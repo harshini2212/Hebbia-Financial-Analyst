@@ -387,6 +387,103 @@
     "sum": 215938000000.0,
     "reconciles": true
   },
+  "snapshot": {
+    "fy": 2026,
+    "years": [
+      2024,
+      2025,
+      2026
+    ],
+    "series": {
+      "revenue": [
+        {
+          "year": 2024,
+          "value": 60922000000.0
+        },
+        {
+          "year": 2025,
+          "value": 130497000000.0
+        },
+        {
+          "year": 2026,
+          "value": 215938000000.0
+        }
+      ],
+      "net income": [
+        {
+          "year": 2024,
+          "value": 29760000000.0
+        },
+        {
+          "year": 2025,
+          "value": 72880000000.0
+        },
+        {
+          "year": 2026,
+          "value": 120067000000.0
+        }
+      ],
+      "operating income": [
+        {
+          "year": 2024,
+          "value": 32972000000.0
+        },
+        {
+          "year": 2025,
+          "value": 81453000000.0
+        },
+        {
+          "year": 2026,
+          "value": 130387000000.0
+        }
+      ],
+      "total assets": [
+        {
+          "year": 2025,
+          "value": 111601000000.0
+        },
+        {
+          "year": 2026,
+          "value": 206803000000.0
+        }
+      ]
+    },
+    "margins": {
+      "gross": 0.7106808435754708,
+      "operating": 0.6038168363141272,
+      "net": 0.5560253406070261,
+      "tax": 0.1511700247437257
+    },
+    "kpis": [
+      {
+        "label": "Revenue",
+        "value": 215938000000.0,
+        "yoy": 0.654735357900948
+      },
+      {
+        "label": "Net income",
+        "value": 120067000000.0,
+        "yoy": 0.6474615806805708
+      },
+      {
+        "label": "Total assets",
+        "value": 206803000000.0,
+        "yoy": 0.8530568722502486
+      },
+      {
+        "label": "Operating cash flow",
+        "value": 102718000000.0,
+        "yoy": 0.6027399397712556
+      }
+    ],
+    "notable": [
+      "Revenue grew 65% year-over-year to $215.9B",
+      "Net income rose 65% YoY",
+      "Operating margin 60.4%",
+      "2 reportable segment(s)"
+    ],
+    "narrative": "NVIDIA had a strong fiscal year 2026, with revenue growing 65% year-over-year to $215.9 billion and net income rising 65% to $120.1 billion. The company remained highly profitable, with an operating margin of 60.4% and a net margin of 55.6%. Notably, total assets nearly doubled from $111.6 billion in FY2025 to $206.8 billion in FY2026, reflecting the company's rapid expansion."
+  },
   "attribution": [
     {
       "id": "opinc.segments_sum",

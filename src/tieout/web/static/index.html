@@ -19,19 +19,19 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0}
-  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
   a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
   .wrap{max-width:1140px;margin:0 auto;padding:0 28px}
 
   /* top bar */
   .topbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-  .nav{display:flex;align-items:center;gap:26px;height:62px}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.3px}
-  .logo{display:grid;grid-template-columns:repeat(2,9px);grid-auto-rows:9px;gap:3px}
+  .nav{display:flex;align-items:center;gap:26px;height:72px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:19px;letter-spacing:-.3px}
+  .logo{display:grid;grid-template-columns:repeat(2,10px);grid-auto-rows:10px;gap:3px}
   .logo i{border-radius:50%;background:var(--text)} .logo i.a{background:var(--accent)}
   .navlinks{display:flex;gap:4px;flex:1;overflow-x:auto}
   .navlinks::-webkit-scrollbar{height:0}
-  .nl{padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:13.5px;font-weight:500}
+  .nl{padding:9px 14px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:14.5px;font-weight:500}
   .nl:hover{background:var(--gray-soft);color:var(--text)}
   .nl.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
   .ghbtn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;white-space:nowrap}
@@ -39,12 +39,12 @@
 
   /* context bar (filing selector) */
   .ctx{background:var(--surface);border-bottom:1px solid var(--line)}
-  .ctxrow{display:flex;align-items:center;gap:8px;padding:12px 0;flex-wrap:wrap}
+  .ctxrow{display:flex;align-items:center;gap:8px;padding:15px 0;flex-wrap:wrap}
   .ctx .lbl{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-right:6px;font-weight:600}
-  .pill{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 14px;cursor:pointer;transition:.14s;min-width:96px}
+  .pill{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 16px;cursor:pointer;transition:.14s;min-width:100px}
   .pill:hover{border-color:var(--accent)}
   .pill.active{border-color:var(--accent);background:var(--accent-soft)}
-  .pill .t{font-weight:700;font-size:13px} .pill .n{color:var(--muted);font-size:11px}
+  .pill .t{font-weight:700;font-size:14px} .pill .n{color:var(--muted);font-size:11.5px}
   .pill.active .t{color:var(--accent)}
   .runbtn{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
   .runbtn:hover{border-color:var(--accent)}
@@ -73,7 +73,7 @@
   .d.up{color:var(--ok)} .d.down{color:var(--bad)} .d.flat{color:var(--muted)}
 
   /* tables */
-  table{width:100%;border-collapse:collapse;font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
   th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line2)}
   th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
   td.num,th.num{text-align:right;font-family:var(--mono)}
@@ -175,7 +175,7 @@
 <main><div class="wrap" id="view"><div class="loading"><span class="spin"></span>Loading…</div></div></main>
 
 <script>
-const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false,acResults:[],hasKey:true};
+const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false,acResults:[],hasKey:true,searchText:''};
 let _acTimer;
 function doSearch(inp,box){
   clearTimeout(_acTimer);
@@ -187,7 +187,7 @@ function doSearch(inp,box){
     if(!S.acResults.length){box.innerHTML='<div class="achint">No match on SEC EDGAR — try the company\'s legal name.</div>';box.classList.add('show');return;}
     box.innerHTML=S.acResults.map(r=>`<div class="acitem" data-tk="${r.ticker}"><span class="tk">${r.ticker}</span><span class="nm">${r.name}</span></div>`).join('')
       +'<div class="achint">Pick a company to pull its latest 10-K from SEC EDGAR and run it live (~30–60s).</div>';
-    box.querySelectorAll('.acitem').forEach(el=>el.onmousedown=(ev)=>{ev.preventDefault();box.classList.remove('show');runTicker(el.getAttribute('data-tk'));});
+    box.querySelectorAll('.acitem').forEach(el=>el.onmousedown=(ev)=>{ev.preventDefault();box.classList.remove('show');S.searchText=el.getAttribute('data-tk')+' — '+el.querySelector('.nm').textContent;runTicker(el.getAttribute('data-tk'));});
     box.classList.add('show');
   },180);
 }
@@ -278,12 +278,12 @@ function renderChrome(){
     p.onclick=()=>{S.ticker=f.ticker;if(NO_CTX.has(S.tab))S.tab='snapshot';renderChrome();render();};fb.appendChild(p);});
   // live connector: type a company name, pick from EDGAR, run the eval live
   const sg=$(`<div class="search"><div class="acwrap">
-    <input id="tsearch" autocomplete="off" spellcheck="false" placeholder="Search a company — Walmart, Nvidia, Coca-Cola…" ${S.busy?'disabled':''}/>
+    <input id="tsearch" autocomplete="off" spellcheck="false" value="${(S.searchText||'').replace(/"/g,'&quot;')}" placeholder="Search a company — Walmart, Nvidia, Coca-Cola…" ${S.busy?'disabled':''}/>
     <div class="ac" id="acbox"></div></div>
     <button class="go" id="tgo" ${S.busy?'disabled':''}>Run live</button></div>`);
   fb.appendChild(sg);
   const inp=sg.querySelector('#tsearch'), box=sg.querySelector('#acbox');
-  const go=()=>{ if(S.acResults&&S.acResults.length) runTicker(S.acResults[0].ticker); else if(inp.value.trim()) runTicker(inp.value); };
+  const go=()=>{ if(S.acResults&&S.acResults.length){S.searchText=S.acResults[0].ticker+' — '+S.acResults[0].name;runTicker(S.acResults[0].ticker);} else if(inp.value.trim()){S.searchText=inp.value.trim();runTicker(inp.value);} };
   sg.querySelector('#tgo').onclick=go;
   inp.oninput=()=>doSearch(inp,box);
   inp.onkeydown=(e)=>{ if(e.key==='Enter'){box.classList.remove('show');go();} else if(e.key==='Escape'){box.classList.remove('show');} };
@@ -302,7 +302,7 @@ async function runTicker(t){
     if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
     const data=await r.json(); S.analyses[t]=data;
     if(!S.filings.find(f=>f.ticker===t)) S.filings.push({ticker:t,issuer:data.issuer,note:'live'});
-    S.ticker=t; S.tab='snapshot';
+    S.ticker=t; S.tab='snapshot'; S.searchText='';
   }catch(e){ alert('Could not run "'+t+'": '+e.message+'\n\nNeeds ANTHROPIC_API_KEY set on the server, and the ticker must file a 10-K on SEC EDGAR.'); }
   clearInterval(timer); S.busy=false; renderChrome(); render();
 }
