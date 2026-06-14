@@ -191,7 +191,7 @@ function doSearch(inp,box){
     box.classList.add('show');
   },180);
 }
-const TABS=[['overview','Overview'],['explorer','Filing explorer'],['propagation','Propagation'],
+const TABS=[['overview','Overview'],['snapshot','Snapshot'],['explorer','Filing explorer'],['propagation','Propagation'],
   ['attribution','Attribution'],['localization','Localization'],['registry','Rulebook'],['approach','Approach']];
 const NO_CTX=new Set(['overview','approach']);
 
@@ -233,6 +233,29 @@ function waterfall(seg){
       : `<span class="chip warn">differs ${money(Math.abs(diff))} · corporate &amp; eliminations</span>`;}
   return `<div class="wfall"><div class="wbar">${slices}</div>
     <div class="wflabels"><span>Σ segments = <b>${money(sum)}</b></span><span>${verdict}</span></div></div>`;}
+function sparkBars(pts,color){
+  const max=Math.max(...pts.map(p=>p.value))||1, w=26, gap=12, h=44;
+  let s=''; pts.forEach((p,i)=>{const bh=Math.max(4,p.value/max*h);
+    s+=`<rect x="${i*(w+gap)}" y="${h-bh}" width="${w}" height="${bh}" rx="3" fill="${color}"/>`
+      +`<text x="${i*(w+gap)+w/2}" y="${h+13}" text-anchor="middle" font-size="9.5" fill="#8b929c">FY${String(p.year).slice(2)}</text>`;});
+  return `<svg width="${pts.length*(w+gap)}" height="${h+18}">${s}</svg>`;}
+// plain-English reasons a rule can't be checked on a given filing
+const NRREASON={
+  'bs.assets_split':'needs a current / non-current assets split this filing doesn\'t tag',
+  'bs.liabilities_split':'needs a current / non-current liabilities split this filing doesn\'t tag',
+  'bs.equity_attribution':'needs a noncontrolling-interest line not separately tagged',
+  'is.gross_profit':'this filing doesn\'t report a gross-profit line',
+  'is.operating_income':'depends on gross profit, which this filing doesn\'t report',
+  'is.net_income_attribution':'needs a noncontrolling-interest split not tagged here',
+  'rev.segments_sum':'segment revenue isn\'t tagged cleanly for this filer',
+  'opinc.segments_sum':'segment operating income isn\'t tagged cleanly for this filer',
+  'margin.gross':'a ratio the filing never states as data — computed on the Propagation tab',
+  'margin.operating':'a ratio the filing never states as data — computed on the Propagation tab',
+  'margin.net':'a ratio the filing never states as data — computed on the Propagation tab',
+  'tax.effective_rate':'a ratio the filing never states as data — computed on the Propagation tab',
+  'bs.balance':'a required balance-sheet line isn\'t tagged for this filing',
+  'bs.lse_decomp':'a required balance-sheet line isn\'t tagged for this filing',
+};
 
 async function boot(){
   S.filings=await(await fetch('/api/filings')).json();
@@ -252,7 +275,7 @@ function renderChrome(){
   document.getElementById('ctxbar').style.display=NO_CTX.has(S.tab)?'none':'block';
   const fb=document.getElementById('filings');fb.innerHTML='<span class="lbl">Filing</span>';
   S.filings.forEach(f=>{const p=$(`<button class="pill ${f.ticker===S.ticker?'active':''}"><span class="t">${f.ticker}</span><span class="n">${f.note}</span></button>`);
-    p.onclick=()=>{S.ticker=f.ticker;renderChrome();render();};fb.appendChild(p);});
+    p.onclick=()=>{S.ticker=f.ticker;if(NO_CTX.has(S.tab))S.tab='snapshot';renderChrome();render();};fb.appendChild(p);});
   // live connector: type a company name, pick from EDGAR, run the eval live
   const sg=$(`<div class="search"><div class="acwrap">
     <input id="tsearch" autocomplete="off" spellcheck="false" placeholder="Search a company — Walmart, Nvidia, Coca-Cola…" ${S.busy?'disabled':''}/>
@@ -279,7 +302,7 @@ async function runTicker(t){
     if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
     const data=await r.json(); S.analyses[t]=data;
     if(!S.filings.find(f=>f.ticker===t)) S.filings.push({ticker:t,issuer:data.issuer,note:'live'});
-    S.ticker=t; S.tab='explorer';
+    S.ticker=t; S.tab='snapshot';
   }catch(e){ alert('Could not run "'+t+'": '+e.message+'\n\nNeeds ANTHROPIC_API_KEY set on the server, and the ticker must file a 10-K on SEC EDGAR.'); }
   clearInterval(timer); S.busy=false; renderChrome(); render();
 }
@@ -292,7 +315,7 @@ async function runLive(){
   S.busy=false;renderChrome();render();
 }
 function render(){const v=document.getElementById('view');
-  const fn={overview:vOverview,explorer:vExplorer,propagation:vProp,attribution:vAttr,
+  const fn={overview:vOverview,snapshot:vSnapshot,explorer:vExplorer,propagation:vProp,attribution:vAttr,
     localization:vLoc,registry:vRegistry,approach:vApproach}[S.tab];
   v.innerHTML='';v.appendChild(fn());}
 function d(){return S.analyses[S.ticker];}
@@ -340,7 +363,48 @@ function vOverview(){
     <span><span class="dot" style="background:var(--ok)"></span>Claude reconciles cleanly across complex real filings — zero false positives</span>
     <span><span class="dot" style="background:var(--bad)"></span>the baseline's errors are caught &amp; labelled automatically</span></div>`));
   el.appendChild(sc);
-  setTimeout(()=>{const b=document.getElementById('goExpl');if(b)b.onclick=()=>{S.tab='explorer';renderChrome();render();window.scrollTo(0,0);};},0);
+  setTimeout(()=>{const b=document.getElementById('goExpl');if(b)b.onclick=()=>{S.tab='snapshot';renderChrome();render();window.scrollTo(0,0);};},0);
+  return el;
+}
+
+/* ---------- Snapshot (company brief) ---------- */
+function vSnapshot(){
+  const g=guard();if(g)return g;const a=d();const s=a.snapshot;const el=$('<div></div>');
+  el.appendChild($(pageHead(`${a.issuer} — FY${a.fiscal_year}`,
+    `A plain-English brief built from this filing's data. Every figure here was checked against the SEC's official numbers by the constraint engine.`)));
+
+  // KPI rail with year-over-year deltas
+  el.appendChild($(`<div class="metrics">${s.kpis.map(k=>{
+    const yo=k.yoy==null?'':(k.yoy>=0?'▲ ':'▼ ')+Math.abs(k.yoy*100).toFixed(1)+'% YoY';
+    return metric(k.label, money(k.value), yo, k.yoy==null?'flat':(k.yoy>=0?'up':'down'));
+  }).join('')}</div>`));
+
+  if(s.narrative) el.appendChild($(`<div class="card"><h3>The year in plain English</h3>
+    <div class="sub">AI-written from the verified figures.</div>
+    <p style="font-size:15px;margin:0;line-height:1.6">${s.narrative}</p></div>`));
+
+  // trend + profitability, side by side
+  const trend=Object.keys(s.series).length?`<div class="card"><h3>Multi-year trend</h3>
+    <div class="sub">From the comparative years in this filing.</div>
+    ${Object.entries(s.series).map(([name,pts])=>`<div class="obar">
+      <div class="who" style="text-transform:capitalize">${name}</div>
+      ${sparkBars(pts, name.includes('net')?'#16a34a':name.includes('asset')?'#7c3aed':'#2f6bff')}
+      <div class="muted mono" style="margin-left:auto">${money(pts[pts.length-1].value)}</div></div>`).join('')}</div>`:'';
+  const m=s.margins;
+  const mstat=(lbl,v)=>`<div style="flex:1;background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:12px 14px">
+    <div class="mono" style="font-size:21px;font-weight:700">${v==null?'—':(v*100).toFixed(1)+'%'}</div>
+    <div class="muted" style="font-size:12px">${lbl}</div></div>`;
+  const margins=`<div class="card"><h3>Profitability</h3><div class="sub">Margins — derived and verified.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">${mstat('Gross',m.gross)}${mstat('Operating',m.operating)}${mstat('Net',m.net)}${mstat('Eff. tax',m.tax)}</div></div>`;
+  el.appendChild($(`<div class="two">${trend}${margins}</div>`));
+
+  if(a.segments) el.appendChild($(`<div class="card"><h3>Revenue by segment</h3>
+    <div class="sub">How the business breaks down.</div>${waterfall(a.segments)}</div>`));
+
+  if(s.notable.length) el.appendChild($(`<div class="card"><h3>Notable this year</h3>
+    <ul class="clean">${s.notable.map(n=>`<li>${n}</li>`).join('')}</ul></div>`));
+
+  el.appendChild($(`<div class="aside">Every figure above was checked against the filing's official SEC data — open <b>Filing explorer</b> for the rule-by-rule audit.</div>`));
   return el;
 }
 
@@ -378,17 +442,43 @@ function vExplorer(){
     <div class="aside" style="margin-top:14px"><h4>What to notice</h4>If a segment were missing, the bar wouldn't reach the total and a striped "missing" slice would appear — exactly the $38B Costco omission an LLM judge waves through.</div></div>`:'';
   el.appendChild($(`<div class="chartgrid">${wfCard||donutCard}${wfCard?donutCard:''}</div>`));
 
-  const cc=$(`<div class="card"><h3>The 16 accounting identities</h3>
-    <div class="sub">"Residual" = how far the two sides are apart; it must stay inside the rounding-aware tolerance band.</div></div>`);
-  let crows='';
-  a.constraints.forEach(c=>{crows+=`<tr>
-    <td><div>${c.description}</div><div class="muted mono" style="font-size:11px">${c.formula}</div></td>
-    <td>${sevChip(c.severity)}</td><td>${statusChip(c.gt_status)}</td>
-    <td class="num">${c.gt_residual!==null?money(c.gt_residual):''}${c.gt_band!==null?'<span class="muted" style="font-size:11px"> ±'+money(c.gt_band)+'</span>':''}</td>
-    <td>${statusChip(c.claude_status)}</td></tr>`;});
-  cc.appendChild($(`<table><thead><tr><th>Identity</th><th>Type</th><th>Official data</th>
-    <th class="num">residual</th><th>Claude</th></tr></thead><tbody>${crows}</tbody></table>`));
-  el.appendChild(cc);
+  const B={verified:[],problem:[],notrep:[]};
+  a.constraints.forEach(c=>{
+    if(c.claude_status==='violated'||c.gt_status==='violated') B.problem.push(c);
+    else if(c.gt_status==='satisfied') B.verified.push(c);
+    else B.notrep.push(c);
+  });
+  const verdict=`We checked <b>${a.constraints.length}</b> accounting rules against ${a.issuer}'s filing. `
+    +`<b style="color:var(--ok)">${B.verified.length} verified${B.problem.length?'':' — all hold'}</b>`
+    +(B.problem.length?`, <b style="color:var(--bad)">${B.problem.length} problem${B.problem.length>1?'s':''}</b>`:'')
+    +`, and <b>${B.notrep.length} not reported</b> (the filing doesn't contain the figures those rules need).`;
+  el.appendChild($(`<div class="note" style="font-size:14px">${verdict}</div>`));
+
+  if(B.verified.length){
+    const rows=B.verified.map(c=>`<tr><td><div>${c.description}</div>
+      <div class="muted mono" style="font-size:11px">${c.formula}</div></td>
+      <td class="num">${c.gt_residual!==null?money(c.gt_residual):''}</td>
+      <td><span class="chip ok">&#10003; holds</span></td></tr>`).join('');
+    el.appendChild($(`<div class="card"><h3>&#10003; Verified — ${B.verified.length} rules hold</h3>
+      <div class="sub">All inputs present and the two sides reconcile (residual within the rounding-aware tolerance).</div>
+      <table><thead><tr><th>Identity</th><th class="num">residual</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></div>`));
+  }
+  if(B.problem.length){
+    const rows=B.problem.map(c=>{const at=a.attribution.find(x=>x.id===c.id)||{};
+      return `<tr><td><div>${c.description}</div><div class="muted mono" style="font-size:11px">${c.formula}</div></td>
+        <td>${at.label?labelChip(at.label):'<span class="chip bad">breaks</span>'}</td>
+        <td class="muted" style="font-size:12px">${at.evidence||''}</td></tr>`;}).join('');
+    el.appendChild($(`<div class="card"><h3>Problems — ${B.problem.length}</h3>
+      <div class="sub">Inputs are present, but the numbers don't reconcile — shown with the attributed cause.</div>
+      <table><thead><tr><th>Identity</th><th>Verdict</th><th>Why</th></tr></thead><tbody>${rows}</tbody></table></div>`));
+  }
+  if(B.notrep.length){
+    const rows=B.notrep.map(c=>`<tr><td>${c.description}</td>
+      <td class="muted" style="font-size:12px">${NRREASON[c.id]||"the filing doesn't report all the line items this rule needs"}</td></tr>`).join('');
+    el.appendChild($(`<div class="card"><details><summary style="cursor:pointer;font-weight:600;font-size:15px">Not reported — ${B.notrep.length} rules (click to expand)</summary>
+      <div class="sub" style="margin-top:10px">Not failures — the tool refuses to grade rules whose figures aren't in this filing.</div>
+      <table><thead><tr><th>Identity</th><th>Why it can't be checked here</th></tr></thead><tbody>${rows}</tbody></table></details></div>`));
+  }
 
   const fc=$(`<div class="card"><h3>Did Claude read the numbers right?</h3>
     <div class="sub">Each consolidated figure Claude pulled from the prose, checked against the SEC's structured value.</div></div>`);

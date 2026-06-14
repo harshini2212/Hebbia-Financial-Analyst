@@ -387,6 +387,107 @@
     "sum": 716924000000.0,
     "reconciles": true
   },
+  "snapshot": {
+    "fy": 2025,
+    "years": [
+      2023,
+      2024,
+      2025
+    ],
+    "series": {
+      "revenue": [
+        {
+          "year": 2023,
+          "value": 574785000000.0
+        },
+        {
+          "year": 2024,
+          "value": 637959000000.0
+        },
+        {
+          "year": 2025,
+          "value": 716924000000.0
+        }
+      ],
+      "net income": [
+        {
+          "year": 2023,
+          "value": 30425000000.0
+        },
+        {
+          "year": 2024,
+          "value": 59248000000.0
+        },
+        {
+          "year": 2025,
+          "value": 77670000000.0
+        }
+      ],
+      "operating income": [
+        {
+          "year": 2023,
+          "value": 36852000000.0
+        },
+        {
+          "year": 2024,
+          "value": 68593000000.0
+        },
+        {
+          "year": 2025,
+          "value": 79975000000.0
+        }
+      ],
+      "total assets": [
+        {
+          "year": 2023,
+          "value": 527854000000.0
+        },
+        {
+          "year": 2024,
+          "value": 624894000000.0
+        },
+        {
+          "year": 2025,
+          "value": 818042000000.0
+        }
+      ]
+    },
+    "margins": {
+      "gross": 0.5028566486824266,
+      "operating": 0.11155296795755199,
+      "net": 0.10833784334183261,
+      "tax": 0.1962779130827964
+    },
+    "kpis": [
+      {
+        "label": "Revenue",
+        "value": 716924000000.0,
+        "yoy": 0.12377754683294695
+      },
+      {
+        "label": "Net income",
+        "value": 77670000000.0,
+        "yoy": 0.3109303267620848
+      },
+      {
+        "label": "Total assets",
+        "value": 818042000000.0,
+        "yoy": 0.3090892215319718
+      },
+      {
+        "label": "Operating cash flow",
+        "value": 139514000000.0,
+        "yoy": 0.20398353426478075
+      }
+    ],
+    "notable": [
+      "Revenue grew 12% year-over-year to $716.9B",
+      "Net income rose 31% YoY",
+      "Operating margin 11.2%",
+      "3 reportable segment(s)"
+    ],
+    "narrative": "Amazon had a strong fiscal year 2025, with revenue growing 12% to $716.9 billion, up from $638.0 billion the prior year. Profitability continued its upward trend: net income rose 31% to $77.7 billion, and operating income increased to $80.0 billion, reflecting an operating margin of 11.2%. Notably, the company's profits grew much faster than its revenue, and total assets expanded significantly to $818.0 billion."
+  },
   "attribution": [],
   "localization": {
     "injected_segment": "NorthAmericaSegmentMember",

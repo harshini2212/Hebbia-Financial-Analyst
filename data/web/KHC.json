@@ -411,6 +411,44 @@
     }
   ],
   "segments": null,
+  "snapshot": {
+    "fy": 2025,
+    "years": [],
+    "series": {},
+    "margins": {
+      "gross": null,
+      "operating": null,
+      "net": null,
+      "tax": -0.07401285583103764
+    },
+    "kpis": [
+      {
+        "label": "Revenue",
+        "value": null,
+        "yoy": null
+      },
+      {
+        "label": "Net income",
+        "value": -5846000000.0,
+        "yoy": -3.130466472303207
+      },
+      {
+        "label": "Total assets",
+        "value": 81786000000.0,
+        "yoy": -0.07363484997791295
+      },
+      {
+        "label": "Operating cash flow",
+        "value": 4462000000.0,
+        "yoy": 0.06644359464627152
+      }
+    ],
+    "notable": [
+      "Net income declined 313% YoY",
+      "Carries redeemable / mezzanine equity on the balance sheet"
+    ],
+    "narrative": "In fiscal year 2025, Kraft Heinz reported a tax margin of -7.4%. The company's profitability deteriorated sharply, with net income declining 313% year-over-year. Notably, the company carries redeemable (mezzanine) equity on its balance sheet."
+  },
   "attribution": [
     {
       "id": "opinc.segments_sum",

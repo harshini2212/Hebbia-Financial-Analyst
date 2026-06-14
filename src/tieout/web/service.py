@@ -16,8 +16,8 @@ from ..attribution import attribute_run
 from ..constraints import Status, is_aggregable
 from ..engine import CheckerEngine, PropagatingEngine
 from ..engine.propagating import _expr_str
-from ..extract import (BaselineExtractor, LlmTextExtractor, ResponseCache,
-                       XbrlDirectExtractor, claude_model)
+from ..extract import (BaselineExtractor, CachedModel, LlmTextExtractor,
+                       ResponseCache, XbrlDirectExtractor, claude_model)
 from ..facts import Fact, FactStore, Source
 from ..ingest import EdgarClient
 from ..ingest.text import edgar_text_provider
@@ -203,6 +203,111 @@ def _segments(gt, periods, fy) -> dict | None:
             and abs(ssum - total) <= max(abs(total) * 0.005, 1e6)}
 
 
+def _bn(v) -> str:
+    if v is None:
+        return "n/a"
+    a = abs(v)
+    if a >= 1e9:
+        return f"${v/1e9:.1f}B"
+    if a >= 1e6:
+        return f"${v/1e6:.1f}M"
+    return f"${v:,.0f}"
+
+
+def _narrative(issuer, fy, snap) -> str | None:
+    """A 2-3 sentence plain-English brief from the verified numbers (1 cached
+    Claude call). Returns None with no API key, so it degrades gracefully."""
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return None
+    lines = [f"{issuer} — fiscal year {fy}. Figures (verified against SEC XBRL):"]
+    for name, pts in snap["series"].items():
+        lines.append(f"  {name}: " + ", ".join(f"FY{p['year']} {_bn(p['value'])}" for p in pts))
+    m = snap["margins"]
+    lines.append("  margins: " + ", ".join(
+        f"{k} {v*100:.1f}%" for k, v in m.items() if v is not None))
+    if snap["notable"]:
+        lines.append("  notable: " + "; ".join(snap["notable"]))
+    prompt = ("You are a financial analyst writing for a non-expert. In 2-3 plain "
+              "sentences, summarize this company's fiscal year: overall performance, "
+              "the profitability trend, and any notable change. Be factual and "
+              "concise, use the numbers given, and do not invent anything.\n\n"
+              + "\n".join(lines))
+    try:
+        cm = CachedModel(claude_model("claude-opus-4-8"), ResponseCache(".cache/llm"),
+                         prompt_version="narrative-v1", adapter_version="narrative/0")
+        text, _, _ = cm.complete(prompt)
+        return text.strip()
+    except Exception:
+        return None
+
+
+def _snapshot(gt, fy, issuer) -> dict:
+    facts = [f for f in gt.all_facts() if f.source is Source.XBRL and not f.dimensions]
+    by = {(f.concept, f.period.fiscal_year): _f(f.value) for f in facts}
+    years = sorted({yr for (c, yr) in by if c == "revenue.total"})[-3:]
+
+    def g(concept, year):
+        return by.get((concept, year))
+
+    series = {}
+    for name, concept in [("revenue", "revenue.total"), ("net income", "net_income.parent"),
+                          ("operating income", "operating_income.total"),
+                          ("total assets", "assets.total")]:
+        pts = [{"year": y, "value": g(concept, y)} for y in years if g(concept, y) is not None]
+        if len(pts) >= 2:
+            series[name] = pts
+
+    rev = g("revenue.total", fy)
+    gp = g("gross_profit.total", fy)
+    if gp is None and rev is not None and g("cogs.total", fy) is not None:
+        gp = rev - g("cogs.total", fy)
+
+    def ratio(a, b):
+        return (a / b) if (a is not None and b not in (None, 0)) else None
+
+    margins = {
+        "gross": ratio(gp, rev),
+        "operating": ratio(g("operating_income.total", fy), rev),
+        "net": ratio(g("net_income.parent", fy), rev),
+        "tax": ratio(g("income_tax.total", fy), g("pretax_income.total", fy)),
+    }
+
+    def yoy(c):
+        return ratio(_sub(g(c, fy), g(c, fy - 1)), g(c, fy - 1))
+
+    kpis = [{"label": lbl, "value": g(c, fy), "yoy": yoy(c)} for lbl, c in
+            [("Revenue", "revenue.total"), ("Net income", "net_income.parent"),
+             ("Total assets", "assets.total"), ("Operating cash flow", "cfo.total")]]
+
+    notable = []
+    ry = yoy("revenue.total")
+    if ry is not None:
+        notable.append(f"Revenue {'grew' if ry >= 0 else 'fell'} {abs(ry)*100:.0f}% "
+                       f"year-over-year to {_bn(rev)}")
+    ni = yoy("net_income.parent")
+    if ni is not None:
+        notable.append(f"Net income {'rose' if ni >= 0 else 'declined'} {abs(ni)*100:.0f}% YoY")
+    if margins["operating"] is not None:
+        notable.append(f"Operating margin {margins['operating']*100:.1f}%")
+    n_seg = len({dict(f.dimensions).get("segment") for f in gt.all_facts()
+                 if f.concept == "revenue.segment"})
+    if n_seg:
+        notable.append(f"{n_seg} reportable segment(s)")
+    if any(c == "income.discontinued" for (c, _) in by):
+        notable.append("Reports discontinued operations (often a divestiture or spin-off)")
+    if any(c == "equity.temporary" for (c, _) in by):
+        notable.append("Carries redeemable / mezzanine equity on the balance sheet")
+
+    snap = {"fy": fy, "years": years, "series": series, "margins": margins,
+            "kpis": kpis, "notable": notable}
+    snap["narrative"] = _narrative(issuer, fy, snap)
+    return snap
+
+
+def _sub(a, b):
+    return (a - b) if (a is not None and b is not None) else None
+
+
 def _scorecard_json(sc) -> dict:
     return {"name": sc.name, "facts": sc.extracted, "agree": sc.agree,
             "disagree": sc.disagree, "satisfied": sc.satisfied,
@@ -253,6 +358,7 @@ def analyze(ticker: str, *, force: bool = False) -> dict:
         "facts": _fact_comparison(claude_store, gt, fy),
         "propagation": _propagation(gt, periods, fy),
         "segments": _segments(gt, periods, fy),
+        "snapshot": _snapshot(gt, fy, filing.issuer),
         "attribution": [{"id": a.template_id, "label": a.label.value,
                          "evidence": a.evidence}
                         for a in attribute_run(REGISTRY, periods, claude_store, gt)

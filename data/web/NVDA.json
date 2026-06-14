@@ -1,33 +1,45 @@
 {
-  "ticker": "COST",
-  "issuer": "COSTCO WHOLESALE CORP /NEW",
-  "fiscal_year": 2025,
-  "filing_date": "2025-10-08",
-  "url": "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm",
+  "ticker": "NVDA",
+  "issuer": "NVIDIA CORP",
+  "fiscal_year": 2026,
+  "filing_date": "2026-02-25",
+  "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm",
   "scorecards": [
     {
       "name": "Claude (text)",
       "facts": 19,
-      "agree": 13,
+      "agree": 14,
       "disagree": 0,
-      "satisfied": 6,
-      "violated": 0,
+      "satisfied": 7,
+      "violated": 1,
       "soft": 0,
-      "indeterminate": 10,
+      "indeterminate": 8,
       "judge_invisible": 0,
-      "attributions": []
+      "attributions": [
+        {
+          "id": "opinc.segments_sum",
+          "label": "filing_inconsistency",
+          "evidence": "ground-truth XBRL figures also break this identity"
+        }
+      ]
     },
     {
       "name": "Baseline (regex)",
-      "facts": 10,
-      "agree": 0,
-      "disagree": 9,
+      "facts": 12,
+      "agree": 4,
+      "disagree": 8,
       "satisfied": 1,
-      "violated": 0,
-      "soft": 0,
-      "indeterminate": 15,
+      "violated": 1,
+      "soft": 1,
+      "indeterminate": 13,
       "judge_invisible": 0,
-      "attributions": []
+      "attributions": [
+        {
+          "id": "is.gross_profit",
+          "label": "extraction_error",
+          "evidence": "gross_profit.total: text=71,100,000 vs xbrl=153,463,000,000 (delta -153,391,900,000); revenue.total: text=2,026,000,000 vs xbrl=215,938,000,000 (delta -213,912,000,000); cogs.total: text=28,900,000 vs xbrl=62,475,000,000 (delta -62,446,100,000)"
+        }
+      ]
     }
   ],
   "constraints": [
@@ -41,7 +53,7 @@
       "gt_band": 1500000.0,
       "claude_status": "satisfied",
       "claude_residual": 0.0,
-      "claude_band": 385495000.0
+      "claude_band": 1034015000.0
     },
     {
       "id": "bs.lse_crosscheck",
@@ -53,7 +65,7 @@
       "gt_band": 1000000.0,
       "claude_status": "satisfied",
       "claude_residual": 0.0,
-      "claude_band": 385495000.0
+      "claude_band": 1034015000.0
     },
     {
       "id": "bs.lse_decomp",
@@ -65,7 +77,7 @@
       "gt_band": 1500000.0,
       "claude_status": "satisfied",
       "claude_residual": 0.0,
-      "claude_band": 385495000.0
+      "claude_band": 1034015000.0
     },
     {
       "id": "bs.assets_split",
@@ -108,24 +120,24 @@
       "description": "Gross profit = Revenue - Cost of revenue",
       "severity": "hard",
       "formula": "gross_profit.total = revenue.total - cogs.total",
-      "gt_status": "indeterminate",
-      "gt_residual": null,
-      "gt_band": null,
-      "claude_status": "indeterminate",
-      "claude_residual": null,
-      "claude_band": null
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 767315000.0
     },
     {
       "id": "is.operating_income",
       "description": "Operating income = Gross profit - Operating expenses",
       "severity": "hard",
       "formula": "operating_income.total = gross_profit.total - opex.total",
-      "gt_status": "indeterminate",
-      "gt_residual": null,
-      "gt_band": null,
-      "claude_status": "indeterminate",
-      "claude_residual": null,
-      "claude_band": null
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 651935000.0
     },
     {
       "id": "is.pretax_to_net",
@@ -137,7 +149,7 @@
       "gt_band": 1500000.0,
       "claude_status": "satisfied",
       "claude_residual": 0.0,
-      "claude_band": 40495000.0
+      "claude_band": 600335000.0
     },
     {
       "id": "is.net_income_attribution",
@@ -158,22 +170,22 @@
       "formula": "revenue.total = sum(revenue.segment[segment])",
       "gt_status": "satisfied",
       "gt_residual": 0.0,
-      "gt_band": 2000000.0,
+      "gt_band": 1500000.0,
       "claude_status": "satisfied",
       "claude_residual": 0.0,
-      "claude_band": 1376175000.0
+      "claude_band": 1079690000.0
     },
     {
       "id": "opinc.segments_sum",
       "description": "Sum of segment operating income = Operating income",
       "severity": "hard",
       "formula": "operating_income.total = sum(operating_income.segment[segment])",
-      "gt_status": "satisfied",
-      "gt_residual": 0.0,
-      "gt_band": 2000000.0,
-      "claude_status": "satisfied",
-      "claude_residual": 0.0,
-      "claude_band": 51915000.0
+      "gt_status": "violated",
+      "gt_residual": -8910000000.0,
+      "gt_band": 1500000.0,
+      "claude_status": "violated",
+      "claude_residual": -8910000000.0,
+      "claude_band": 696485000.0
     },
     {
       "id": "margin.gross",
@@ -227,150 +239,134 @@
   "facts": [
     {
       "concept": "assets.current",
-      "text": 38380000000.0,
-      "xbrl": 38380000000.0,
+      "text": 125605000000.0,
+      "xbrl": 125605000000.0,
       "agree": true
     },
     {
       "concept": "assets.total",
-      "text": 77099000000.0,
-      "xbrl": 77099000000.0,
+      "text": 206803000000.0,
+      "xbrl": 206803000000.0,
       "agree": true
     },
     {
       "concept": "cfo.total",
-      "text": 13335000000.0,
-      "xbrl": 13335000000.0,
+      "text": 102718000000.0,
+      "xbrl": 102718000000.0,
       "agree": true
     },
     {
       "concept": "cogs.total",
-      "text": 239886000000.0,
-      "xbrl": 239886000000.0,
+      "text": 62475000000.0,
+      "xbrl": 62475000000.0,
       "agree": true
     },
     {
-      "concept": "equity.total",
-      "text": 29164000000.0,
-      "xbrl": 29164000000.0,
+      "concept": "equity.parent",
+      "text": 157293000000.0,
+      "xbrl": 157293000000.0,
+      "agree": true
+    },
+    {
+      "concept": "gross_profit.total",
+      "text": 153463000000.0,
+      "xbrl": 153463000000.0,
       "agree": true
     },
     {
       "concept": "income_tax.total",
-      "text": 2719000000.0,
-      "xbrl": 2719000000.0,
+      "text": 21383000000.0,
+      "xbrl": 21383000000.0,
       "agree": true
     },
     {
       "concept": "liabilities.current",
-      "text": 37108000000.0,
-      "xbrl": 37108000000.0,
+      "text": 32163000000.0,
+      "xbrl": 32163000000.0,
       "agree": true
     },
     {
       "concept": "liabilities.total",
-      "text": 47935000000.0,
-      "xbrl": 47935000000.0,
+      "text": 49510000000.0,
+      "xbrl": 49510000000.0,
       "agree": true
     },
     {
       "concept": "liabilities_and_equity.total",
-      "text": 77099000000.0,
-      "xbrl": 77099000000.0,
+      "text": 206803000000.0,
+      "xbrl": 206803000000.0,
       "agree": true
     },
     {
       "concept": "net_income.consolidated",
-      "text": 8099000000.0,
-      "xbrl": 8099000000.0,
-      "agree": true
+      "text": 120067000000.0,
+      "xbrl": null,
+      "agree": null
     },
     {
       "concept": "operating_income.total",
-      "text": 10383000000.0,
-      "xbrl": 10383000000.0,
+      "text": 130387000000.0,
+      "xbrl": 130387000000.0,
+      "agree": true
+    },
+    {
+      "concept": "opex.total",
+      "text": 23076000000.0,
+      "xbrl": 23076000000.0,
       "agree": true
     },
     {
       "concept": "pretax_income.total",
-      "text": 10818000000.0,
-      "xbrl": 10818000000.0,
+      "text": 141450000000.0,
+      "xbrl": 141450000000.0,
       "agree": true
     },
     {
       "concept": "revenue.total",
-      "text": 275235000000.0,
-      "xbrl": 275235000000.0,
+      "text": 215938000000.0,
+      "xbrl": 215938000000.0,
       "agree": true
     }
   ],
   "propagation": [
     {
       "concept": "assets.noncurrent",
-      "value": 38719000000.0,
+      "value": 81198000000.0,
       "unit": "USD",
       "op": "assets.noncurrent (from assets.total = assets.current + assets.noncurrent)",
       "inputs": 2
     },
     {
       "concept": "liabilities.noncurrent",
-      "value": 10827000000.0,
+      "value": 17347000000.0,
       "unit": "USD",
       "op": "liabilities.noncurrent (from liabilities.total = liabilities.current + liabilities.noncurrent)",
       "inputs": 2
     },
     {
-      "concept": "equity.nci",
-      "value": 0.0,
-      "unit": "USD",
-      "op": "equity.nci (from equity.total = equity.parent + equity.nci)",
-      "inputs": 2
-    },
-    {
-      "concept": "gross_profit.total",
-      "value": 35349000000.0,
-      "unit": "USD",
-      "op": "gross_profit.total = revenue.total - cogs.total",
-      "inputs": 2
-    },
-    {
-      "concept": "opex.total",
-      "value": 24966000000.0,
-      "unit": "USD",
-      "op": "opex.total (from operating_income.total = gross_profit.total - opex.total)",
-      "inputs": 2
-    },
-    {
-      "concept": "net_income.nci",
-      "value": 0.0,
-      "unit": "USD",
-      "op": "net_income.nci (from net_income.consolidated = net_income.parent + net_income.nci)",
-      "inputs": 2
-    },
-    {
       "concept": "gross_margin.ratio",
-      "value": 0.1284320671496477,
+      "value": 0.7106808435846425,
       "unit": "ratio",
       "op": "gross_margin.ratio = gross_profit.total / revenue.total",
       "inputs": 2
     },
     {
       "concept": "operating_margin.ratio",
-      "value": 0.037724126658828204,
+      "value": 0.603816836322726,
       "unit": "ratio",
       "op": "operating_margin.ratio = operating_income.total / revenue.total",
       "inputs": 2
     },
     {
       "concept": "net_margin.ratio",
-      "value": 0.02942576344191343,
+      "value": 0.5560253406153687,
       "unit": "ratio",
       "op": "net_margin.ratio = net_income.parent / revenue.total",
       "inputs": 2
     },
     {
       "concept": "effective_tax_rate.ratio",
-      "value": 0.2513403613346289,
+      "value": 0.1511700247581095,
       "unit": "ratio",
       "op": "effective_tax_rate.ratio = income_tax.total / pretax_income.total",
       "inputs": 2
@@ -379,151 +375,46 @@
   "segments": {
     "members": [
       {
-        "name": "UnitedStates",
-        "value": 200046000000.0
+        "name": "ComputeAndNetworkingSegment",
+        "value": 193479000000.0
       },
       {
-        "name": "OtherInternational",
-        "value": 38266000000.0
-      },
-      {
-        "name": "Canada",
-        "value": 36923000000.0
+        "name": "GraphicsSegment",
+        "value": 22459000000.0
       }
     ],
-    "total": 275235000000.0,
-    "sum": 275235000000.0,
+    "total": 215938000000.0,
+    "sum": 215938000000.0,
     "reconciles": true
   },
-  "snapshot": {
-    "fy": 2025,
-    "years": [
-      2023,
-      2024,
-      2025
-    ],
-    "series": {
-      "revenue": [
-        {
-          "year": 2023,
-          "value": 242290000000.0
-        },
-        {
-          "year": 2024,
-          "value": 254453000000.0
-        },
-        {
-          "year": 2025,
-          "value": 275235000000.0
-        }
-      ],
-      "net income": [
-        {
-          "year": 2023,
-          "value": 6292000000.0
-        },
-        {
-          "year": 2024,
-          "value": 7367000000.0
-        },
-        {
-          "year": 2025,
-          "value": 8099000000.0
-        }
-      ],
-      "operating income": [
-        {
-          "year": 2023,
-          "value": 8114000000.0
-        },
-        {
-          "year": 2024,
-          "value": 9285000000.0
-        },
-        {
-          "year": 2025,
-          "value": 10383000000.0
-        }
-      ],
-      "total assets": [
-        {
-          "year": 2023,
-          "value": 68994000000.0
-        },
-        {
-          "year": 2024,
-          "value": 69831000000.0
-        },
-        {
-          "year": 2025,
-          "value": 77099000000.0
-        }
-      ]
-    },
-    "margins": {
-      "gross": 0.12843206714262356,
-      "operating": 0.03772412665540356,
-      "net": 0.029425763438516175,
-      "tax": 0.2513403586614901
-    },
-    "kpis": [
-      {
-        "label": "Revenue",
-        "value": 275235000000.0,
-        "yoy": 0.08167323631476146
-      },
-      {
-        "label": "Net income",
-        "value": 8099000000.0,
-        "yoy": 0.09936201981810777
-      },
-      {
-        "label": "Total assets",
-        "value": 77099000000.0,
-        "yoy": 0.10407984992338647
-      },
-      {
-        "label": "Operating cash flow",
-        "value": 13335000000.0,
-        "yoy": 0.17602963224270218
-      }
-    ],
-    "notable": [
-      "Revenue grew 8% year-over-year to $275.2B",
-      "Net income rose 10% YoY",
-      "Operating margin 3.8%",
-      "3 reportable segment(s)"
-    ],
-    "narrative": "Costco had a strong fiscal year 2025, with revenue growing 8% to $275.2 billion and net income rising 10% to $8.1 billion. Profitability continued its upward trend, as operating income climbed to $10.4 billion (from $9.3 billion in 2024 and $8.1 billion in 2023), reflecting steady year-over-year gains over the past three years. Total assets also increased notably, from $69.8 billion to $77.1 billion."
-  },
-  "attribution": [],
+  "attribution": [
+    {
+      "id": "opinc.segments_sum",
+      "label": "filing_inconsistency",
+      "evidence": "ground-truth XBRL figures also break this identity"
+    }
+  ],
   "localization": {
-    "injected_segment": "UnitedStatesMember",
+    "injected_segment": "ComputeAndNetworkingSegmentMember",
     "injected_amount": 5000000000,
     "residual": -5000000000.0,
     "suspects": [
       {
         "concept": "revenue.segment",
-        "segment": "CanadaMember",
-        "value": 36923000000.0,
+        "segment": "GraphicsSegmentMember",
+        "value": 22459000000.0,
         "score": 1.0
       },
       {
         "concept": "revenue.segment",
-        "segment": "UnitedStatesMember",
-        "value": 205046000000.0,
-        "score": 1.0
-      },
-      {
-        "concept": "revenue.segment",
-        "segment": "OtherInternationalMember",
-        "value": 38266000000.0,
+        "segment": "ComputeAndNetworkingSegmentMember",
+        "value": 198479000000.0,
         "score": 1.0
       },
       {
         "concept": "revenue.total",
         "segment": "(total)",
-        "value": 275235000000.0,
+        "value": 215938000000.0,
         "score": 0.2
       }
     ]
