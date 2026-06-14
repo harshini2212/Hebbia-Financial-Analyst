@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>tieout — financial-extraction verifier</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#161c24; --panel2:#1c242e; --line:#2a3441;
+    --text:#e6edf3; --muted:#8b98a8; --faint:#647082;
+    --accent:#5b8cff; --accent2:#7c5cff;
+    --ok:#3fb950; --bad:#f85149; --warn:#d29922; --gray:#6e7b8c;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+  header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#131a22,#0f1419)}
+  .head{display:flex;align-items:center;gap:14px;padding:20px 0}
+  .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:800;color:#fff}
+  .brand h1{font-size:18px;margin:0;letter-spacing:-.3px}
+  .brand p{margin:0;color:var(--muted);font-size:12.5px}
+  .head .spacer{flex:1}
+  .ghlink{color:var(--muted);font-size:13px;border:1px solid var(--line);padding:6px 11px;border-radius:7px}
+  /* filing selector */
+  .filings{display:flex;gap:8px;align-items:center;padding:14px 0;flex-wrap:wrap}
+  .filings .lbl{color:var(--muted);font-size:12px;margin-right:4px;text-transform:uppercase;letter-spacing:.5px}
+  .pill{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:7px 13px;border-radius:20px;cursor:pointer;font-size:13px;transition:.15s}
+  .pill:hover{border-color:var(--accent)}
+  .pill.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .pill .note{color:var(--muted);font-size:11px;margin-left:6px}
+  .pill.active .note{color:#dfe8ff}
+  .runbtn{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12.5px}
+  .runbtn:hover{border-color:var(--accent2)}
+  /* tabs */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:4px;overflow-x:auto}
+  .tab{padding:11px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;font-size:13.5px}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+  main{padding:26px 0 80px}
+  /* generic */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:18px;overflow-x:auto}
+  .card h3{margin:0 0 4px;font-size:15px}
+  .card .sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
+  .grid{display:grid;gap:14px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:13px 15px}
+  .stat .n{font-size:22px;font-weight:700;font-family:var(--mono)}
+  .stat .k{color:var(--muted);font-size:12px;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+  td.num,th.num{text-align:right;font-family:var(--mono)}
+  tbody tr:hover{background:var(--panel2)}
+  .mono{font-family:var(--mono)}
+  .muted{color:var(--muted)}
+  .chip{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .chip.ok{background:rgba(63,185,80,.15);color:#56d364}
+  .chip.bad{background:rgba(248,81,73,.15);color:#ff7b72}
+  .chip.warn{background:rgba(210,153,34,.16);color:#e3b341}
+  .chip.gray{background:rgba(110,123,140,.16);color:#9aa7b8}
+  .chip.acc{background:rgba(91,140,255,.16);color:#8db1ff}
+  .pitch{font-size:15px;line-height:1.65}
+  .pitch b{color:#fff}
+  .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
+  .barrow .lab{width:200px;font-size:13px}
+  .bar{flex:1;height:18px;background:var(--panel2);border-radius:5px;overflow:hidden}
+  .bar > div{height:100%;background:linear-gradient(90deg,var(--bad),#ff9b94)}
+  .barrow .sc{width:46px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .chain{font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin:6px 0}
+  .chain .res{color:#8db1ff}
+  .arrow{color:var(--muted)}
+  .err{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.4);color:#ff9b94;padding:10px 14px;border-radius:8px}
+  .loading{color:var(--muted);padding:40px;text-align:center}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
+  .dtable td{vertical-align:top}
+  code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="head">
+    <div class="logo">⊨</div>
+    <div class="brand">
+      <h1>tieout</h1>
+      <p>Deterministic verification of LLM-extracted figures from SEC 10-K filings</p>
+    </div>
+    <div class="spacer"></div>
+    <a class="ghlink" href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">GitHub ↗</a>
+  </div>
+  <div class="filings" id="filings"></div>
+  <div class="tabs" id="tabs"></div>
+</div></header>
+
+<main><div class="wrap" id="view"><div class="loading"><span class="spin"></span>Loading…</div></div></main>
+
+<script>
+const S = { filings:[], analyses:{}, registry:[], ticker:null, tab:'overview', busy:false };
+const TABS = [
+  ['overview','Overview'], ['explorer','Filing explorer'], ['propagation','Propagation'],
+  ['attribution','Attribution'], ['localization','Localization'],
+  ['registry','Constraint registry'], ['about','About'],
+];
+
+const $ = (h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
+function money(v,unit){
+  if(v===null||v===undefined) return '—';
+  if(unit==='ratio') return (v*100).toFixed(2)+'%';
+  const a=Math.abs(v), s=v<0?'-':'';
+  if(a>=1e9) return s+'$'+(a/1e9).toFixed(2)+'B';
+  if(a>=1e6) return s+'$'+(a/1e6).toFixed(2)+'M';
+  if(a>=1e3) return s+'$'+(a/1e3).toFixed(1)+'K';
+  return s+'$'+a.toFixed(0);
+}
+function statusChip(st){
+  const m={satisfied:['ok','✓ satisfied'],violated:['bad','✗ violated'],
+           indeterminate:['gray','– indeterminate'],'n/a':['gray','n/a']};
+  const [c,t]=m[st]||['gray',st]; return `<span class="chip ${c}">${t}</span>`;
+}
+function labelChip(l){
+  const m={extraction_error:'bad',filing_inconsistency:'warn',
+           constraint_model_error:'warn',undetermined:'gray'};
+  return `<span class="chip ${m[l]||'gray'}">${l}</span>`;
+}
+function sevChip(s){ return s==='soft'?'<span class="chip gray">soft</span>':'<span class="chip acc">hard</span>'; }
+
+async function boot(){
+  S.filings = await (await fetch('/api/filings')).json();
+  S.ticker = S.filings[0].ticker;
+  S.registry = await (await fetch('/api/registry')).json();
+  await Promise.all(S.filings.map(async f=>{
+    try{ S.analyses[f.ticker] = await (await fetch('/api/analysis/'+f.ticker)).json(); }
+    catch(e){ S.analyses[f.ticker] = {error:String(e)}; }
+  }));
+  renderChrome(); render();
+}
+
+function renderChrome(){
+  const fb = document.getElementById('filings');
+  fb.innerHTML = '<span class="lbl">Filing</span>';
+  S.filings.forEach(f=>{
+    const p = $(`<button class="pill ${f.ticker===S.ticker?'active':''}">${f.ticker}<span class="note">${f.note}</span></button>`);
+    p.onclick = ()=>{ S.ticker=f.ticker; renderChrome(); render(); };
+    fb.appendChild(p);
+  });
+  const run = $(`<button class="runbtn" id="runbtn">${S.busy?'<span class=spin></span>Running…':'↻ Run live'}</button>`);
+  run.onclick = runLive; fb.appendChild(run);
+
+  const tb = document.getElementById('tabs'); tb.innerHTML='';
+  TABS.forEach(([id,label])=>{
+    const t=$(`<div class="tab ${id===S.tab?'active':''}">${label}</div>`);
+    t.onclick=()=>{ S.tab=id; renderChrome(); render(); }; tb.appendChild(t);
+  });
+}
+
+async function runLive(){
+  if(S.busy) return; S.busy=true; renderChrome();
+  try{
+    const r = await fetch('/api/analysis/'+S.ticker+'/run',{method:'POST'});
+    if(!r.ok){ throw new Error((await r.json()).detail||r.statusText); }
+    S.analyses[S.ticker] = await r.json();
+  }catch(e){ alert('Live run failed: '+e.message+'\n(Needs ANTHROPIC_API_KEY for an uncached filing.)'); }
+  S.busy=false; renderChrome(); render();
+}
+
+function render(){
+  const v=document.getElementById('view');
+  const fn={overview:vOverview,explorer:vExplorer,propagation:vProp,
+            attribution:vAttr,localization:vLoc,registry:vRegistry,about:vAbout}[S.tab];
+  v.innerHTML=''; v.appendChild(fn());
+}
+function d(){ return S.analyses[S.ticker]; }
+function guard(){ const a=d(); if(a&&a.error) return $(`<div class="err">Failed to load ${S.ticker}: ${a.error}</div>`); return null; }
+
+/* ---------- Overview ---------- */
+function vOverview(){
+  const el=$('<div></div>');
+  el.appendChild($(`<div class="card"><div class="pitch">
+    An AI analyst's worst failure is a <b>plausible, individually-correct figure that is collectively wrong</b> —
+    a segment dropped from a roll-up, a balance missing mezzanine equity. An LLM-as-judge waves these through.
+    <b>tieout</b> runs extracted figures through deterministic accounting identities and says <b>what</b> broke,
+    <b>by how much</b>, and <b>whose fault</b> it is — using the filing's own XBRL as ground truth.
+  </div></div>`));
+
+  const tbl=$(`<div class="card"><h3>Cross-filing discrimination</h3>
+    <div class="sub">Claude (text) vs a regex baseline, scored against SEC XBRL ground truth.</div></div>`);
+  let rows='';
+  S.filings.forEach(f=>{
+    const a=S.analyses[f.ticker]; if(!a||a.error) return;
+    a.scorecards.forEach((sc,i)=>{
+      const attr=sc.attributions.map(x=>labelChip(x.label)).join(' ')||'<span class="muted">—</span>';
+      rows+=`<tr><td>${i===0?'<b>'+f.ticker+'</b>':''}</td><td>${sc.name}</td>
+        <td class="num">${sc.facts}</td><td class="num">${sc.agree}</td>
+        <td class="num">${sc.disagree}</td><td class="num">${sc.violated}</td>
+        <td>${attr}</td></tr>`;
+    });
+  });
+  const t=$(`<table><thead><tr><th>Filing</th><th>Extractor</th><th class="num">Facts</th>
+    <th class="num">Agree</th><th class="num">Disagree</th><th class="num">Hard viol</th>
+    <th>Attribution</th></tr></thead><tbody>${rows}</tbody></table>`);
+  tbl.appendChild(t);
+  tbl.appendChild($(`<div class="legend">
+    <span>✓ Claude reconciles cleanly across complex real filings (zero false positives)</span>
+    <span>✗ the regex baseline's errors are caught &amp; attributed automatically</span></div>`));
+  el.appendChild(tbl);
+  return el;
+}
+
+/* ---------- Filing explorer ---------- */
+function vExplorer(){
+  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
+  el.appendChild($(`<div class="card"><h3>${a.issuer} (${a.ticker}) — 10-K FY${a.fiscal_year}</h3>
+    <div class="sub">Filed ${a.filing_date} · <a href="${a.url}" target="_blank">EDGAR source ↗</a></div>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr)" id="stats"></div></div>`));
+  const sc=a.scorecards[0], stats=el.querySelector('#stats');
+  [['Facts extracted',sc.facts],['Agree w/ XBRL',sc.agree],['Disagree',sc.disagree],
+   ['Hard violations',sc.violated]].forEach(([k,n])=>
+    stats.appendChild($(`<div class="stat"><div class="n">${n}</div><div class="k">${k}</div></div>`)));
+
+  const cc=$(`<div class="card"><h3>Accounting identities</h3>
+    <div class="sub">Each identity evaluated on ground-truth XBRL and on Claude's extraction. Residual vs. tolerance band.</div></div>`);
+  let crows='';
+  a.constraints.forEach(c=>{
+    crows+=`<tr>
+      <td><div>${c.description}</div><div class="muted mono" style="font-size:11px">${c.formula}</div></td>
+      <td>${sevChip(c.severity)}</td>
+      <td>${statusChip(c.gt_status)}</td>
+      <td class="num">${c.gt_residual!==null?money(c.gt_residual):''}<span class="muted" style="font-size:11px">${c.gt_band!==null?' ±'+money(c.gt_band):''}</span></td>
+      <td>${statusChip(c.claude_status)}</td>
+      <td class="num">${c.claude_residual!==null?money(c.claude_residual):''}<span class="muted" style="font-size:11px">${c.claude_band!==null?' ±'+money(c.claude_band):''}</span></td>
+    </tr>`;
+  });
+  cc.appendChild($(`<table><thead><tr><th>Identity</th><th>Sev</th>
+    <th>Ground truth</th><th class="num">residual</th>
+    <th>Claude</th><th class="num">residual</th></tr></thead><tbody>${crows}</tbody></table>`));
+  el.appendChild(cc);
+
+  const fc=$(`<div class="card"><h3>Extracted figures vs. ground truth</h3>
+    <div class="sub">Consolidated line items Claude pulled from the filing text, checked against XBRL.</div></div>`);
+  let frows='';
+  a.facts.forEach(f=>{
+    const m=f.agree===null?'<span class="chip gray">no tag</span>':(f.agree?'<span class="chip ok">✓</span>':'<span class="chip bad">✗</span>');
+    frows+=`<tr><td class="mono">${f.concept}</td>
+      <td class="num">${money(f.text)}</td><td class="num">${money(f.xbrl)}</td><td>${m}</td></tr>`;
+  });
+  fc.appendChild($(`<table><thead><tr><th>Concept</th><th class="num">Claude (text)</th>
+    <th class="num">XBRL</th><th>Match</th></tr></thead><tbody>${frows}</tbody></table>`));
+  el.appendChild(fc);
+  return el;
+}
+
+/* ---------- Propagation ---------- */
+function vProp(){
+  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
+  el.appendChild($(`<div class="card"><h3>Propagation — the graph fills gaps</h3>
+    <div class="sub">Any identity with one missing value is solved for it; results cascade. Each derived
+    fact carries a full provenance chain — the figure the filing never stated, with its derivation.</div>
+    <div id="chains"></div></div>`));
+  const c=el.querySelector('#chains');
+  if(!a.propagation.length){ c.appendChild($('<div class="muted">No derived facts for this filing.</div>')); return el; }
+  a.propagation.forEach(p=>{
+    c.appendChild($(`<div class="chain"><span class="res">${p.concept}</span> = <b>${money(p.value,p.unit)}</b>
+      <span class="arrow">&nbsp;←&nbsp;</span> ${p.op} <span class="muted">(${p.inputs} inputs)</span></div>`));
+  });
+  return el;
+}
+
+/* ---------- Attribution ---------- */
+function vAttr(){
+  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
+  el.appendChild($(`<div class="card"><h3>Three-way violation attribution</h3>
+    <div class="sub">When an identity fails, XBRL ground truth disambiguates the cause:</div>
+    <table class="dtable"><thead><tr><th>Ground truth</th><th>vs. text</th><th>→ label</th></tr></thead>
+    <tbody>
+      <tr><td>satisfies the identity</td><td>a figure disagrees</td><td>${labelChip('extraction_error')}</td></tr>
+      <tr><td>breaks the identity itself</td><td>—</td><td>${labelChip('filing_inconsistency')}</td></tr>
+      <tr><td>satisfies, text matches it</td><td>rule still fires</td><td>${labelChip('constraint_model_error')}</td></tr>
+      <tr><td>incomplete</td><td>—</td><td>${labelChip('undetermined')}</td></tr>
+    </tbody></table></div>`));
+
+  const ac=$(`<div class="card"><h3>Attributed violations — ${a.ticker} (Claude)</h3></div>`);
+  if(!a.attribution.length){
+    ac.appendChild($('<div class="muted">No attributable violations — Claude\'s extraction reconciles cleanly.</div>'));
+  } else {
+    a.attribution.forEach(x=>{
+      ac.appendChild($(`<div style="margin:10px 0">
+        <code>${x.id}</code> ${labelChip(x.label)}
+        <div class="muted mono" style="font-size:11.5px;margin-top:4px">${x.evidence}</div></div>`));
+    });
+  }
+  el.appendChild(ac);
+  return el;
+}
+
+/* ---------- Localization ---------- */
+function vLoc(){
+  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
+  const L=a.localization;
+  const c=$(`<div class="card"><h3>Localization — finding the culprit</h3>
+    <div class="sub">We inject a $5B error into one segment and let the graph rank suspects by how few
+    satisfied constraints vouch for each figure.</div><div id="body"></div></div>`);
+  const b=c.querySelector('#body');
+  if(!L){ b.appendChild($('<div class="muted">No segment data to run the localization demo for this filing.</div>')); el.appendChild(c); return el; }
+  b.appendChild($(`<div style="margin-bottom:12px">Injected <b>+$5B</b> into segment <code>${L.injected_segment}</code>
+    → <code>rev.segments_sum</code> ${statusChip('violated')} residual <span class="mono">${money(L.residual)}</span></div>`));
+  const max=Math.max(...L.suspects.map(s=>s.score),0.0001);
+  L.suspects.forEach(s=>{
+    b.appendChild($(`<div class="barrow"><div class="lab">${s.segment} <span class="muted mono" style="font-size:11px">${money(s.value)}</span></div>
+      <div class="bar"><div style="width:${(s.score/max*100).toFixed(0)}%"></div></div>
+      <div class="sc">${s.score.toFixed(2)}</div></div>`));
+  });
+  b.appendChild($(`<div class="legend"><span>Higher bar = more suspect. The consolidated total is
+    exonerated (vouched by margin identities); honest limit: sibling members need a cross-period signal to isolate a single one.</span></div>`));
+  el.appendChild(c); return el;
+}
+
+/* ---------- Registry ---------- */
+function vRegistry(){
+  const el=$('<div></div>');
+  el.appendChild($(`<div class="card"><h3>Constraint registry — ${S.registry.length} hand-authored identities</h3>
+    <div class="sub">Universal accounting identities, bound per filing/period. Tolerance is rounding-aware
+    and source-aware (tight for ground truth, looser for prose).</div></div>`));
+  let rows='';
+  S.registry.forEach(r=>{
+    rows+=`<tr><td class="mono">${r.id}</td><td>${r.description}</td>
+      <td class="mono muted" style="font-size:11.5px">${r.formula}</td><td>${sevChip(r.severity)}</td></tr>`;
+  });
+  el.querySelector('.card').appendChild($(`<table><thead><tr><th>ID</th><th>Identity</th><th>Formula</th><th>Sev</th></tr></thead><tbody>${rows}</tbody></table>`));
+  return el;
+}
+
+/* ---------- About ---------- */
+function vAbout(){
+  return $(`<div class="card pitch">
+    <h3>How it works</h3>
+    <p><b>Ingest</b> a filing from SEC EDGAR — structured XBRL via <code>arelle</code> (ground truth) and the raw text (what the LLM reads).
+    <b>Extract</b> with pluggable adapters (Claude / regex baseline / XBRL-direct).
+    <b>Verify</b> against ${S.registry.length} accounting identities with <b>rounding-aware interval arithmetic</b> — never <code>==</code>.
+    <b>Propagate</b> to fill gaps with provenance, <b>localize</b> suspects, and <b>attribute</b> every violation three ways.</p>
+    <p><b>Reproducible:</b> every LLM response is content-addressed cached (SHA-256 of the fully-rendered request), so re-runs are free and bit-identical.</p>
+    <p><b>Real-world XBRL handling:</b> 52/53-week fiscal-year anchoring, segment-total de-duplication, optional-zero terms for mezzanine equity / NCI / equity-method / discontinued operations, and a soft severity for the fragile pretax→net bridge.</p>
+    <p><b>Honest limits:</b> with full context, frontier models extract large-cap headline figures accurately — so this is foremost a <b>deterministic verifier</b> that also catches errors under weaker models or constrained context. A true filing inconsistency needs cross-filing restated comparatives (roadmap).</p>
+    <p class="muted">Built as a portfolio project. Code: <a href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">github.com/harshini2212/Financial-Eval-Harness</a></p>
+  </div>`);
+}
+
+boot();
+</script>
+</body>
+</html>

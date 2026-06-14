@@ -53,6 +53,20 @@ Design decisions worth noting (details in [ARCHITECTURE.md](ARCHITECTURE.md)):
 - **Real-world XBRL handling**: 52/53-week **fiscal-year anchoring** (Amazon's FY2025 ends 2026-01-01), dimensional **segment-total de-duplication**, optional-zero terms for mezzanine equity / NCI / equity-method / discontinued ops, and a **soft** severity for the inherently-fragile pretax→net bridge.
 - **Honest attribution**: a ground-truth violation is only called a filing inconsistency after ruling out an incomplete rule — most "inconsistencies" in audited filings are really modeling gaps, and the system is built to say so.
 
+## Interactive UI
+
+A zero-build web UI (FastAPI + a single self-contained page) lets you explore every
+layer — discrimination table, per-identity reconciliation, the propagation cascade,
+attribution, localization, and the constraint registry — across the three filings.
+Ships with precomputed results, so it runs instantly, offline, **no API key**:
+
+```bash
+pip install fastapi "uvicorn[standard]"
+python serve.py                             # -> http://localhost:8000
+```
+Tabs: **Overview · Filing explorer · Propagation · Attribution · Localization · Registry · About.**
+A "Run live" button re-runs a filing against EDGAR + Claude (needs a key).
+
 ## Quickstart (3 commands)
 
 ```bash

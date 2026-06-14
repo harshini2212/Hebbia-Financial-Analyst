@@ -1,0 +1,421 @@
+{
+  "ticker": "KHC",
+  "issuer": "Kraft Heinz Co",
+  "fiscal_year": 2025,
+  "filing_date": "2026-02-12",
+  "url": "https://www.sec.gov/Archives/edgar/data/1637459/000163745926000009/khc-20251227.htm",
+  "scorecards": [
+    {
+      "name": "Claude (text)",
+      "facts": 25,
+      "agree": 18,
+      "disagree": 0,
+      "satisfied": 8,
+      "violated": 1,
+      "soft": 0,
+      "indeterminate": 7,
+      "judge_invisible": 0,
+      "attributions": [
+        {
+          "id": "opinc.segments_sum",
+          "label": "undetermined",
+          "evidence": "no complete XBRL ground truth to disambiguate"
+        }
+      ]
+    },
+    {
+      "name": "Baseline (regex)",
+      "facts": 13,
+      "agree": 0,
+      "disagree": 11,
+      "satisfied": 0,
+      "violated": 1,
+      "soft": 0,
+      "indeterminate": 15,
+      "judge_invisible": 0,
+      "attributions": [
+        {
+          "id": "bs.balance",
+          "label": "extraction_error",
+          "evidence": "assets.total: text=27 vs xbrl=81,786,000,000 (delta -81,785,999,973); liabilities.total: text=39,997 vs xbrl=39,997,000,000 (delta -39,996,960,003); equity.total: text=41,777 vs xbrl=41,777,000,000 (delta -41,776,958,223); equity.temporary: text=12 vs xbrl=12,000,000 (delta -11,999,988)"
+        }
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "id": "bs.balance",
+      "description": "Assets = Liabilities + Total equity + Mezzanine equity",
+      "severity": "hard",
+      "formula": "assets.total = liabilities.total + equity.total + equity.temporary",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 2000000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 408930000.0
+    },
+    {
+      "id": "bs.lse_crosscheck",
+      "description": "Total liabilities & equity = Total assets",
+      "severity": "hard",
+      "formula": "liabilities_and_equity.total = assets.total",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1000000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 408930000.0
+    },
+    {
+      "id": "bs.lse_decomp",
+      "description": "Total liabilities & equity = Liabilities + Equity + Mezzanine",
+      "severity": "hard",
+      "formula": "liabilities_and_equity.total = liabilities.total + equity.total + equity.temporary",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 2000000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 408930000.0
+    },
+    {
+      "id": "bs.assets_split",
+      "description": "Assets = Current + Non-current assets",
+      "severity": "hard",
+      "formula": "assets.total = assets.current + assets.noncurrent",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "bs.liabilities_split",
+      "description": "Liabilities = Current + Non-current liabilities",
+      "severity": "hard",
+      "formula": "liabilities.total = liabilities.current + liabilities.noncurrent",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "bs.equity_attribution",
+      "description": "Total equity = Parent equity + NCI",
+      "severity": "hard",
+      "formula": "equity.total = equity.parent + equity.nci",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 208885000.0
+    },
+    {
+      "id": "is.gross_profit",
+      "description": "Gross profit = Revenue - Cost of revenue",
+      "severity": "hard",
+      "formula": "gross_profit.total = revenue.total - cogs.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 41545000.0
+    },
+    {
+      "id": "is.operating_income",
+      "description": "Operating income = Gross profit - Operating expenses",
+      "severity": "hard",
+      "formula": "operating_income.total = gross_profit.total - opex.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "is.pretax_to_net",
+      "description": "Consolidated net income = Pretax - Tax + Equity-method + Discontinued ops",
+      "severity": "soft",
+      "formula": "net_income.consolidated = pretax_income.total - income_tax.total + income.equity_method + income.discontinued",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 29240000.0
+    },
+    {
+      "id": "is.net_income_attribution",
+      "description": "Consolidated net income = Parent + NCI",
+      "severity": "hard",
+      "formula": "net_income.consolidated = net_income.parent + net_income.nci",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 29240000.0
+    },
+    {
+      "id": "rev.segments_sum",
+      "description": "Sum of segment revenue = Total revenue",
+      "severity": "hard",
+      "formula": "revenue.total = sum(revenue.segment[segment])",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 124710000.0
+    },
+    {
+      "id": "opinc.segments_sum",
+      "description": "Sum of segment operating income = Operating income",
+      "severity": "hard",
+      "formula": "operating_income.total = sum(operating_income.segment[segment])",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "violated",
+      "claude_residual": -9942000000.0,
+      "claude_band": 26365000.0
+    },
+    {
+      "id": "margin.gross",
+      "description": "Gross margin = Gross profit / Revenue",
+      "severity": "hard",
+      "formula": "gross_margin.ratio = gross_profit.total / revenue.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "margin.operating",
+      "description": "Operating margin = Operating income / Revenue",
+      "severity": "hard",
+      "formula": "operating_margin.ratio = operating_income.total / revenue.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "margin.net",
+      "description": "Net margin = Net income (parent) / Revenue",
+      "severity": "hard",
+      "formula": "net_margin.ratio = net_income.parent / revenue.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "tax.effective_rate",
+      "description": "Effective tax rate = Income tax / Pretax income",
+      "severity": "hard",
+      "formula": "effective_tax_rate.ratio = income_tax.total / pretax_income.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    }
+  ],
+  "facts": [
+    {
+      "concept": "assets.current",
+      "text": 10127000000.0,
+      "xbrl": 10127000000.0,
+      "agree": true
+    },
+    {
+      "concept": "assets.total",
+      "text": 81786000000.0,
+      "xbrl": 81786000000.0,
+      "agree": true
+    },
+    {
+      "concept": "cfo.total",
+      "text": 4462000000.0,
+      "xbrl": 4462000000.0,
+      "agree": true
+    },
+    {
+      "concept": "cogs.total",
+      "text": 16633000000.0,
+      "xbrl": 16633000000.0,
+      "agree": true
+    },
+    {
+      "concept": "equity.nci",
+      "text": 113000000.0,
+      "xbrl": 113000000.0,
+      "agree": true
+    },
+    {
+      "concept": "equity.parent",
+      "text": 41664000000.0,
+      "xbrl": 41664000000.0,
+      "agree": true
+    },
+    {
+      "concept": "equity.temporary",
+      "text": 12000000.0,
+      "xbrl": 12000000.0,
+      "agree": true
+    },
+    {
+      "concept": "equity.total",
+      "text": 41777000000.0,
+      "xbrl": 41777000000.0,
+      "agree": true
+    },
+    {
+      "concept": "gross_profit.total",
+      "text": 8309000000.0,
+      "xbrl": 8309000000.0,
+      "agree": true
+    },
+    {
+      "concept": "income_tax.total",
+      "text": 403000000.0,
+      "xbrl": 403000000.0,
+      "agree": true
+    },
+    {
+      "concept": "liabilities.current",
+      "text": 8778000000.0,
+      "xbrl": 8778000000.0,
+      "agree": true
+    },
+    {
+      "concept": "liabilities.total",
+      "text": 39997000000.0,
+      "xbrl": 39997000000.0,
+      "agree": true
+    },
+    {
+      "concept": "liabilities_and_equity.total",
+      "text": 81786000000.0,
+      "xbrl": 81786000000.0,
+      "agree": true
+    },
+    {
+      "concept": "net_income.consolidated",
+      "text": -5848000000.0,
+      "xbrl": -5848000000.0,
+      "agree": true
+    },
+    {
+      "concept": "net_income.nci",
+      "text": -2000000.0,
+      "xbrl": -2000000.0,
+      "agree": true
+    },
+    {
+      "concept": "net_income.parent",
+      "text": -5846000000.0,
+      "xbrl": -5846000000.0,
+      "agree": true
+    },
+    {
+      "concept": "operating_income.total",
+      "text": -4669000000.0,
+      "xbrl": -4669000000.0,
+      "agree": true
+    },
+    {
+      "concept": "pretax_income.total",
+      "text": -5445000000.0,
+      "xbrl": -5445000000.0,
+      "agree": true
+    },
+    {
+      "concept": "revenue.total",
+      "text": 24942000000.0,
+      "xbrl": null,
+      "agree": null
+    }
+  ],
+  "propagation": [
+    {
+      "concept": "assets.noncurrent",
+      "value": 71659000000.0,
+      "unit": "USD",
+      "op": "assets.noncurrent (from assets.total = assets.current + assets.noncurrent)",
+      "inputs": 2
+    },
+    {
+      "concept": "liabilities.noncurrent",
+      "value": 31219000000.0,
+      "unit": "USD",
+      "op": "liabilities.noncurrent (from liabilities.total = liabilities.current + liabilities.noncurrent)",
+      "inputs": 2
+    },
+    {
+      "concept": "revenue.total",
+      "value": 24942000000.0,
+      "unit": "USD",
+      "op": "revenue.total (from gross_profit.total = revenue.total - cogs.total)",
+      "inputs": 2
+    },
+    {
+      "concept": "opex.total",
+      "value": 12978000000.0,
+      "unit": "USD",
+      "op": "opex.total (from operating_income.total = gross_profit.total - opex.total)",
+      "inputs": 2
+    },
+    {
+      "concept": "gross_margin.ratio",
+      "value": 0.33313286959356947,
+      "unit": "ratio",
+      "op": "gross_margin.ratio = gross_profit.total / revenue.total",
+      "inputs": 2
+    },
+    {
+      "concept": "operating_margin.ratio",
+      "value": -0.18719429185918096,
+      "unit": "ratio",
+      "op": "operating_margin.ratio = operating_income.total / revenue.total",
+      "inputs": 2
+    },
+    {
+      "concept": "net_margin.ratio",
+      "value": -0.23438377152769066,
+      "unit": "ratio",
+      "op": "net_margin.ratio = net_income.parent / revenue.total",
+      "inputs": 2
+    },
+    {
+      "concept": "effective_tax_rate.ratio",
+      "value": -0.07401286488739861,
+      "unit": "ratio",
+      "op": "effective_tax_rate.ratio = income_tax.total / pretax_income.total",
+      "inputs": 2
+    }
+  ],
+  "attribution": [
+    {
+      "id": "opinc.segments_sum",
+      "label": "undetermined",
+      "evidence": "no complete XBRL ground truth to disambiguate"
+    }
+  ],
+  "localization": null
+}

@@ -15,7 +15,9 @@ dependencies = []
 # Phase 0+: real XBRL ingestion (EDGAR ground truth).
 xbrl = ["arelle-release>=2.20"]
 # Phase 3+: provider-agnostic extraction adapters.
-llm = ["anthropic>=0.40", "google-genai>=0.3"]
+llm = ["anthropic>=0.40"]
+# Web UI (FastAPI server + zero-build single-page frontend).
+web = ["fastapi>=0.110", "uvicorn[standard]>=0.27"]
 dev = ["pytest>=8"]
 
 [tool.setuptools.packages.find]
