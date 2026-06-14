@@ -229,6 +229,16 @@ def analyze(ticker: str, *, force: bool = False) -> dict:
     return result
 
 
+_search_client: EdgarClient | None = None
+
+
+def search_companies(query: str, limit: int = 8) -> list[dict]:
+    global _search_client
+    if _search_client is None:
+        _search_client = EdgarClient()
+    return _search_client.search(query, limit)
+
+
 def filings_index() -> list[dict]:
     out = []
     for f in FILINGS:

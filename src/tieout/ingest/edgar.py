@@ -18,6 +18,15 @@ _ARCHIVE_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc_nodash}/{doc}
 
 DEFAULT_USER_AGENT = "tieout-research hv2201@nyu.edu"
 
+# Brand/product → ticker, for searches that won't match the legal entity name.
+_ALIASES = {
+    "google": "GOOGL", "alphabet": "GOOGL", "youtube": "GOOGL",
+    "facebook": "META", "instagram": "META", "whatsapp": "META",
+    "nbc": "CMCSA", "universal": "CMCSA", "aws": "AMZN",
+    "chatgpt": "MSFT", "windows": "MSFT", "xbox": "MSFT",
+    "iphone": "AAPL", "instagram": "META",
+}
+
 
 @dataclass(frozen=True)
 class FilingLocator:
@@ -44,6 +53,7 @@ class EdgarClient:
         self.user_agent = user_agent
         self.timeout = timeout
         self._ticker_index: dict[str, tuple[str, str]] | None = None
+        self._companies: list[dict] | None = None
 
     def _get(self, url: str) -> bytes:
         req = urllib.request.Request(url, headers={"User-Agent": self.user_agent})
@@ -59,6 +69,47 @@ class EdgarClient:
                 for row in raw.values()
             }
         return self._ticker_index
+
+    def _load_companies(self) -> list[dict]:
+        if self._companies is None:
+            raw = json.loads(self._get(_TICKERS_URL))
+            # raw is dict ordered by descending market cap; keep that as `rank`.
+            self._companies = [
+                {"ticker": r["ticker"].upper(), "name": r["title"],
+                 "cik": f"{int(r['cik_str']):010d}", "rank": i}
+                for i, r in enumerate(raw.values())
+            ]
+        return self._companies
+
+    def search(self, query: str, limit: int = 8) -> list[dict]:
+        """Typeahead over EDGAR companies, ranked by match quality then size."""
+        q = query.strip().lower()
+        if not q:
+            return []
+        alias = _ALIASES.get(q)
+        scored = []
+        for c in self._load_companies():
+            t, name = c["ticker"].lower(), c["name"].lower()
+            if t == q:
+                s = 1000
+            elif t.startswith(q):
+                s = 720
+            elif name.startswith(q):
+                s = 600
+            elif (" " + q) in (" " + name):
+                s = 380
+            elif q in name:
+                s = 220
+            elif q in t:
+                s = 150
+            else:
+                s = 0
+            if alias and c["ticker"] == alias:
+                s = max(s, 900)
+            if s:
+                scored.append((s, -c["rank"], c))
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return [{"ticker": c["ticker"], "name": c["name"]} for _, _, c in scored[:limit]]
 
     def resolve_cik(self, ticker: str) -> tuple[str, str]:
         """Return (cik10, issuer_name) for a ticker."""

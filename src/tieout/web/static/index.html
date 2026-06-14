@@ -128,9 +128,18 @@
   .badge{font-size:10.5px;font-weight:700;letter-spacing:.3px;color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:20px;margin-left:8px;vertical-align:2px}
   /* live search */
   .search{display:flex;align-items:center;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
-  .search input{border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;width:230px;font-family:var(--sans);color:var(--text)}
+  .acwrap{position:relative}
+  .search input{border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;width:300px;font-family:var(--sans);color:var(--text)}
   .search input:focus{outline:none;border-color:var(--accent)}
   .search .go{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer}
+  .ac{position:absolute;top:42px;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);z-index:60;max-height:340px;overflow:auto;display:none}
+  .ac.show{display:block}
+  .acitem{padding:9px 12px;cursor:pointer;display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--line2)}
+  .acitem:last-child{border-bottom:none}
+  .acitem:hover,.acitem.sel{background:var(--accent-soft)}
+  .acitem .tk{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--accent);min-width:62px}
+  .acitem .nm{font-size:13px;color:var(--text)}
+  .achint{padding:8px 12px;color:var(--faint);font-size:11.5px;border-top:1px solid var(--line2)}
   .runmsg{color:var(--accent);font-size:12.5px;font-weight:500;margin-left:auto;display:flex;align-items:center}
   /* charts */
   .chartgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
@@ -164,7 +173,22 @@
 <main><div class="wrap" id="view"><div class="loading"><span class="spin"></span>Loading…</div></div></main>
 
 <script>
-const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false};
+const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false,acResults:[]};
+let _acTimer;
+function doSearch(inp,box){
+  clearTimeout(_acTimer);
+  _acTimer=setTimeout(async()=>{
+    const q=inp.value.trim();
+    if(!q){S.acResults=[];box.classList.remove('show');return;}
+    try{S.acResults=await fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json());}
+    catch(e){S.acResults=[];}
+    if(!S.acResults.length){box.innerHTML='<div class="achint">No match on SEC EDGAR — try the company\'s legal name.</div>';box.classList.add('show');return;}
+    box.innerHTML=S.acResults.map(r=>`<div class="acitem" data-tk="${r.ticker}"><span class="tk">${r.ticker}</span><span class="nm">${r.name}</span></div>`).join('')
+      +'<div class="achint">Pick a company to pull its latest 10-K from SEC EDGAR and run it live (~30–60s).</div>';
+    box.querySelectorAll('.acitem').forEach(el=>el.onmousedown=(ev)=>{ev.preventDefault();box.classList.remove('show');runTicker(el.getAttribute('data-tk'));});
+    box.classList.add('show');
+  },180);
+}
 const TABS=[['overview','Overview'],['explorer','Filing explorer'],['propagation','Propagation'],
   ['attribution','Attribution'],['localization','Localization'],['registry','Rulebook'],['approach','Approach']];
 const NO_CTX=new Set(['overview','approach']);
@@ -226,14 +250,19 @@ function renderChrome(){
   const fb=document.getElementById('filings');fb.innerHTML='<span class="lbl">Filing</span>';
   S.filings.forEach(f=>{const p=$(`<button class="pill ${f.ticker===S.ticker?'active':''}"><span class="t">${f.ticker}</span><span class="n">${f.note}</span></button>`);
     p.onclick=()=>{S.ticker=f.ticker;renderChrome();render();};fb.appendChild(p);});
-  // live connector: search any company on SEC EDGAR and run the eval live
-  const sg=$(`<div class="search">
-    <input id="tsearch" placeholder="Run any company — e.g. WMT, NVDA, KO" ${S.busy?'disabled':''}/>
+  // live connector: type a company name, pick from EDGAR, run the eval live
+  const sg=$(`<div class="search"><div class="acwrap">
+    <input id="tsearch" autocomplete="off" spellcheck="false" placeholder="Search a company — Walmart, Nvidia, Coca-Cola…" ${S.busy?'disabled':''}/>
+    <div class="ac" id="acbox"></div></div>
     <button class="go" id="tgo" ${S.busy?'disabled':''}>Run live</button></div>`);
   fb.appendChild(sg);
-  const go=()=>runTicker(document.getElementById('tsearch').value);
+  const inp=sg.querySelector('#tsearch'), box=sg.querySelector('#acbox');
+  const go=()=>{ if(S.acResults&&S.acResults.length) runTicker(S.acResults[0].ticker); else if(inp.value.trim()) runTicker(inp.value); };
   sg.querySelector('#tgo').onclick=go;
-  sg.querySelector('#tsearch').onkeydown=(e)=>{if(e.key==='Enter')go();};
+  inp.oninput=()=>doSearch(inp,box);
+  inp.onkeydown=(e)=>{ if(e.key==='Enter'){box.classList.remove('show');go();} else if(e.key==='Escape'){box.classList.remove('show');} };
+  inp.onblur=()=>setTimeout(()=>box.classList.remove('show'),150);
+  inp.onfocus=()=>{ if(S.acResults&&S.acResults.length) box.classList.add('show'); };
   if(S.busy) fb.appendChild($(`<div class="runmsg"><span class="spin"></span>${S.runmsg||'Running…'}</div>`));
 }
 const STAGES=['Resolving ticker on SEC EDGAR…','Downloading the 10-K + XBRL…','Parsing the financial statements…','Extracting figures with Claude…','Checking accounting identities…'];

@@ -25,6 +25,11 @@ def registry():
     return service.registry_json()
 
 
+@app.get("/api/search")
+def search(q: str = ""):
+    return service.search_companies(q)
+
+
 @app.get("/api/analysis/{ticker}")
 def analysis(ticker: str):
     try:
