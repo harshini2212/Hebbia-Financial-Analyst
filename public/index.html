@@ -25,13 +25,14 @@
 
   /* top bar */
   .topbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-  .nav{display:flex;align-items:center;gap:26px;height:72px}
+  .nav{display:flex;align-items:center;gap:16px;height:72px}
   .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:21px;letter-spacing:-.3px}
   .logo{display:grid;grid-template-columns:repeat(2,10px);grid-auto-rows:10px;gap:3px}
   .logo i{border-radius:50%;background:var(--text)} .logo i.a{background:var(--accent)}
-  .navlinks{display:flex;gap:4px;flex:1;overflow-x:auto}
+  .navlinks{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto}
   .navlinks::-webkit-scrollbar{height:0}
-  .nl{padding:9px 14px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:15.5px;font-weight:500}
+  .nl{padding:8px 11px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:14px;font-weight:500}
+  .brand,.ghbtn{flex-shrink:0}
   .nl:hover{background:var(--gray-soft);color:var(--text)}
   .nl.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
   .ghbtn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 15px;border-radius:9px;font-size:14px;font-weight:600;white-space:nowrap}
