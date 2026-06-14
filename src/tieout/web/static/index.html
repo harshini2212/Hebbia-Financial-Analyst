@@ -3,351 +3,386 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>tieout — financial-extraction verifier</title>
+<title>tieout — verify what AI extracts from filings</title>
 <style>
   :root{
-    --bg:#0f1419; --panel:#161c24; --panel2:#1c242e; --line:#2a3441;
-    --text:#e6edf3; --muted:#8b98a8; --faint:#647082;
-    --accent:#5b8cff; --accent2:#7c5cff;
-    --ok:#3fb950; --bad:#f85149; --warn:#d29922; --gray:#6e7b8c;
-    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
-    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --bg:#f6f7f9; --surface:#ffffff; --surface2:#fbfcfd;
+    --line:#e6e8eb; --line2:#eef0f2;
+    --text:#0d1117; --muted:#646b76; --faint:#8b929c;
+    --accent:#2f6bff; --accent-soft:#eaf0ff;
+    --ok:#16a34a; --ok-soft:#e7f6ec; --bad:#dc2626; --bad-soft:#fdecec;
+    --warn:#b45309; --warn-soft:#fbf1e3; --gray:#6b7280; --gray-soft:#eef0f2;
+    --mono:'SFMono-Regular',ui-monospace,Consolas,Menlo,monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.06);
+    --shadow-sm:0 1px 2px rgba(16,24,40,.06);
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline}
-  .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
-  header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#131a22,#0f1419)}
-  .head{display:flex;align-items:center;gap:14px;padding:20px 0}
-  .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:800;color:#fff}
-  .brand h1{font-size:18px;margin:0;letter-spacing:-.3px}
-  .brand p{margin:0;color:var(--muted);font-size:12.5px}
-  .head .spacer{flex:1}
-  .ghlink{color:var(--muted);font-size:13px;border:1px solid var(--line);padding:6px 11px;border-radius:7px}
-  /* filing selector */
-  .filings{display:flex;gap:8px;align-items:center;padding:14px 0;flex-wrap:wrap}
-  .filings .lbl{color:var(--muted);font-size:12px;margin-right:4px;text-transform:uppercase;letter-spacing:.5px}
-  .pill{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:7px 13px;border-radius:20px;cursor:pointer;font-size:13px;transition:.15s}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 28px}
+
+  /* top bar */
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .nav{display:flex;align-items:center;gap:26px;height:62px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.3px}
+  .logo{display:grid;grid-template-columns:repeat(2,9px);grid-auto-rows:9px;gap:3px}
+  .logo i{border-radius:50%;background:var(--text)} .logo i.a{background:var(--accent)}
+  .navlinks{display:flex;gap:4px;flex:1;overflow-x:auto}
+  .navlinks::-webkit-scrollbar{height:0}
+  .nl{padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:13.5px;font-weight:500}
+  .nl:hover{background:var(--gray-soft);color:var(--text)}
+  .nl.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .ghbtn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;white-space:nowrap}
+  .ghbtn:hover{border-color:var(--accent);text-decoration:none}
+
+  /* context bar (filing selector) */
+  .ctx{background:var(--surface);border-bottom:1px solid var(--line)}
+  .ctxrow{display:flex;align-items:center;gap:8px;padding:12px 0;flex-wrap:wrap}
+  .ctx .lbl{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-right:6px;font-weight:600}
+  .pill{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 14px;cursor:pointer;transition:.14s;min-width:96px}
   .pill:hover{border-color:var(--accent)}
-  .pill.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-  .pill .note{color:var(--muted);font-size:11px;margin-left:6px}
-  .pill.active .note{color:#dfe8ff}
-  .runbtn{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12.5px}
-  .runbtn:hover{border-color:var(--accent2)}
-  /* tabs */
-  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:4px;overflow-x:auto}
-  .tab{padding:11px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;font-size:13.5px}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
-  main{padding:26px 0 80px}
-  /* generic */
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:18px;overflow-x:auto}
-  .card h3{margin:0 0 4px;font-size:15px}
-  .card .sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
-  .grid{display:grid;gap:14px}
-  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:13px 15px}
-  .stat .n{font-size:22px;font-weight:700;font-family:var(--mono)}
-  .stat .k{color:var(--muted);font-size:12px;margin-top:2px}
+  .pill.active{border-color:var(--accent);background:var(--accent-soft)}
+  .pill .t{font-weight:700;font-size:13px} .pill .n{color:var(--muted);font-size:11px}
+  .pill.active .t{color:var(--accent)}
+  .runbtn{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .runbtn:hover{border-color:var(--accent)}
+
+  main{padding:30px 0 90px}
+  /* headings */
+  .phead{margin-bottom:20px}
+  .phead h2{margin:0 0 6px;font-size:24px;letter-spacing:-.5px}
+  .lead{margin:0;color:var(--muted);font-size:15px;max-width:760px}
+  .eyebrow{color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+
+  /* cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow-sm);overflow-x:auto}
+  .card h3{margin:0 0 3px;font-size:16px;letter-spacing:-.2px}
+  .card .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .note{background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:12px 15px;color:var(--muted);font-size:13px;margin-bottom:16px}
+  .note b{color:var(--text)}
+
+  /* metric rail (ChartMogul style) */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
+  @media(max-width:820px){.metrics{grid-template-columns:repeat(2,1fr)}}
+  .metric{background:var(--surface);padding:16px 18px}
+  .metric .l{color:var(--muted);font-size:12px;margin-bottom:6px}
+  .metric .v{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
+  .metric .d{font-size:12px;font-weight:600;margin-top:3px}
+  .d.up{color:var(--ok)} .d.down{color:var(--bad)} .d.flat{color:var(--muted)}
+
+  /* tables */
   table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
-  th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line2)}
+  th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
   td.num,th.num{text-align:right;font-family:var(--mono)}
-  tbody tr:hover{background:var(--panel2)}
-  .mono{font-family:var(--mono)}
-  .muted{color:var(--muted)}
-  .chip{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11.5px;font-weight:600;white-space:nowrap}
-  .chip.ok{background:rgba(63,185,80,.15);color:#56d364}
-  .chip.bad{background:rgba(248,81,73,.15);color:#ff7b72}
-  .chip.warn{background:rgba(210,153,34,.16);color:#e3b341}
-  .chip.gray{background:rgba(110,123,140,.16);color:#9aa7b8}
-  .chip.acc{background:rgba(91,140,255,.16);color:#8db1ff}
-  .pitch{font-size:15px;line-height:1.65}
-  .pitch b{color:#fff}
-  .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
-  .barrow .lab{width:200px;font-size:13px}
-  .bar{flex:1;height:18px;background:var(--panel2);border-radius:5px;overflow:hidden}
-  .bar > div{height:100%;background:linear-gradient(90deg,var(--bad),#ff9b94)}
-  .barrow .sc{width:46px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
-  .chain{font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin:6px 0}
-  .chain .res{color:#8db1ff}
-  .arrow{color:var(--muted)}
-  .err{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.4);color:#ff9b94;padding:10px 14px;border-radius:8px}
-  .loading{color:var(--muted);padding:40px;text-align:center}
-  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  tbody tr:hover{background:var(--surface2)}
+  tbody tr:last-child td{border-bottom:none}
+  .mono{font-family:var(--mono)} .muted{color:var(--muted)}
+
+  .chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .chip.ok{background:var(--ok-soft);color:var(--ok)}
+  .chip.bad{background:var(--bad-soft);color:var(--bad)}
+  .chip.warn{background:var(--warn-soft);color:var(--warn)}
+  .chip.gray{background:var(--gray-soft);color:var(--gray)}
+  .chip.acc{background:var(--accent-soft);color:var(--accent)}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:1px}
+
+  /* hero (ChronoTask style) */
+  .hero{position:relative;text-align:center;padding:50px 0 30px}
+  .hero h1{font-size:54px;line-height:1.05;letter-spacing:-2px;margin:0 0 6px;font-weight:800}
+  .hero h1 .g{color:var(--faint)}
+  .hero p.tag{font-size:17px;color:var(--muted);max-width:620px;margin:14px auto 0}
+  .hero .cta{display:inline-flex;gap:10px;margin-top:24px}
+  .btn{background:var(--accent);color:#fff;border:none;padding:12px 22px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn:hover{filter:brightness(1.05);text-decoration:none}
+  .btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--line)}
+  .floats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  .fcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;text-align:left;min-width:215px}
+  .fcard .h{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .fcard .m{font-family:var(--mono);font-size:13px}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:820px){.two,.three{grid-template-columns:1fr}.hero h1{font-size:38px;letter-spacing:-1px}}
+  .chain{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:10px 13px;margin:7px 0}
+  .chain .res{color:var(--accent);font-weight:600} .arrow{color:var(--faint)}
+  .barrow{display:flex;align-items:center;gap:12px;margin:9px 0}
+  .barrow .lab{width:230px;font-size:13px}
+  .bar{flex:1;height:20px;background:var(--gray-soft);border-radius:6px;overflow:hidden}
+  .bar>div{height:100%;background:linear-gradient(90deg,#f87171,#dc2626);border-radius:6px}
+  .barrow .sc{width:42px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .err{background:var(--bad-soft);border:1px solid #f3c0c0;color:var(--bad);padding:11px 15px;border-radius:10px}
+  .loading{color:var(--muted);padding:60px;text-align:center}
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-3px;margin-right:8px}
   @keyframes s{to{transform:rotate(360deg)}}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
-  .dtable td{vertical-align:top}
-  code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:720px){.two{grid-template-columns:1fr}}
+  code{font-family:var(--mono);background:var(--gray-soft);padding:1px 6px;border-radius:5px;font-size:12px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12.5px;margin-top:12px}
+  .feat{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}
+  .feat h4{margin:0 0 6px;font-size:15px} .feat p{margin:0;color:var(--muted);font-size:13.5px}
+  .feat .ic{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:17px;margin-bottom:12px}
+  ul.clean{margin:6px 0 0;padding-left:18px;color:var(--muted)} ul.clean li{margin:7px 0}
+  ul.clean b{color:var(--text)}
 </style>
 </head>
 <body>
-<header><div class="wrap">
-  <div class="head">
-    <div class="logo">⊨</div>
-    <div class="brand">
-      <h1>tieout</h1>
-      <p>Deterministic verification of LLM-extracted figures from SEC 10-K filings</p>
-    </div>
-    <div class="spacer"></div>
-    <a class="ghlink" href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">GitHub ↗</a>
-  </div>
-  <div class="filings" id="filings"></div>
-  <div class="tabs" id="tabs"></div>
-</div></header>
-
+<div class="topbar"><div class="wrap nav">
+  <div class="brand"><span class="logo"><i class="a"></i><i></i><i></i><i></i></span> tieout</div>
+  <div class="navlinks" id="tabs"></div>
+  <a class="ghbtn" href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">GitHub ↗</a>
+</div></div>
+<div class="ctx" id="ctxbar"><div class="wrap"><div class="ctxrow" id="filings"></div></div></div>
 <main><div class="wrap" id="view"><div class="loading"><span class="spin"></span>Loading…</div></div></main>
 
 <script>
-const S = { filings:[], analyses:{}, registry:[], ticker:null, tab:'overview', busy:false };
-const TABS = [
-  ['overview','Overview'], ['explorer','Filing explorer'], ['propagation','Propagation'],
-  ['attribution','Attribution'], ['localization','Localization'],
-  ['registry','Constraint registry'], ['about','About'],
-];
+const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false};
+const TABS=[['overview','Overview'],['explorer','Filing explorer'],['propagation','Propagation'],
+  ['attribution','Attribution'],['localization','Localization'],['registry','Rulebook'],['approach','Approach']];
+const NO_CTX=new Set(['overview','approach']);
 
-const $ = (h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
+const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
 function money(v,unit){
   if(v===null||v===undefined) return '—';
   if(unit==='ratio') return (v*100).toFixed(2)+'%';
-  const a=Math.abs(v), s=v<0?'-':'';
+  const a=Math.abs(v),s=v<0?'−':'';
   if(a>=1e9) return s+'$'+(a/1e9).toFixed(2)+'B';
   if(a>=1e6) return s+'$'+(a/1e6).toFixed(2)+'M';
   if(a>=1e3) return s+'$'+(a/1e3).toFixed(1)+'K';
   return s+'$'+a.toFixed(0);
 }
-function statusChip(st){
-  const m={satisfied:['ok','✓ satisfied'],violated:['bad','✗ violated'],
-           indeterminate:['gray','– indeterminate'],'n/a':['gray','n/a']};
-  const [c,t]=m[st]||['gray',st]; return `<span class="chip ${c}">${t}</span>`;
-}
-function labelChip(l){
-  const m={extraction_error:'bad',filing_inconsistency:'warn',
-           constraint_model_error:'warn',undetermined:'gray'};
-  return `<span class="chip ${m[l]||'gray'}">${l}</span>`;
-}
-function sevChip(s){ return s==='soft'?'<span class="chip gray">soft</span>':'<span class="chip acc">hard</span>'; }
+function statusChip(st){const m={satisfied:['ok','✓ ties out'],violated:['bad','✗ breaks'],
+  indeterminate:['gray','– n/a'],'n/a':['gray','—']};const[c,t]=m[st]||['gray',st];return `<span class="chip ${c}">${t}</span>`;}
+function labelChip(l){const m={extraction_error:'bad',filing_inconsistency:'warn',constraint_model_error:'warn',undetermined:'gray'};
+  return `<span class="chip ${m[l]||'gray'}">${l.replace(/_/g,' ')}</span>`;}
+function sevChip(s){return s==='soft'?'<span class="chip gray">soft</span>':'<span class="chip acc">hard</span>';}
+function pageHead(t,s){return `<div class="phead"><h2>${t}</h2><p class="lead">${s}</p></div>`;}
+function metric(l,v,d,tone){return `<div class="metric"><div class="l">${l}</div><div class="v">${v}</div>${d?`<div class="d ${tone||'flat'}">${d}</div>`:''}</div>`;}
 
 async function boot(){
-  S.filings = await (await fetch('/api/filings')).json();
-  S.ticker = S.filings[0].ticker;
-  S.registry = await (await fetch('/api/registry')).json();
+  S.filings=await(await fetch('/api/filings')).json();
+  S.ticker=S.filings[0].ticker;
+  S.registry=await(await fetch('/api/registry')).json();
   await Promise.all(S.filings.map(async f=>{
-    try{ S.analyses[f.ticker] = await (await fetch('/api/analysis/'+f.ticker)).json(); }
-    catch(e){ S.analyses[f.ticker] = {error:String(e)}; }
+    try{S.analyses[f.ticker]=await(await fetch('/api/analysis/'+f.ticker)).json();}
+    catch(e){S.analyses[f.ticker]={error:String(e)};}
   }));
-  renderChrome(); render();
+  renderChrome();render();
 }
-
 function renderChrome(){
-  const fb = document.getElementById('filings');
-  fb.innerHTML = '<span class="lbl">Filing</span>';
-  S.filings.forEach(f=>{
-    const p = $(`<button class="pill ${f.ticker===S.ticker?'active':''}">${f.ticker}<span class="note">${f.note}</span></button>`);
-    p.onclick = ()=>{ S.ticker=f.ticker; renderChrome(); render(); };
-    fb.appendChild(p);
-  });
-  const run = $(`<button class="runbtn" id="runbtn">${S.busy?'<span class=spin></span>Running…':'↻ Run live'}</button>`);
-  run.onclick = runLive; fb.appendChild(run);
-
-  const tb = document.getElementById('tabs'); tb.innerHTML='';
-  TABS.forEach(([id,label])=>{
-    const t=$(`<div class="tab ${id===S.tab?'active':''}">${label}</div>`);
-    t.onclick=()=>{ S.tab=id; renderChrome(); render(); }; tb.appendChild(t);
-  });
+  const tb=document.getElementById('tabs');tb.innerHTML='';
+  TABS.forEach(([id,label])=>{const t=$(`<div class="nl ${id===S.tab?'active':''}">${label}</div>`);
+    t.onclick=()=>{S.tab=id;renderChrome();render();window.scrollTo(0,0);};tb.appendChild(t);});
+  document.getElementById('ctxbar').style.display=NO_CTX.has(S.tab)?'none':'block';
+  const fb=document.getElementById('filings');fb.innerHTML='<span class="lbl">Filing</span>';
+  S.filings.forEach(f=>{const p=$(`<button class="pill ${f.ticker===S.ticker?'active':''}"><span class="t">${f.ticker}</span><span class="n">${f.note}</span></button>`);
+    p.onclick=()=>{S.ticker=f.ticker;renderChrome();render();};fb.appendChild(p);});
+  const run=$(`<button class="runbtn" id="runbtn">${S.busy?'<span class=spin></span>Running…':'↻ Run live'}</button>`);
+  run.onclick=runLive;fb.appendChild(run);
 }
-
 async function runLive(){
-  if(S.busy) return; S.busy=true; renderChrome();
-  try{
-    const r = await fetch('/api/analysis/'+S.ticker+'/run',{method:'POST'});
-    if(!r.ok){ throw new Error((await r.json()).detail||r.statusText); }
-    S.analyses[S.ticker] = await r.json();
-  }catch(e){ alert('Live run failed: '+e.message+'\n(Needs ANTHROPIC_API_KEY for an uncached filing.)'); }
-  S.busy=false; renderChrome(); render();
+  if(S.busy)return;S.busy=true;renderChrome();
+  try{const r=await fetch('/api/analysis/'+S.ticker+'/run',{method:'POST'});
+    if(!r.ok)throw new Error((await r.json()).detail||r.statusText);
+    S.analyses[S.ticker]=await r.json();}
+  catch(e){alert('Live run failed: '+e.message+'\n(Needs ANTHROPIC_API_KEY for an uncached filing.)');}
+  S.busy=false;renderChrome();render();
 }
+function render(){const v=document.getElementById('view');
+  const fn={overview:vOverview,explorer:vExplorer,propagation:vProp,attribution:vAttr,
+    localization:vLoc,registry:vRegistry,approach:vApproach}[S.tab];
+  v.innerHTML='';v.appendChild(fn());}
+function d(){return S.analyses[S.ticker];}
+function guard(){const a=d();if(a&&a.error)return $(`<div class="err">Failed to load ${S.ticker}: ${a.error}</div>`);return null;}
 
-function render(){
-  const v=document.getElementById('view');
-  const fn={overview:vOverview,explorer:vExplorer,propagation:vProp,
-            attribution:vAttr,localization:vLoc,registry:vRegistry,about:vAbout}[S.tab];
-  v.innerHTML=''; v.appendChild(fn());
-}
-function d(){ return S.analyses[S.ticker]; }
-function guard(){ const a=d(); if(a&&a.error) return $(`<div class="err">Failed to load ${S.ticker}: ${a.error}</div>`); return null; }
-
-/* ---------- Overview ---------- */
+/* ---------- Overview (hero) ---------- */
 function vOverview(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="card"><div class="pitch">
-    An AI analyst's worst failure is a <b>plausible, individually-correct figure that is collectively wrong</b> —
-    a segment dropped from a roll-up, a balance missing mezzanine equity. An LLM-as-judge waves these through.
-    <b>tieout</b> runs extracted figures through deterministic accounting identities and says <b>what</b> broke,
-    <b>by how much</b>, and <b>whose fault</b> it is — using the filing's own XBRL as ground truth.
-  </div></div>`));
+  el.appendChild($(`<div class="hero">
+    <div class="eyebrow">AI extraction · verified</div>
+    <h1>Trust the numbers<br><span class="g">your AI pulls from filings.</span></h1>
+    <p class="tag">tieout checks LLM-extracted figures from SEC 10-Ks against the unbreakable rules of
+      accounting — catching the plausible-but-wrong numbers an AI-as-judge waves through.</p>
+    <div class="cta">
+      <button class="btn" id="goExpl">Explore a filing →</button>
+      <a class="btn ghost" href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">View code</a>
+    </div>
+    <div class="floats">
+      <div class="fcard"><div class="h">Balance sheet identity</div><div class="m"><span class="dot" style="background:var(--ok)"></span>assets = liabilities + equity <span class="chip ok" style="margin-left:6px">✓</span></div></div>
+      <div class="fcard"><div class="h">Costco segments (limited context)</div><div class="m"><span class="dot" style="background:var(--bad)"></span>parts ≠ total · off by $38.27B <span class="chip bad" style="margin-left:6px">✗</span></div></div>
+      <div class="fcard"><div class="h">Derived, never stated</div><div class="m"><span class="dot" style="background:var(--accent)"></span>gross margin = 12.84%</div></div>
+    </div></div>`));
 
-  const tbl=$(`<div class="card"><h3>Cross-filing discrimination</h3>
-    <div class="sub">Claude (text) vs a regex baseline, scored against SEC XBRL ground truth.</div></div>`);
-  let rows='';
-  S.filings.forEach(f=>{
-    const a=S.analyses[f.ticker]; if(!a||a.error) return;
-    a.scorecards.forEach((sc,i)=>{
-      const attr=sc.attributions.map(x=>labelChip(x.label)).join(' ')||'<span class="muted">—</span>';
-      rows+=`<tr><td>${i===0?'<b>'+f.ticker+'</b>':''}</td><td>${sc.name}</td>
-        <td class="num">${sc.facts}</td><td class="num">${sc.agree}</td>
-        <td class="num">${sc.disagree}</td><td class="num">${sc.violated}</td>
-        <td>${attr}</td></tr>`;
-    });
-  });
-  const t=$(`<table><thead><tr><th>Filing</th><th>Extractor</th><th class="num">Facts</th>
-    <th class="num">Agree</th><th class="num">Disagree</th><th class="num">Hard viol</th>
-    <th>Attribution</th></tr></thead><tbody>${rows}</tbody></table>`);
-  tbl.appendChild(t);
-  tbl.appendChild($(`<div class="legend">
-    <span>✓ Claude reconciles cleanly across complex real filings (zero false positives)</span>
-    <span>✗ the regex baseline's errors are caught &amp; attributed automatically</span></div>`));
-  el.appendChild(tbl);
+  const sc=$(`<div class="card"><h3>Cross-filing scoreboard</h3>
+    <div class="sub">Claude (reading the text) vs. a dumb regex baseline, both graded against the SEC's own structured data (XBRL).</div></div>`);
+  let agg={facts:0,agree:0}; let rows='';
+  S.filings.forEach(f=>{const a=S.analyses[f.ticker];if(!a||a.error)return;
+    a.scorecards.forEach((s,i)=>{ if(s.name.startsWith('Claude')){agg.facts+=s.facts;agg.agree+=s.agree;}
+      const attr=s.attributions.map(x=>labelChip(x.label)).join(' ')||'<span class="muted">none</span>';
+      rows+=`<tr><td>${i===0?'<b>'+f.ticker+'</b><div class="muted" style="font-size:11px">'+f.note+'</div>':''}</td>
+        <td>${s.name}</td><td class="num">${s.facts}</td><td class="num">${s.agree}</td>
+        <td class="num">${s.disagree}</td><td class="num">${s.violated}</td><td>${attr}</td></tr>`;});});
+  sc.appendChild($(`<table><thead><tr><th>Filing</th><th>Extractor</th><th class="num">Figures</th>
+    <th class="num">Agree</th><th class="num">Disagree</th><th class="num">Breaks</th><th>If broken, why</th>
+    </tr></thead><tbody>${rows}</tbody></table>`));
+  sc.appendChild($(`<div class="legend">
+    <span><span class="dot" style="background:var(--ok)"></span>Claude reconciles cleanly across complex real filings — zero false positives</span>
+    <span><span class="dot" style="background:var(--bad)"></span>the baseline's errors are caught &amp; labelled automatically</span></div>`));
+  el.appendChild(sc);
+  setTimeout(()=>{const b=document.getElementById('goExpl');if(b)b.onclick=()=>{S.tab='explorer';renderChrome();render();window.scrollTo(0,0);};},0);
   return el;
 }
 
 /* ---------- Filing explorer ---------- */
 function vExplorer(){
-  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
-  el.appendChild($(`<div class="card"><h3>${a.issuer} (${a.ticker}) — 10-K FY${a.fiscal_year}</h3>
-    <div class="sub">Filed ${a.filing_date} · <a href="${a.url}" target="_blank">EDGAR source ↗</a></div>
-    <div class="grid" style="grid-template-columns:repeat(4,1fr)" id="stats"></div></div>`));
-  const sc=a.scorecards[0], stats=el.querySelector('#stats');
-  [['Facts extracted',sc.facts],['Agree w/ XBRL',sc.agree],['Disagree',sc.disagree],
-   ['Hard violations',sc.violated]].forEach(([k,n])=>
-    stats.appendChild($(`<div class="stat"><div class="n">${n}</div><div class="k">${k}</div></div>`)));
+  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');
+  el.appendChild($(pageHead(`${a.issuer} — 10-K FY${a.fiscal_year}`,
+    `Every accounting identity, checked against the filing's official data (XBRL) and against what Claude pulled from the text. Filed ${a.filing_date}.`)));
+  el.appendChild($(`<div style="margin:-10px 0 18px"><a href="${a.url}" target="_blank">Open the filing on SEC EDGAR ↗</a></div>`));
 
-  const cc=$(`<div class="card"><h3>Accounting identities</h3>
-    <div class="sub">Each identity evaluated on ground-truth XBRL and on Claude's extraction. Residual vs. tolerance band.</div></div>`);
+  const sc=a.scorecards[0], idOk=a.constraints.filter(c=>c.gt_status==='satisfied').length;
+  el.appendChild($(`<div class="metrics">
+    ${metric('Figures Claude extracted',sc.facts,a.facts.filter(f=>f.agree===false).length?null:'all consistent','up')}
+    ${metric('Agree with official data',sc.agree+' / '+(sc.agree+sc.disagree),sc.disagree===0?'0 disagreements':sc.disagree+' off',sc.disagree===0?'up':'down')}
+    ${metric('Hard violations',sc.violated,sc.violated===0?'clean':'caught',sc.violated===0?'up':'down')}
+    ${metric('Gaps filled by graph',a.propagation.length,'derived w/ provenance','flat')}
+  </div>`));
+
+  const cc=$(`<div class="card"><h3>The 16 accounting identities</h3>
+    <div class="sub">"Residual" = how far the two sides are apart; it must stay inside the rounding-aware tolerance band.</div></div>`);
   let crows='';
-  a.constraints.forEach(c=>{
-    crows+=`<tr>
-      <td><div>${c.description}</div><div class="muted mono" style="font-size:11px">${c.formula}</div></td>
-      <td>${sevChip(c.severity)}</td>
-      <td>${statusChip(c.gt_status)}</td>
-      <td class="num">${c.gt_residual!==null?money(c.gt_residual):''}<span class="muted" style="font-size:11px">${c.gt_band!==null?' ±'+money(c.gt_band):''}</span></td>
-      <td>${statusChip(c.claude_status)}</td>
-      <td class="num">${c.claude_residual!==null?money(c.claude_residual):''}<span class="muted" style="font-size:11px">${c.claude_band!==null?' ±'+money(c.claude_band):''}</span></td>
-    </tr>`;
-  });
-  cc.appendChild($(`<table><thead><tr><th>Identity</th><th>Sev</th>
-    <th>Ground truth</th><th class="num">residual</th>
-    <th>Claude</th><th class="num">residual</th></tr></thead><tbody>${crows}</tbody></table>`));
+  a.constraints.forEach(c=>{crows+=`<tr>
+    <td><div>${c.description}</div><div class="muted mono" style="font-size:11px">${c.formula}</div></td>
+    <td>${sevChip(c.severity)}</td><td>${statusChip(c.gt_status)}</td>
+    <td class="num">${c.gt_residual!==null?money(c.gt_residual):''}${c.gt_band!==null?'<span class="muted" style="font-size:11px"> ±'+money(c.gt_band)+'</span>':''}</td>
+    <td>${statusChip(c.claude_status)}</td></tr>`;});
+  cc.appendChild($(`<table><thead><tr><th>Identity</th><th>Type</th><th>Official data</th>
+    <th class="num">residual</th><th>Claude</th></tr></thead><tbody>${crows}</tbody></table>`));
   el.appendChild(cc);
 
-  const fc=$(`<div class="card"><h3>Extracted figures vs. ground truth</h3>
-    <div class="sub">Consolidated line items Claude pulled from the filing text, checked against XBRL.</div></div>`);
+  const fc=$(`<div class="card"><h3>Did Claude read the numbers right?</h3>
+    <div class="sub">Each consolidated figure Claude pulled from the prose, checked against the SEC's structured value.</div></div>`);
   let frows='';
-  a.facts.forEach(f=>{
-    const m=f.agree===null?'<span class="chip gray">no tag</span>':(f.agree?'<span class="chip ok">✓</span>':'<span class="chip bad">✗</span>');
-    frows+=`<tr><td class="mono">${f.concept}</td>
-      <td class="num">${money(f.text)}</td><td class="num">${money(f.xbrl)}</td><td>${m}</td></tr>`;
-  });
-  fc.appendChild($(`<table><thead><tr><th>Concept</th><th class="num">Claude (text)</th>
-    <th class="num">XBRL</th><th>Match</th></tr></thead><tbody>${frows}</tbody></table>`));
+  a.facts.forEach(f=>{const m=f.agree===null?'<span class="chip gray">no tag</span>':(f.agree?'<span class="chip ok">✓ match</span>':'<span class="chip bad">✗ off</span>');
+    frows+=`<tr><td class="mono">${f.concept}</td><td class="num">${money(f.text)}</td>
+      <td class="num">${money(f.xbrl)}</td><td>${m}</td></tr>`;});
+  fc.appendChild($(`<table><thead><tr><th>Line item</th><th class="num">Claude (from text)</th>
+    <th class="num">Official (XBRL)</th><th>Match</th></tr></thead><tbody>${frows}</tbody></table>`));
   el.appendChild(fc);
   return el;
 }
 
 /* ---------- Propagation ---------- */
 function vProp(){
-  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
-  el.appendChild($(`<div class="card"><h3>Propagation — the graph fills gaps</h3>
-    <div class="sub">Any identity with one missing value is solved for it; results cascade. Each derived
-    fact carries a full provenance chain — the figure the filing never stated, with its derivation.</div>
-    <div id="chains"></div></div>`));
-  const c=el.querySelector('#chains');
-  if(!a.propagation.length){ c.appendChild($('<div class="muted">No derived facts for this filing.</div>')); return el; }
-  a.propagation.forEach(p=>{
-    c.appendChild($(`<div class="chain"><span class="res">${p.concept}</span> = <b>${money(p.value,p.unit)}</b>
-      <span class="arrow">&nbsp;←&nbsp;</span> ${p.op} <span class="muted">(${p.inputs} inputs)</span></div>`));
-  });
-  return el;
+  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');
+  el.appendChild($(pageHead('Propagation — the graph fills the gaps',
+    'The identities share variables, so when one value is missing the tool solves for it instead of giving up. Each derived number carries its formula — the citation trail an autonomous analyst needs.')));
+  el.appendChild($(`<div class="note">Example: ${a.issuer} never printed its gross margin. The graph derived
+    it from <code>revenue − cost</code>, then computed the ratio — values that were never in the filing.</div>`));
+  const c=$('<div class="card"><h3>Figures derived for FY'+a.fiscal_year+'</h3></div>');
+  if(!a.propagation.length){c.appendChild($('<div class="muted">No derived facts for this filing.</div>'));}
+  a.propagation.forEach(p=>{c.appendChild($(`<div class="chain"><span class="res">${p.concept}</span> = <b>${money(p.value,p.unit)}</b>
+    <span class="arrow"> ← </span>${p.op} <span class="muted">(${p.inputs} inputs)</span></div>`));});
+  el.appendChild(c);return el;
 }
 
 /* ---------- Attribution ---------- */
 function vAttr(){
-  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
-  el.appendChild($(`<div class="card"><h3>Three-way violation attribution</h3>
-    <div class="sub">When an identity fails, XBRL ground truth disambiguates the cause:</div>
-    <table class="dtable"><thead><tr><th>Ground truth</th><th>vs. text</th><th>→ label</th></tr></thead>
-    <tbody>
-      <tr><td>satisfies the identity</td><td>a figure disagrees</td><td>${labelChip('extraction_error')}</td></tr>
-      <tr><td>breaks the identity itself</td><td>—</td><td>${labelChip('filing_inconsistency')}</td></tr>
-      <tr><td>satisfies, text matches it</td><td>rule still fires</td><td>${labelChip('constraint_model_error')}</td></tr>
-      <tr><td>incomplete</td><td>—</td><td>${labelChip('undetermined')}</td></tr>
+  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');
+  el.appendChild($(pageHead('Attribution — whose fault is it?',
+    "Most tools just say 'wrong.' When an identity breaks, tieout uses the filing's official data to decide the actual cause — so a real model error isn't confused with a filing quirk or an incomplete rule.")));
+  el.appendChild($(`<div class="card"><h3>The decision logic</h3>
+    <table><thead><tr><th>Official data…</th><th>vs. the text…</th><th>→ verdict</th></tr></thead><tbody>
+    <tr><td>satisfies the identity</td><td>a figure disagrees</td><td>${labelChip('extraction_error')}</td></tr>
+    <tr><td>breaks the identity itself</td><td>—</td><td>${labelChip('filing_inconsistency')}</td></tr>
+    <tr><td>satisfies, text matches it</td><td>rule still fires</td><td>${labelChip('constraint_model_error')}</td></tr>
+    <tr><td>incomplete</td><td>—</td><td>${labelChip('undetermined')}</td></tr>
     </tbody></table></div>`));
-
-  const ac=$(`<div class="card"><h3>Attributed violations — ${a.ticker} (Claude)</h3></div>`);
-  if(!a.attribution.length){
-    ac.appendChild($('<div class="muted">No attributable violations — Claude\'s extraction reconciles cleanly.</div>'));
-  } else {
-    a.attribution.forEach(x=>{
-      ac.appendChild($(`<div style="margin:10px 0">
-        <code>${x.id}</code> ${labelChip(x.label)}
-        <div class="muted mono" style="font-size:11.5px;margin-top:4px">${x.evidence}</div></div>`));
-    });
-  }
-  el.appendChild(ac);
-  return el;
+  const ac=$(`<div class="card"><h3>Verdicts for ${a.ticker} (Claude)</h3></div>`);
+  if(!a.attribution.length){ac.appendChild($('<div class="note">No attributable violations — Claude\'s extraction reconciles cleanly against the official data.</div>'));}
+  a.attribution.forEach(x=>{ac.appendChild($(`<div style="margin:12px 0"><code>${x.id}</code> ${labelChip(x.label)}
+    <div class="muted mono" style="font-size:11.5px;margin-top:5px">${x.evidence}</div></div>`));});
+  el.appendChild(ac);return el;
 }
 
 /* ---------- Localization ---------- */
 function vLoc(){
-  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
-  const L=a.localization;
-  const c=$(`<div class="card"><h3>Localization — finding the culprit</h3>
-    <div class="sub">We inject a $5B error into one segment and let the graph rank suspects by how few
-    satisfied constraints vouch for each figure.</div><div id="body"></div></div>`);
-  const b=c.querySelector('#body');
-  if(!L){ b.appendChild($('<div class="muted">No segment data to run the localization demo for this filing.</div>')); el.appendChild(c); return el; }
-  b.appendChild($(`<div style="margin-bottom:12px">Injected <b>+$5B</b> into segment <code>${L.injected_segment}</code>
-    → <code>rev.segments_sum</code> ${statusChip('violated')} residual <span class="mono">${money(L.residual)}</span></div>`));
+  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');const L=a.localization;
+  el.appendChild($(pageHead('Localization — pointing at the culprit',
+    'We inject a fake $5B error into one segment, then rank suspects by how few satisfied identities vouch for each figure. It also stays honest about what it cannot pinpoint.')));
+  const c=$('<div class="card"></div>');
+  if(!L){c.appendChild($('<div class="muted">No segment data to run the localization demo for this filing.</div>'));el.appendChild(c);return el;}
+  c.appendChild($(`<div class="note">Injected <b>+$5B</b> into segment <code>${L.injected_segment}</code> →
+    <code>rev.segments_sum</code> ${statusChip('violated')} with residual <b class="mono">${money(L.residual)}</b>.</div>`));
   const max=Math.max(...L.suspects.map(s=>s.score),0.0001);
-  L.suspects.forEach(s=>{
-    b.appendChild($(`<div class="barrow"><div class="lab">${s.segment} <span class="muted mono" style="font-size:11px">${money(s.value)}</span></div>
-      <div class="bar"><div style="width:${(s.score/max*100).toFixed(0)}%"></div></div>
-      <div class="sc">${s.score.toFixed(2)}</div></div>`));
-  });
-  b.appendChild($(`<div class="legend"><span>Higher bar = more suspect. The consolidated total is
-    exonerated (vouched by margin identities); honest limit: sibling members need a cross-period signal to isolate a single one.</span></div>`));
-  el.appendChild(c); return el;
+  L.suspects.forEach(s=>{c.appendChild($(`<div class="barrow"><div class="lab">${s.segment}
+    <span class="muted mono" style="font-size:11px">${money(s.value)}</span></div>
+    <div class="bar"><div style="width:${(s.score/max*100).toFixed(0)}%"></div></div><div class="sc">${s.score.toFixed(2)}</div></div>`));});
+  c.appendChild($(`<div class="legend"><span>Taller bar = more suspect. The consolidated total is exonerated
+    (vouched by the margin identities). Honest limit: sibling segments share no other identity, so isolating a single one needs a cross-period signal.</span></div>`));
+  el.appendChild(c);return el;
 }
 
-/* ---------- Registry ---------- */
+/* ---------- Rulebook (registry) ---------- */
 function vRegistry(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="card"><h3>Constraint registry — ${S.registry.length} hand-authored identities</h3>
-    <div class="sub">Universal accounting identities, bound per filing/period. Tolerance is rounding-aware
-    and source-aware (tight for ground truth, looser for prose).</div></div>`));
+  el.appendChild($(pageHead('The rulebook',
+    `${S.registry.length} universal accounting identities, hand-authored once and bound to each filing. Tolerance is rounding-aware and source-aware (tight for official data, looser for prose).`)));
   let rows='';
-  S.registry.forEach(r=>{
-    rows+=`<tr><td class="mono">${r.id}</td><td>${r.description}</td>
-      <td class="mono muted" style="font-size:11.5px">${r.formula}</td><td>${sevChip(r.severity)}</td></tr>`;
-  });
-  el.querySelector('.card').appendChild($(`<table><thead><tr><th>ID</th><th>Identity</th><th>Formula</th><th>Sev</th></tr></thead><tbody>${rows}</tbody></table>`));
+  S.registry.forEach(r=>{rows+=`<tr><td class="mono">${r.id}</td><td>${r.description}</td>
+    <td class="mono muted" style="font-size:11.5px">${r.formula}</td><td>${sevChip(r.severity)}</td></tr>`;});
+  el.appendChild($(`<div class="card"><table><thead><tr><th>ID</th><th>Identity</th><th>Formula</th><th>Type</th></tr></thead><tbody>${rows}</tbody></table></div>`));
   return el;
 }
 
-/* ---------- About ---------- */
-function vAbout(){
-  return $(`<div class="card pitch">
-    <h3>How it works</h3>
-    <p><b>Ingest</b> a filing from SEC EDGAR — structured XBRL via <code>arelle</code> (ground truth) and the raw text (what the LLM reads).
-    <b>Extract</b> with pluggable adapters (Claude / regex baseline / XBRL-direct).
-    <b>Verify</b> against ${S.registry.length} accounting identities with <b>rounding-aware interval arithmetic</b> — never <code>==</code>.
-    <b>Propagate</b> to fill gaps with provenance, <b>localize</b> suspects, and <b>attribute</b> every violation three ways.</p>
-    <p><b>Reproducible:</b> every LLM response is content-addressed cached (SHA-256 of the fully-rendered request), so re-runs are free and bit-identical.</p>
-    <p><b>Real-world XBRL handling:</b> 52/53-week fiscal-year anchoring, segment-total de-duplication, optional-zero terms for mezzanine equity / NCI / equity-method / discontinued operations, and a soft severity for the fragile pretax→net bridge.</p>
-    <p><b>Honest limits:</b> with full context, frontier models extract large-cap headline figures accurately — so this is foremost a <b>deterministic verifier</b> that also catches errors under weaker models or constrained context. A true filing inconsistency needs cross-filing restated comparatives (roadmap).</p>
-    <p class="muted">Built as a portfolio project. Code: <a href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">github.com/harshini2212/Financial-Eval-Harness</a></p>
-  </div>`);
+/* ---------- Approach (Rogo + differentiation + learnings) ---------- */
+function vApproach(){
+  const el=$('<div></div>');
+  el.appendChild($(pageHead('Approach',
+    'Why this exists, how it relates to what Rogo is building, and what made it hard.')));
+
+  el.appendChild($(`<div class="two">
+    <div class="feat"><div class="ic">◎</div><h4>What Rogo builds</h4>
+      <p>An AI analyst (“Felix”) for Wall Street that reads filings, research and data and answers analysts'
+      questions — automating hours of work across 250+ institutions. Its value rests entirely on the numbers
+      it surfaces being <b>trustworthy</b>.</p></div>
+    <div class="feat"><div class="ic">⊨</div><h4>What tieout adds</h4>
+      <p>The verification layer that makes such an analyst safe to rely on: a deterministic check that the
+      extracted numbers actually obey accounting — the guardrail you can't get from a second AI grading the first.</p></div>
+  </div>`));
+
+  el.appendChild($(`<div class="card"><h3>What we did differently</h3>
+    <ul class="clean">
+      <li><b>Not LLM-as-judge.</b> The usual way to grade AI output is to ask another AI — which rubber-stamps
+        plausible-but-wrong numbers. We grade with <b>deterministic accounting math</b> instead.</li>
+      <li><b>The filing grades itself.</b> We use each filing's own official XBRL data as the answer key —
+        free, exact ground truth, no manual labelling.</li>
+      <li><b>A constraint graph, not a checklist.</b> Because the rules share variables, the tool can
+        <b>propagate</b> — fill missing values and cross-check — not just pass/fail.</li>
+      <li><b>Attribution, not just detection.</b> A three-way “whose fault” verdict, the part most tools skip.</li>
+    </ul></div>`));
+
+  el.appendChild($(`<div class="card"><h3>What we learned (the honest part)</h3>
+    <ul class="clean">
+      <li><b>Not crying wolf is harder than catching errors.</b> Real filings broke a naive checker — Kraft
+        Heinz's $12M mezzanine equity, Amazon's $554M equity-method income, 3M's $1.4B discontinued operations,
+        3M's $24B segment double-count. Modelling real accounting structure was ~80% of the work.</li>
+      <li><b>Be honest about what a result shows.</b> The flashy “$38B catch” was partly a context-window
+        artifact — with full context Claude is accurate. So it's a <b>verifier first</b> that also catches errors
+        under weaker conditions, not a gotcha machine.</li>
+      <li><b>A true “filing inconsistency” is rare</b> in audited filings — most apparent ones are really your
+        own rule being incomplete. Knowing the difference is the whole game.</li>
+      <li><b>Engineering rigor:</b> reproducible via content-addressed caching, rounding-aware tolerance, and
+        edge cases like 52/53-week fiscal years (Amazon's FY2025 ends Jan 1, 2026).</li>
+    </ul></div>`));
+
+  el.appendChild($(`<div class="card"><h3>How it works, end to end</h3>
+    <div class="three">
+      <div><b>1 · Ingest</b><p class="muted" style="font-size:13px">Pull a filing from SEC EDGAR — official XBRL (ground truth) and raw text (what the AI reads).</p></div>
+      <div><b>2 · Extract &amp; verify</b><p class="muted" style="font-size:13px">Claude / baseline / XBRL pull the numbers; 16 identities check them with interval tolerance.</p></div>
+      <div><b>3 · Explain</b><p class="muted" style="font-size:13px">Propagate to fill gaps, localize the culprit, and attribute every break three ways.</p></div>
+    </div></div>`));
+  return el;
 }
 
 boot();
