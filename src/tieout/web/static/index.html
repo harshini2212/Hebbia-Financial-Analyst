@@ -164,19 +164,25 @@
   .vuln{background:var(--bad-soft);border:1px solid #f3c0c0;border-radius:12px;padding:14px 16px;margin-bottom:16px}
   .vuln.clean{background:var(--ok-soft);border-color:#bfe6cb}
   .vuln h4{margin:0 0 4px;font-size:14px}
+  .askinput{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;font-family:var(--sans);color:var(--text)}
+  .askinput:focus{outline:none;border-color:var(--accent)}
+  .exrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .ex{font-size:12.5px;color:var(--accent);background:var(--accent-soft);border:1px solid #cfdcff;border-radius:20px;padding:5px 12px;cursor:pointer}
+  .ex:hover{background:#dde7ff}
 </style>
 </head>
 <body>
 <div class="topbar"><div class="wrap nav">
   <div class="brand"><span class="logo"><i class="a"></i><i></i><i></i><i></i></span> tieout <span class="badge">BUILT FOR ROGO</span></div>
   <div class="navlinks" id="tabs"></div>
-  <a class="ghbtn" href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">GitHub ↗</a>
+  <a class="ghbtn" href="https://github.com/harshini2212/Hebbia-Financial-Analyst" target="_blank">GitHub ↗</a>
 </div></div>
 <div class="ctx" id="ctxbar"><div class="wrap"><div class="ctxrow" id="filings"></div></div></div>
 <main><div class="wrap" id="view"><div class="loading"><span class="spin"></span>Loading…</div></div></main>
 
 <script>
-const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false,acResults:[],hasKey:true,searchText:'',isStatic:false};
+const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false,acResults:[],hasKey:true,searchText:'',isStatic:false,
+  askQ:'',askResult:null,askBusy:false,askError:'',bench:null};
 let _acTimer;
 function doSearch(inp,box){
   clearTimeout(_acTimer);
@@ -192,9 +198,9 @@ function doSearch(inp,box){
     box.classList.add('show');
   },180);
 }
-const TABS=[['overview','Overview'],['snapshot','Snapshot'],['explorer','Filing explorer'],['propagation','Propagation'],
+const TABS=[['overview','Overview'],['snapshot','Snapshot'],['ask','Verified cell'],['benchmark','Hybrid eval'],['explorer','Filing explorer'],['propagation','Propagation'],
   ['attribution','Attribution'],['localization','Localization'],['registry','Rulebook'],['approach','Approach']];
-const NO_CTX=new Set(['overview','approach']);
+const NO_CTX=new Set(['overview','approach','benchmark']);
 
 const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
 function money(v,unit){
@@ -278,7 +284,7 @@ function renderChrome(){
   S.filings.forEach(f=>{const p=$(`<button class="pill ${f.ticker===S.ticker?'active':''}"><span class="t">${f.ticker}</span><span class="n">${f.note}</span></button>`);
     p.onclick=()=>{S.ticker=f.ticker;if(NO_CTX.has(S.tab))S.tab='snapshot';renderChrome();render();};fb.appendChild(p);});
   if(S.isStatic){
-    fb.appendChild($(`<div class="runmsg" style="color:var(--muted);font-weight:500">Hosted demo — 3 sample filings. <a href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">Clone the repo</a> to run any company live.</div>`));
+    fb.appendChild($(`<div class="runmsg" style="color:var(--muted);font-weight:500">Hosted demo — 3 sample filings. <a href="https://github.com/harshini2212/Hebbia-Financial-Analyst" target="_blank">Clone the repo</a> to run any company live.</div>`));
     return;
   }
   // live connector: type a company name, pick from EDGAR, run the eval live
@@ -320,7 +326,7 @@ async function runLive(){
   S.busy=false;renderChrome();render();
 }
 function render(){const v=document.getElementById('view');
-  const fn={overview:vOverview,snapshot:vSnapshot,explorer:vExplorer,propagation:vProp,attribution:vAttr,
+  const fn={overview:vOverview,snapshot:vSnapshot,ask:vAsk,benchmark:vBench,explorer:vExplorer,propagation:vProp,attribution:vAttr,
     localization:vLoc,registry:vRegistry,approach:vApproach}[S.tab];
   v.innerHTML='';v.appendChild(fn());}
 function d(){return S.analyses[S.ticker];}
@@ -336,7 +342,7 @@ function vOverview(){
       accounting — catching the plausible-but-wrong numbers an AI-as-judge waves through.</p>
     <div class="cta">
       <button class="btn" id="goExpl">Explore a filing →</button>
-      <a class="btn ghost" href="https://github.com/harshini2212/Financial-Eval-Harness" target="_blank">View code</a>
+      <a class="btn ghost" href="https://github.com/harshini2212/Hebbia-Financial-Analyst" target="_blank">View code</a>
     </div>
     <div class="floats">
       <div class="fcard"><div class="h">Balance sheet identity</div><div class="m"><span class="dot" style="background:var(--ok)"></span>assets = liabilities + equity <span class="chip ok" style="margin-left:6px">✓</span></div></div>
@@ -369,6 +375,109 @@ function vOverview(){
     <span><span class="dot" style="background:var(--bad)"></span>the baseline's errors are caught &amp; labelled automatically</span></div>`));
   el.appendChild(sc);
   setTimeout(()=>{const b=document.getElementById('goExpl');if(b)b.onclick=()=>{S.tab='snapshot';renderChrome();render();window.scrollTo(0,0);};},0);
+  return el;
+}
+
+/* ---------- Verified cell (live column agent + engine verification) ---------- */
+function vAsk(){
+  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
+  el.appendChild($(pageHead(`Verified cell — ${a.issuer} FY${a.fiscal_year}`,
+    'A Matrix-style column agent answers a question over this filing, then the deterministic identity engine verifies the cell — every cited figure, the accounting identities they touch, and whether the answer actually follows from them. No LLM judge involved.')));
+  if(S.isStatic){
+    el.appendChild($('<div class="note">Filling a verified cell runs live on the server (the column agent calls Claude with tool use). Open the deployed app or run it locally to try it.</div>'));
+    return el;
+  }
+  const examples=["What was the gross margin?","What was net income?","What was the operating margin?","How did revenue grow year over year?"];
+  const bar=$(`<div class="card"><div style="display:flex;gap:8px">
+    <input id="askq" class="askinput" placeholder="Ask about ${a.issuer}'s financials…" value="${(S.askQ||'').replace(/"/g,'&quot;')}" ${S.askBusy?'disabled':''}/>
+    <button class="btn" id="askgo" ${S.askBusy?'disabled':''}>${S.askBusy?'Thinking…':'Ask'}</button></div>
+    <div class="exrow">${examples.map(e=>`<span class="ex" data-q="${e}">${e}</span>`).join('')}</div></div>`);
+  el.appendChild(bar);
+  const inp=bar.querySelector('#askq');
+  const submit=(q)=>{const text=(q!==undefined?q:inp.value).trim(); if(text){S.askQ=text;askCell(text);}};
+  bar.querySelector('#askgo').onclick=()=>submit();
+  inp.onkeydown=(e)=>{if(e.key==='Enter')submit();};
+  bar.querySelectorAll('.ex').forEach(x=>x.onclick=()=>submit(x.getAttribute('data-q')));
+  if(S.askBusy) el.appendChild($('<div class="note"><span class="spin"></span>The column agent is retrieving figures and computing… (~10–20s)</div>'));
+  if(S.askError) el.appendChild($(`<div class="err">${S.askError}</div>`));
+  if(S.askResult) el.appendChild(renderAsk(S.askResult));
+  return el;
+}
+async function askCell(question){
+  S.askBusy=true; S.askError=''; S.askResult=null; render();
+  try{
+    const r=await fetch('/api/ask/'+encodeURIComponent(S.ticker),{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    S.askResult=await r.json();
+  }catch(e){ S.askError='Could not answer: '+e.message; }
+  S.askBusy=false; render();
+}
+function renderAsk(res){
+  if(res.error) return $(`<div class="err">Agent error: ${res.error}</div>`);
+  const v=res.verdict;
+  const badge=v.trusted
+    ? '<span class="chip ok">&#10003; Verified cell — figures tie to official data and the answer reconciles</span>'
+    : '<span class="chip bad">&#9888; Unverified cell — see the failed check below</span>';
+  const deriv=(res.derivation||[]).map(dd=>`<div class="chain"><span class="chip ${dd.type==='retrieval'?'acc':dd.type==='calculation'?'warn':'gray'}" style="margin-right:8px">${dd.type}</span>${dd.text}</div>`).join('')||'<div class="muted">—</div>';
+  let checks='';
+  (v.checks||[]).forEach(c=>{const m=c.ok===null?'<span class="chip gray">n/a</span>':(c.ok?'<span class="chip ok">&#10003;</span>':'<span class="chip bad">&#10007;</span>');
+    checks+=`<tr><td>${c.label||''}</td><td class="mono">${c.concept||''}</td><td class="num">${c.stated==null?'':money(c.stated)}</td><td class="num">${c.truth==null?'':money(c.truth)}</td><td>${m}</td></tr>`;});
+  // self-consistency: does the stated answer follow from the cited figures via the identities?
+  let calc='';
+  if(v.calc_status==='corroborated') calc=`<div class="note" style="margin-top:12px"><span class="chip ok">&#10003; self-consistent</span> the accounting identities derive the stated answer from the cited figures.</div>`;
+  else if(v.calc_status==='contradicted') calc=`<div class="vuln" style="margin-top:12px"><h4>✗ Not self-consistent</h4><div class="muted">From the cited figures the identities derive <b>${v.derived_value}</b>, not the stated answer — the multi-step reasoning doesn't reconcile.</div></div>`;
+  // accounting identities the cell's own figures touch
+  let idens='';
+  (v.identities||[]).forEach(ic=>{const chip=ic.status==='satisfied'?'<span class="chip ok">&#10003; ties out</span>':`<span class="chip bad">&#10007; breaks</span> ${ic.label?labelChip(ic.label):''}`;
+    idens+=`<tr><td>${ic.description}</td><td>${chip}</td><td class="muted" style="font-size:12px">${ic.evidence||''}</td></tr>`;});
+  const idenCard=idens?`<h4 style="margin:18px 0 6px;font-size:13px">Accounting identities the cited figures touch</h4>
+    <table><thead><tr><th>Identity</th><th>Result</th><th>Detail</th></tr></thead><tbody>${idens}</tbody></table>`:'';
+  return $(`<div class="card"><div style="margin-bottom:10px">${badge}</div>
+    <h3 style="font-size:20px;margin:0 0 2px">${res.answer}</h3>
+    <div class="sub">The column agent made ${res.tool_calls} grounded retrieval(s) via tool calls${res.answer_concept?` · answer maps to <code>${res.answer_concept}</code>`:''}.</div>
+    ${calc}
+    <h4 style="margin:14px 0 6px;font-size:13px">Derivation (retrieval → definition → calculation)</h4>${deriv}
+    <h4 style="margin:18px 0 6px;font-size:13px">Cited figures checked against official XBRL</h4>
+    <table><thead><tr><th>Figure</th><th>Concept</th><th class="num">Agent</th><th class="num">Official</th><th>Match</th></tr></thead><tbody>${checks}</tbody></table>
+    ${idenCard}</div>`);
+}
+
+/* ---------- Hybrid eval (leaderboard: deterministic + rubric + judge) ---------- */
+function vBench(){
+  const el=$('<div></div>');
+  el.appendChild($(pageHead('Hybrid answer-quality evaluation',
+    "Hebbia's evaluation philosophy is hybrid — deterministic checks + rubric/LLM grading. Applied to financial extraction: each model fills Matrix cells over real SEC filings, scored on the audit trail (Retrieval / Definition / Calculation), by a naive LLM judge, and — the differentiator — by the deterministic accounting-identity layer. The headline is the money metric: answers the judge accepts that are actually wrong.")));
+  if(!S.bench){
+    el.appendChild($('<div class="loading"><span class="spin"></span>Loading results…</div>'));
+    fetch('/api/benchmark').then(r=>r.json()).then(b=>{S.bench=b; if(S.tab==='benchmark') render();}).catch(()=>{S.bench={results:{}}; if(S.tab==='benchmark') render();});
+    return el;
+  }
+  const res=S.bench.results||{};
+  if(!Object.keys(res).length){
+    el.appendChild($('<div class="note">No benchmark results yet — run <code>python scripts/run_bench.py</code> on the server.</div>'));
+    return el;
+  }
+  let rows='';
+  Object.values(res).forEach(r=>{rows+=`<tr><td><b>${r.label}</b></td>
+    <td class="num">${(r.rubric_score*100).toFixed(0)}%</td>
+    <td class="num">${(r.final_accuracy*100).toFixed(0)}%</td>
+    <td class="num">${(r.gap*100>=0?'+':'')+(r.gap*100).toFixed(0)}pp</td>
+    <td class="num">${(r.trusted_rate*100).toFixed(0)}%</td>
+    <td class="num">${(r.judge_accuracy*100).toFixed(0)}%</td>
+    <td class="num">${r.money_metric}</td></tr>`;});
+  el.appendChild($(`<div class="card"><h3>Leaderboard · ${S.bench.question_count} questions</h3>
+    <div class="sub">Rubric = derivation (audit-trail) score. Final = bottom-line accuracy. The last column is the money metric.</div>
+    <table><thead><tr><th>Model</th><th class="num">Rubric</th><th class="num">Final answer</th><th class="num">Gap</th><th class="num">Trusted</th><th class="num">LLM-judge says OK</th><th class="num">Judge-passed but wrong</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="legend"><span>Rubric grades the full audit trail (retrieval / definition / calculation); Final grades only the bottom-line number.</span>
+    <span><b>Judge-passed but wrong</b> = a naive LLM-judge rubber-stamped these; the constraint layer caught them.</span></div></div>`));
+  const first=Object.values(res)[0];
+  let qrows='';
+  (first.per_question||[]).forEach(p=>{const fa=p.final_ok?'<span class="chip ok">&#10003;</span>':'<span class="chip bad">&#10007;</span>';
+    const tr=p.trusted?'<span class="chip ok">&#10003;</span>':'<span class="chip bad">&#10007;</span>';
+    qrows+=`<tr><td>${p.question}</td><td>${p.skill}</td><td class="num">${(p.rubric_score*100).toFixed(0)}%</td><td>${fa}</td><td>${tr}</td><td>${p.judge_yes?'yes':'no'}</td></tr>`;});
+  el.appendChild($(`<div class="card"><h3>Per-question · ${first.label}</h3>
+    <table><thead><tr><th>Question</th><th>Skill</th><th class="num">Rubric</th><th>Final</th><th>Trusted</th><th>Judge OK</th></tr></thead><tbody>${qrows}</tbody></table></div>`));
   return el;
 }
 
@@ -560,20 +669,21 @@ function vRegistry(){
   return el;
 }
 
-/* ---------- Approach (Rogo + differentiation + learnings) ---------- */
+/* ---------- Approach (Hebbia framing + differentiation + learnings) ---------- */
 function vApproach(){
   const el=$('<div></div>');
   el.appendChild($(pageHead('Approach',
-    'Why this exists, how it relates to what Rogo is building, and what made it hard.')));
+    'Why this exists, how it maps onto what Hebbia is building, and what made it hard.')));
 
   el.appendChild($(`<div class="two">
-    <div class="feat"><div class="ic">◎</div><h4>What Rogo builds</h4>
-      <p>An AI analyst (“Felix”) for Wall Street that reads filings, research and data and answers analysts'
-      questions — automating hours of work across 250+ institutions. Its value rests entirely on the numbers
-      it surfaces being <b>trustworthy</b>.</p></div>
-    <div class="feat"><div class="ic">⊨</div><h4>What tieout adds</h4>
-      <p>The verification layer that makes such an analyst safe to rely on: a deterministic check that the
-      extracted numbers actually obey accounting — the guardrail you can't get from a second AI grading the first.</p></div>
+    <div class="feat"><div class="ic">◎</div><h4>What Hebbia builds</h4>
+      <p>Matrix — documents as rows, questions as columns, and a swarm of agents filling each <b>cell</b> with a
+      cited answer over filings, contracts and transcripts. The product's value rests entirely on those cells being
+      <b>trustworthy</b>; today that trust comes from citations and rubric / LLM-judge evaluation.</p></div>
+    <div class="feat"><div class="ic">⊨</div><h4>What this adds</h4>
+      <p>The missing leg of that trust: a deterministic check that a cell's figures actually obey accounting —
+      cross-figure identities, three-way attribution, and a self-consistency test that the answer follows from the
+      cited numbers. The guardrail you can't get from a second AI grading the first.</p></div>
   </div>`));
 
   el.appendChild($(`<div class="card"><h3>What we did differently</h3>

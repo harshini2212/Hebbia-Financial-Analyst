@@ -40,6 +40,11 @@ def main() -> None:
     (OUT / "api" / "health.json").write_text(
         json.dumps({"api_key": False, "static": True}), encoding="utf-8")
 
+    # the hybrid-eval leaderboard, if it's been generated
+    bench = ROOT / "data" / "bench" / "results.json"
+    if bench.exists():
+        shutil.copy(bench, OUT / "api" / "benchmark.json")
+
     for f in filings:
         shutil.copy(DATA / f"{f['ticker']}.json",
                     OUT / "api" / "analysis" / f"{f['ticker']}.json")

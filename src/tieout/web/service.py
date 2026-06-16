@@ -370,6 +370,51 @@ def analyze(ticker: str, *, force: bool = False) -> dict:
     return result
 
 
+_agent_stores: dict = {}
+
+
+def _agent_store(ticker: str):
+    t = ticker.upper()
+    if t not in _agent_stores:
+        filing = EdgarClient().find_10k(t)
+        s = FactStore(); s.add_all(XbrlDirectExtractor().extract(filing))
+        fy = max(p.fiscal_year for p in periods_in(s.all_facts()))
+        _agent_stores[t] = (s, fy, filing.issuer)
+    return _agent_stores[t]
+
+
+def ask(ticker: str, question: str) -> dict:
+    """Fill one Matrix cell live over a filing, then verify it against the
+    accounting-identity engine (no LLM judge involved)."""
+    from ..agent import ColumnAgent, verify_cell
+    store, fy, issuer = _agent_store(ticker)
+    cell = ColumnAgent(store, model_id="claude-opus-4-8",
+                       cache=ResponseCache(".cache/llm")).fill(question, fy)
+    v = verify_cell(cell, store)
+    return {
+        "issuer": issuer, "fiscal_year": fy, "question": question,
+        "answer": cell.answer, "value": cell.value, "unit": cell.unit,
+        "answer_concept": cell.answer_concept,
+        "derivation": cell.derivation, "numbers_used": cell.numbers_used,
+        "tool_calls": len(cell.tool_calls), "error": cell.error,
+        "verdict": {
+            "trusted": v.trusted, "retrieval_ok": v.retrieval_ok,
+            "calc_status": v.calc_status, "derived_value": v.derived_value,
+            "checks": [{"label": c.label, "concept": c.concept, "stated": c.stated,
+                        "truth": c.truth, "ok": c.ok, "note": c.note} for c in v.checks],
+            "identities": [{"id": ic.template_id, "description": ic.description,
+                            "status": ic.status, "residual": ic.residual,
+                            "label": ic.label, "evidence": ic.evidence}
+                           for ic in v.identities],
+        },
+    }
+
+
+def benchmark() -> dict:
+    p = Path("data/bench/results.json")
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {"results": {}}
+
+
 _search_client: EdgarClient | None = None
 
 

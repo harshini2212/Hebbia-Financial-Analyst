@@ -1,0 +1,208 @@
+{
+  "_comment": "A small hybrid answer-quality eval for financial-document extraction. Each question carries a rubric whose line items are tagged retrieval/definition/calculation (the extraction/reasoning skills a Matrix column-generation step must get right). Retrieval & calculation items are auto-graded by the fact store + the agent's computed value; gold values were read from each filing's official XBRL. The deterministic identity layer (verify_cell) is the third leg, alongside the rubric and a naive LLM judge.",
+  "questions": [
+    {
+      "id": "cost-gross", "ticker": "COST", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Costco's gross margin in fiscal year 2025?",
+      "gold": {"value": 0.1284, "unit": "ratio", "tolerance": 0.004},
+      "required_concepts": ["revenue.total", "cogs.total"],
+      "formula": "gross margin = (revenue - cost of revenue) / revenue",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 total revenue", "concept": "revenue.total", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve FY2025 cost of revenue", "concept": "cogs.total", "weight": 3},
+        {"type": "definition", "text": "Gross margin = (revenue - cogs) / revenue", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 12.84%", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-op", "ticker": "COST", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Costco's operating margin in fiscal year 2025?",
+      "gold": {"value": 0.0377, "unit": "ratio", "tolerance": 0.004},
+      "required_concepts": ["operating_income.total", "revenue.total"],
+      "formula": "operating margin = operating income / revenue",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 operating income", "concept": "operating_income.total", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve FY2025 total revenue", "concept": "revenue.total", "weight": 3},
+        {"type": "definition", "text": "Operating margin = operating income / revenue", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 3.77%", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-net", "ticker": "COST", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Costco's net profit margin in fiscal year 2025?",
+      "gold": {"value": 0.0294, "unit": "ratio", "tolerance": 0.004},
+      "required_concepts": ["net_income.parent", "revenue.total"],
+      "formula": "net margin = net income attributable to parent / revenue",
+      "note": "trap: must use net income, not operating income",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 net income", "concept": "net_income.parent", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve FY2025 total revenue", "concept": "revenue.total", "weight": 3},
+        {"type": "definition", "text": "Net margin = net income / revenue (not operating income)", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 2.94%", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-ni", "ticker": "COST", "fiscal_year": 2025, "skill": "statement_analysis",
+      "question": "What was Costco's net income attributable to the company in fiscal year 2025?",
+      "gold": {"value": 8099000000, "unit": "USD"},
+      "required_concepts": ["net_income.parent"],
+      "formula": "reported net income attributable to parent",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 net income", "concept": "net_income.parent", "weight": 3},
+        {"type": "calculation", "text": "Report ~= $8.10B", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-assets", "ticker": "COST", "fiscal_year": 2025, "skill": "statement_analysis",
+      "question": "What were Costco's total assets at the end of fiscal year 2025?",
+      "gold": {"value": 77099000000, "unit": "USD"},
+      "required_concepts": ["assets.total"],
+      "formula": "reported total assets",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 total assets", "concept": "assets.total", "weight": 3},
+        {"type": "calculation", "text": "Report ~= $77.1B", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-cfo", "ticker": "COST", "fiscal_year": 2025, "skill": "statement_analysis",
+      "question": "How much net cash did Costco generate from operating activities in fiscal year 2025?",
+      "gold": {"value": 13335000000, "unit": "USD"},
+      "required_concepts": ["cfo.total"],
+      "formula": "reported net cash from operating activities",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 operating cash flow", "concept": "cfo.total", "weight": 3},
+        {"type": "calculation", "text": "Report ~= $13.3B", "weight": 2}
+      ]
+    },
+    {
+      "id": "amzn-op", "ticker": "AMZN", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Amazon's operating margin in fiscal year 2025?",
+      "gold": {"value": 0.1116, "unit": "ratio", "tolerance": 0.004},
+      "required_concepts": ["operating_income.total", "revenue.total"],
+      "formula": "operating margin = operating income / revenue",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 operating income", "concept": "operating_income.total", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve FY2025 total revenue", "concept": "revenue.total", "weight": 3},
+        {"type": "definition", "text": "Operating margin = operating income / revenue", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 11.16%", "weight": 2}
+      ]
+    },
+    {
+      "id": "amzn-tax", "ticker": "AMZN", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Amazon's effective income tax rate in fiscal year 2025?",
+      "gold": {"value": 0.1963, "unit": "ratio", "tolerance": 0.005},
+      "required_concepts": ["income_tax.total", "pretax_income.total"],
+      "formula": "effective tax rate = income tax expense / pretax income",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 income tax expense", "concept": "income_tax.total", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve FY2025 pretax income", "concept": "pretax_income.total", "weight": 3},
+        {"type": "definition", "text": "Effective tax rate = income tax / pretax income", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 19.6%", "weight": 2}
+      ]
+    },
+    {
+      "id": "amzn-growth", "ticker": "AMZN", "fiscal_year": 2025, "skill": "earnings_analysis",
+      "question": "By what percentage did Amazon's total revenue grow from fiscal year 2024 to fiscal year 2025?",
+      "gold": {"value": 0.1238, "unit": "ratio", "tolerance": 0.006},
+      "required_concepts": ["revenue.total"],
+      "formula": "growth = (FY2025 revenue - FY2024 revenue) / FY2024 revenue",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 revenue", "concept": "revenue.total", "fiscal_year": 2025, "weight": 3},
+        {"type": "retrieval", "text": "Retrieve FY2024 revenue", "concept": "revenue.total", "fiscal_year": 2024, "weight": 3},
+        {"type": "definition", "text": "Growth = (current - prior) / prior", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 12.4%", "weight": 2}
+      ]
+    },
+    {
+      "id": "amzn-ni", "ticker": "AMZN", "fiscal_year": 2025, "skill": "statement_analysis",
+      "question": "What was Amazon's net income in fiscal year 2025?",
+      "gold": {"value": 77670000000, "unit": "USD"},
+      "required_concepts": ["net_income.parent"],
+      "formula": "reported net income",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 net income", "concept": "net_income.parent", "weight": 3},
+        {"type": "calculation", "text": "Report ~= $77.7B", "weight": 2}
+      ]
+    },
+    {
+      "id": "amzn-assets", "ticker": "AMZN", "fiscal_year": 2025, "skill": "statement_analysis",
+      "question": "What were Amazon's total assets at the end of fiscal year 2025?",
+      "gold": {"value": 818042000000, "unit": "USD"},
+      "required_concepts": ["assets.total"],
+      "formula": "reported total assets",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 total assets", "concept": "assets.total", "weight": 3},
+        {"type": "calculation", "text": "Report ~= $818B", "weight": 2}
+      ]
+    },
+    {
+      "id": "khc-ni", "ticker": "KHC", "fiscal_year": 2025, "skill": "earnings_analysis",
+      "question": "What was Kraft Heinz's net income attributable to the company in fiscal year 2025?",
+      "gold": {"value": -5846000000, "unit": "USD"},
+      "required_concepts": ["net_income.parent"],
+      "formula": "reported net income (a loss)",
+      "note": "trap: company posted a net LOSS; answer must be negative",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve FY2025 net income", "concept": "net_income.parent", "weight": 3},
+        {"type": "calculation", "text": "Report ~= -$5.85B (a loss)", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-current", "ticker": "COST", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Costco's current ratio at the end of fiscal year 2025?",
+      "gold": {"value": 1.034, "unit": "ratio", "tolerance": 0.02},
+      "required_concepts": ["assets.current", "liabilities.current"],
+      "formula": "current ratio = current assets / current liabilities",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve current assets", "concept": "assets.current", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve current liabilities", "concept": "liabilities.current", "weight": 3},
+        {"type": "definition", "text": "Current ratio = current assets / current liabilities", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 1.03", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-roe", "ticker": "COST", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Costco's return on equity (ROE) in fiscal year 2025?",
+      "gold": {"value": 0.2777, "unit": "ratio", "tolerance": 0.008},
+      "required_concepts": ["net_income.parent", "equity.total"],
+      "formula": "ROE = net income / total stockholders' equity",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve net income", "concept": "net_income.parent", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve total equity", "concept": "equity.total", "weight": 3},
+        {"type": "definition", "text": "ROE = net income / total equity", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 27.8%", "weight": 2}
+      ]
+    },
+    {
+      "id": "cost-roa", "ticker": "COST", "fiscal_year": 2025, "skill": "metrics",
+      "question": "What was Costco's return on assets (ROA) in fiscal year 2025?",
+      "gold": {"value": 0.1051, "unit": "ratio", "tolerance": 0.006},
+      "required_concepts": ["net_income.parent", "assets.total"],
+      "formula": "ROA = net income / total assets",
+      "rubric": [
+        {"type": "retrieval", "text": "Retrieve net income", "concept": "net_income.parent", "weight": 3},
+        {"type": "retrieval", "text": "Retrieve total assets", "concept": "assets.total", "weight": 3},
+        {"type": "definition", "text": "ROA = net income / total assets", "weight": 2},
+        {"type": "calculation", "text": "Compute ~= 10.5%", "weight": 2}
+      ]
+    },
+    {
+      "id": "khc-gm", "ticker": "KHC", "fiscal_year": 2025, "skill": "abstention",
+      "question": "What was Kraft Heinz's gross margin in fiscal year 2025?",
+      "gold": {"answerable": false, "unit": "ratio"},
+      "note": "abstention trap: total revenue is not cleanly reported in this filing's structured data, so gross margin cannot be computed. The trustworthy answer is to say so, not invent a number.",
+      "rubric": [
+        {"type": "calculation", "text": "Recognize the inputs aren't reported and decline rather than fabricate a number", "weight": 4}
+      ]
+    },
+    {
+      "id": "cost-fcf", "ticker": "COST", "fiscal_year": 2025, "skill": "abstention",
+      "question": "What was Costco's free cash flow in fiscal year 2025?",
+      "gold": {"answerable": false, "unit": "USD"},
+      "note": "abstention trap: capital expenditures aren't available to the agent, so free cash flow (operating cash flow - capex) cannot be computed. Declining is correct.",
+      "rubric": [
+        {"type": "calculation", "text": "Recognize capex is unavailable and decline rather than fabricate", "weight": 4}
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@ import os
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -21,6 +21,19 @@ app = FastAPI(title="tieout", docs_url="/api/docs")
 # runs per rolling hour. Tune via the TIEOUT_RUN_LIMIT env var (0 = unlimited).
 _RUN_LIMIT = int(os.environ.get("TIEOUT_RUN_LIMIT", "40"))
 _RUN_TIMES: collections.deque = collections.deque()
+
+
+def _ratelimit():
+    if not _RUN_LIMIT:
+        return
+    now = time.time()
+    while _RUN_TIMES and now - _RUN_TIMES[0] > 3600:
+        _RUN_TIMES.popleft()
+    if len(_RUN_TIMES) >= _RUN_LIMIT:
+        raise HTTPException(status_code=429,
+                            detail="Hourly live-run limit reached (protects the demo's "
+                                   "API budget). Try again later.")
+    _RUN_TIMES.append(now)
 
 
 @app.get("/api/filings")
@@ -54,19 +67,28 @@ def analysis(ticker: str):
 
 @app.post("/api/analysis/{ticker}/run")
 def analysis_live(ticker: str):
-    if _RUN_LIMIT:
-        now = time.time()
-        while _RUN_TIMES and now - _RUN_TIMES[0] > 3600:
-            _RUN_TIMES.popleft()
-        if len(_RUN_TIMES) >= _RUN_LIMIT:
-            raise HTTPException(status_code=429,
-                                detail="Live-run limit reached for this hour — "
-                                       "try again later (this protects the demo's API budget).")
-        _RUN_TIMES.append(now)
+    _ratelimit()
     try:
         return service.analyze(ticker, force=True)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/ask/{ticker}")
+def ask(ticker: str, payload: dict = Body(...)):
+    question = (payload or {}).get("question", "").strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="question is required")
+    _ratelimit()
+    try:
+        return service.ask(ticker, question)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/benchmark")
+def benchmark():
+    return service.benchmark()
 
 
 @app.get("/")

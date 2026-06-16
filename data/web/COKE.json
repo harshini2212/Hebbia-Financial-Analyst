@@ -1,0 +1,549 @@
+{
+  "ticker": "COKE",
+  "issuer": "Coca-Cola Consolidated, Inc.",
+  "fiscal_year": 2025,
+  "filing_date": "2026-02-18",
+  "url": "https://www.sec.gov/Archives/edgar/data/317540/000162828026009057/coke-20251231.htm",
+  "scorecards": [
+    {
+      "name": "Claude (text)",
+      "facts": 19,
+      "agree": 12,
+      "disagree": 0,
+      "satisfied": 7,
+      "violated": 1,
+      "soft": 0,
+      "indeterminate": 8,
+      "judge_invisible": 0,
+      "attributions": [
+        {
+          "id": "rev.segments_sum",
+          "label": "filing_inconsistency",
+          "evidence": "ground-truth XBRL figures also break this identity"
+        }
+      ]
+    },
+    {
+      "name": "Baseline (regex)",
+      "facts": 12,
+      "agree": 0,
+      "disagree": 11,
+      "satisfied": 0,
+      "violated": 2,
+      "soft": 1,
+      "indeterminate": 13,
+      "judge_invisible": 0,
+      "attributions": [
+        {
+          "id": "bs.balance",
+          "label": "extraction_error",
+          "evidence": "assets.total: text=1 vs xbrl=4,302,998,000 (delta -4,302,997,999); liabilities.total: text=5,042,721 vs xbrl=5,042,721,000 (delta -5,037,678,279); equity.total: text=31 vs xbrl=-739,723,000 (delta 739,723,031)"
+        },
+        {
+          "id": "is.gross_profit",
+          "label": "extraction_error",
+          "evidence": "gross_profit.total: text=2,025 vs xbrl=2,872,362,000 (delta -2,872,359,975); revenue.total: text=5 vs xbrl=7,228,055,000 (delta -7,228,054,995); cogs.total: text=4,355,693 vs xbrl=4,355,693,000 (delta -4,351,337,307)"
+        }
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "id": "bs.balance",
+      "description": "Assets = Liabilities + Total equity + Mezzanine equity",
+      "severity": "hard",
+      "formula": "assets.total = liabilities.total + equity.total + equity.temporary",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 21514990.0
+    },
+    {
+      "id": "bs.lse_crosscheck",
+      "description": "Total liabilities & equity = Total assets",
+      "severity": "hard",
+      "formula": "liabilities_and_equity.total = assets.total",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1000.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 21514990.0
+    },
+    {
+      "id": "bs.lse_decomp",
+      "description": "Total liabilities & equity = Liabilities + Equity + Mezzanine",
+      "severity": "hard",
+      "formula": "liabilities_and_equity.total = liabilities.total + equity.total + equity.temporary",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 21514990.0
+    },
+    {
+      "id": "bs.assets_split",
+      "description": "Assets = Current + Non-current assets",
+      "severity": "hard",
+      "formula": "assets.total = assets.current + assets.noncurrent",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "bs.liabilities_split",
+      "description": "Liabilities = Current + Non-current liabilities",
+      "severity": "hard",
+      "formula": "liabilities.total = liabilities.current + liabilities.noncurrent",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "bs.equity_attribution",
+      "description": "Total equity = Parent equity + NCI",
+      "severity": "hard",
+      "formula": "equity.total = equity.parent + equity.nci",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "is.gross_profit",
+      "description": "Gross profit = Revenue - Cost of revenue",
+      "severity": "hard",
+      "formula": "gross_profit.total = revenue.total - cogs.total",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 14361810.0
+    },
+    {
+      "id": "is.operating_income",
+      "description": "Operating income = Gross profit - Operating expenses",
+      "severity": "hard",
+      "formula": "operating_income.total = gross_profit.total - opex.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 4753280.0
+    },
+    {
+      "id": "is.pretax_to_net",
+      "description": "Consolidated net income = Pretax - Tax + Equity-method + Discontinued ops",
+      "severity": "soft",
+      "formula": "net_income.consolidated = pretax_income.total - income_tax.total + income.equity_method + income.discontinued",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 2852910.0
+    },
+    {
+      "id": "is.net_income_attribution",
+      "description": "Consolidated net income = Parent + NCI",
+      "severity": "hard",
+      "formula": "net_income.consolidated = net_income.parent + net_income.nci",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "rev.segments_sum",
+      "description": "Sum of segment revenue = Total revenue",
+      "severity": "hard",
+      "formula": "revenue.total = sum(revenue.segment[segment])",
+      "gt_status": "violated",
+      "gt_residual": -7509751000.0,
+      "gt_band": 3000.0,
+      "claude_status": "violated",
+      "claude_residual": -281696000.0,
+      "claude_band": 37548755.0
+    },
+    {
+      "id": "opinc.segments_sum",
+      "description": "Sum of segment operating income = Operating income",
+      "severity": "hard",
+      "formula": "operating_income.total = sum(operating_income.segment[segment])",
+      "gt_status": "satisfied",
+      "gt_residual": 0.0,
+      "gt_band": 1500.0,
+      "claude_status": "satisfied",
+      "claude_residual": 0.0,
+      "claude_band": 4753280.0
+    },
+    {
+      "id": "margin.gross",
+      "description": "Gross margin = Gross profit / Revenue",
+      "severity": "hard",
+      "formula": "gross_margin.ratio = gross_profit.total / revenue.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "margin.operating",
+      "description": "Operating margin = Operating income / Revenue",
+      "severity": "hard",
+      "formula": "operating_margin.ratio = operating_income.total / revenue.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "margin.net",
+      "description": "Net margin = Net income (parent) / Revenue",
+      "severity": "hard",
+      "formula": "net_margin.ratio = net_income.parent / revenue.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    },
+    {
+      "id": "tax.effective_rate",
+      "description": "Effective tax rate = Income tax / Pretax income",
+      "severity": "hard",
+      "formula": "effective_tax_rate.ratio = income_tax.total / pretax_income.total",
+      "gt_status": "indeterminate",
+      "gt_residual": null,
+      "gt_band": null,
+      "claude_status": "indeterminate",
+      "claude_residual": null,
+      "claude_band": null
+    }
+  ],
+  "facts": [
+    {
+      "concept": "assets.current",
+      "text": 1426674000.0,
+      "xbrl": 1426674000.0,
+      "agree": true
+    },
+    {
+      "concept": "assets.total",
+      "text": 4302998000.0,
+      "xbrl": 4302998000.0,
+      "agree": true
+    },
+    {
+      "concept": "cfo.total",
+      "text": 931904000.0,
+      "xbrl": 931904000.0,
+      "agree": true
+    },
+    {
+      "concept": "cogs.total",
+      "text": 4355693000.0,
+      "xbrl": 4355693000.0,
+      "agree": true
+    },
+    {
+      "concept": "equity.total",
+      "text": -739723000.0,
+      "xbrl": null,
+      "agree": null
+    },
+    {
+      "concept": "gross_profit.total",
+      "text": 2872362000.0,
+      "xbrl": 2872362000.0,
+      "agree": true
+    },
+    {
+      "concept": "income_tax.total",
+      "text": 202336000.0,
+      "xbrl": 202336000.0,
+      "agree": true
+    },
+    {
+      "concept": "liabilities.current",
+      "text": 1128657000.0,
+      "xbrl": 1128657000.0,
+      "agree": true
+    },
+    {
+      "concept": "liabilities.total",
+      "text": 5042721000.0,
+      "xbrl": 5042721000.0,
+      "agree": true
+    },
+    {
+      "concept": "liabilities_and_equity.total",
+      "text": 4302998000.0,
+      "xbrl": 4302998000.0,
+      "agree": true
+    },
+    {
+      "concept": "net_income.consolidated",
+      "text": 570582000.0,
+      "xbrl": null,
+      "agree": null
+    },
+    {
+      "concept": "operating_income.total",
+      "text": 950656000.0,
+      "xbrl": 950656000.0,
+      "agree": true
+    },
+    {
+      "concept": "opex.total",
+      "text": 1921706000.0,
+      "xbrl": null,
+      "agree": null
+    },
+    {
+      "concept": "pretax_income.total",
+      "text": 772918000.0,
+      "xbrl": 772918000.0,
+      "agree": true
+    },
+    {
+      "concept": "revenue.total",
+      "text": 7228055000.0,
+      "xbrl": 7228055000.0,
+      "agree": true
+    }
+  ],
+  "propagation": [
+    {
+      "concept": "assets.noncurrent",
+      "value": 2876324000.0,
+      "unit": "USD",
+      "op": "assets.noncurrent (from assets.total = assets.current + assets.noncurrent)",
+      "inputs": 2
+    },
+    {
+      "concept": "liabilities.noncurrent",
+      "value": 3914064000.0,
+      "unit": "USD",
+      "op": "liabilities.noncurrent (from liabilities.total = liabilities.current + liabilities.noncurrent)",
+      "inputs": 2
+    },
+    {
+      "concept": "opex.total",
+      "value": 1921706000.0,
+      "unit": "USD",
+      "op": "opex.total (from operating_income.total = gross_profit.total - opex.total)",
+      "inputs": 2
+    },
+    {
+      "concept": "gross_margin.ratio",
+      "value": 0.39739072267713077,
+      "unit": "ratio",
+      "op": "gross_margin.ratio = gross_profit.total / revenue.total",
+      "inputs": 2
+    },
+    {
+      "concept": "operating_margin.ratio",
+      "value": 0.13152307225111584,
+      "unit": "ratio",
+      "op": "operating_margin.ratio = operating_income.total / revenue.total",
+      "inputs": 2
+    },
+    {
+      "concept": "net_margin.ratio",
+      "value": 0.07893990845393918,
+      "unit": "ratio",
+      "op": "net_margin.ratio = net_income.parent / revenue.total",
+      "inputs": 2
+    },
+    {
+      "concept": "effective_tax_rate.ratio",
+      "value": 0.2617819742849929,
+      "unit": "ratio",
+      "op": "effective_tax_rate.ratio = income_tax.total / pretax_income.total",
+      "inputs": 2
+    }
+  ],
+  "segments": {
+    "members": [
+      {
+        "name": "NonalcoholicBeverageSegment",
+        "value": 7183782000.0
+      },
+      {
+        "name": "AllOtherSegments",
+        "value": 325969000.0
+      }
+    ],
+    "total": 7228055000.0,
+    "sum": 7509751000.0,
+    "reconciles": false
+  },
+  "snapshot": {
+    "fy": 2025,
+    "years": [
+      2023,
+      2024,
+      2025
+    ],
+    "series": {
+      "revenue": [
+        {
+          "year": 2023,
+          "value": 6653858000.0
+        },
+        {
+          "year": 2024,
+          "value": 6899716000.0
+        },
+        {
+          "year": 2025,
+          "value": 7228055000.0
+        }
+      ],
+      "net income": [
+        {
+          "year": 2023,
+          "value": 408375000.0
+        },
+        {
+          "year": 2024,
+          "value": 633125000.0
+        },
+        {
+          "year": 2025,
+          "value": 570582000.0
+        }
+      ],
+      "operating income": [
+        {
+          "year": 2023,
+          "value": 834451000.0
+        },
+        {
+          "year": 2024,
+          "value": 920350000.0
+        },
+        {
+          "year": 2025,
+          "value": 950656000.0
+        }
+      ],
+      "total assets": [
+        {
+          "year": 2024,
+          "value": 5313139000.0
+        },
+        {
+          "year": 2025,
+          "value": 4302998000.0
+        }
+      ]
+    },
+    "margins": {
+      "gross": 0.39739072267712405,
+      "operating": 0.13152307225111043,
+      "net": 0.078939908453934,
+      "tax": 0.26178197428446487
+    },
+    "kpis": [
+      {
+        "label": "Revenue",
+        "value": 7228055000.0,
+        "yoy": 0.047587320985385484
+      },
+      {
+        "label": "Net income",
+        "value": 570582000.0,
+        "yoy": -0.09878460019743336
+      },
+      {
+        "label": "Total assets",
+        "value": 4302998000.0,
+        "yoy": -0.19012131999558077
+      },
+      {
+        "label": "Operating cash flow",
+        "value": 931904000.0,
+        "yoy": 0.06338398620653456
+      }
+    ],
+    "notable": [
+      "Revenue grew 5% year-over-year to $7.2B",
+      "Net income declined 10% YoY",
+      "Operating margin 13.2%",
+      "2 reportable segment(s)"
+    ],
+    "narrative": "In fiscal year 2025, Coca-Cola Consolidated grew its revenue 5% to $7.2 billion, and its operating income rose modestly to $950.7 million from $920.4 million the prior year. However, net income fell about 10% to $570.6 million, down from $633.1 million in FY2024, indicating that costs or other expenses below the operating line weighed on bottom-line profitability despite higher sales. Total assets also declined notably, from $5.3 billion to $4.3 billion."
+  },
+  "attribution": [
+    {
+      "id": "rev.segments_sum",
+      "label": "filing_inconsistency",
+      "evidence": "ground-truth XBRL figures also break this identity"
+    }
+  ],
+  "localization": {
+    "injected_segment": "NonalcoholicBeverageSegmentMember",
+    "injected_amount": 5000000000,
+    "residual": -12509751000.0,
+    "suspects": [
+      {
+        "concept": "revenue.segment",
+        "segment": "AllOtherSegmentsMember",
+        "value": 44273000.0,
+        "score": 1.0
+      },
+      {
+        "concept": "revenue.segment",
+        "segment": "NonalcoholicBeverageSegmentMember",
+        "value": 57478000.0,
+        "score": 1.0
+      },
+      {
+        "concept": "revenue.segment",
+        "segment": "NonalcoholicBeverageSegmentMember",
+        "value": 7126304000.0,
+        "score": 1.0
+      },
+      {
+        "concept": "revenue.segment",
+        "segment": "AllOtherSegmentsMember",
+        "value": 325969000.0,
+        "score": 1.0
+      },
+      {
+        "concept": "revenue.segment",
+        "segment": "NonalcoholicBeverageSegmentMember",
+        "value": 12183782000.0,
+        "score": 1.0
+      },
+      {
+        "concept": "revenue.total",
+        "segment": "(total)",
+        "value": 7228055000.0,
+        "score": 0.2
+      }
+    ]
+  }
+}
