@@ -145,6 +145,10 @@
   .qstatus.warn{background:var(--warn-soft);border-color:#f0dcbf;color:var(--warn)}
   .tev2{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0}
   .tickok{color:var(--ok);font-weight:700} .tickdim{color:var(--faint)}
+  .acbox{position:absolute;top:42px;left:0;width:360px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow);z-index:30;max-height:320px;overflow:auto}
+  .acbox:empty{display:none}
+  .acitem{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line2);display:flex;gap:9px;align-items:baseline}
+  .acitem:last-child{border-bottom:none} .acitem:hover{background:var(--accent-soft)}
   .memo{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:26px 30px;max-width:760px;box-shadow:var(--shadow-sm)}
   .memo h2{font-size:18px;margin:0 0 2px} .memo .by{color:var(--faint);font-size:11.5px;margin-bottom:16px}
   .memo h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin:18px 0 8px}
@@ -384,8 +388,11 @@ function closeInspect(){document.getElementById('scrim').classList.remove('show'
 /* ---------- Companies ---------- */
 function vCompanies(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="phead"><h1>Companies</h1><p>Select a company to set the active entity. EDGAR ingests its filings; the synthetic ERP/CRM is calibrated to its real XBRL.</p></div>`));
-  const sb=$(`<div class="search"><input id="csearch" placeholder="Ticker (e.g. CRM, SNOW) — runs live, ~30s"/><button class="btn" id="cgo">Run live</button></div>`);
+  el.appendChild($(`<div class="phead"><h1>Companies</h1><p>Search <b>any</b> public company by name or ticker — EDGAR ingests its filings and the synthetic ERP/CRM is calibrated to its real XBRL. <b>Calibrated demo data.</b></p></div>`));
+  const sb=$(`<div class="search" style="position:relative">
+    <input id="csearch" autocomplete="off" spellcheck="false" placeholder="Search a company — Nvidia, Salesforce, Costco…" style="flex:0 0 360px"/>
+    <div id="cac" class="acbox"></div>
+    <span id="cmsg" class="muted" style="font-size:12px;align-self:center"></span></div>`);
   el.appendChild(sb);
   const cards=$('<div class="cards"></div>');
   S.companies.forEach(co=>{const active=co.ticker===S.company;
@@ -396,13 +403,28 @@ function vCompanies(){
     c.onclick=async()=>{S.company=co.ticker;await loadCompany();S.tab='qoe';renderNav();render();};
     cards.appendChild(c);});
   el.appendChild(cards);
-  setTimeout(()=>{const go=async()=>{const t=(sb.querySelector('#csearch').value||'').trim().toUpperCase();if(!t||S.busy)return;
-    S.busy=true;sb.querySelector('#cgo').textContent='Running…';
-    try{const r=await fetch('/api/qoe/'+t+'/run',{method:'POST'});if(!r.ok)throw new Error((await r.json()).detail||r.statusText);
-      S.company=t;S.companies=await(await fetch('/api/qoe/companies')).json();await loadCompany();S.tab='qoe';renderNav();render();}
-    catch(e){alert('Could not run '+t+': '+e.message);S.busy=false;sb.querySelector('#cgo').textContent='Run live';}};
-    sb.querySelector('#cgo').onclick=go;sb.querySelector('#csearch').onkeydown=e=>{if(e.key==='Enter')go();};},0);
+  setTimeout(()=>wireCompanySearch(sb),0);
   return el;
+}
+/* typeahead: resolve a NAME -> ticker via /api/search, then run live (fixes 'NVIDIA not found') */
+function wireCompanySearch(sb){
+  const inp=sb.querySelector('#csearch'), ac=sb.querySelector('#cac'), msg=sb.querySelector('#cmsg');
+  let timer;
+  const run=async(ticker,name)=>{
+    ac.innerHTML=''; msg.innerHTML='<span class="spin" style="margin:0"></span> ingesting '+esc(name||ticker)+' from SEC EDGAR… (~30s first time)';
+    try{const r=await fetch(`${API}/api/qoe/${ticker}/run`,{method:'POST'});if(!r.ok)throw new Error((await r.json()).detail||r.statusText);
+      S.company=ticker; S.companies=await(await fetch(`${API}/api/qoe/companies`)).json(); await loadCompany(); S.tab='qoe'; renderNav(); render();}
+    catch(e){ msg.textContent='Could not run '+ticker+': '+e.message; }
+  };
+  inp.oninput=()=>{clearTimeout(timer);const q=inp.value.trim();if(q.length<2){ac.innerHTML='';return;}
+    timer=setTimeout(async()=>{ let res=[];
+      try{res=await(await fetch(`${API}/api/search?q=`+encodeURIComponent(q))).json();}catch(e){}
+      ac.innerHTML=(res||[]).slice(0,8).map(c=>`<div class="acitem" data-t="${c.ticker}" data-n="${esc(c.name)}"><span class="mono" style="color:var(--accent);font-weight:700;min-width:54px">${c.ticker}</span><span>${esc(c.name)}</span></div>`).join('')
+        ||'<div class="acitem muted">no match — try the ticker</div>';
+      ac.querySelectorAll('.acitem[data-t]').forEach(it=>it.onclick=()=>run(it.getAttribute('data-t'),it.getAttribute('data-n')));
+    },180);};
+  inp.onkeydown=e=>{if(e.key==='Enter'){const f=ac.querySelector('.acitem[data-t]');if(f)f.click();}};
+  inp.onblur=()=>setTimeout(()=>{ac.innerHTML='';},200);
 }
 
 /* ---------- Sources (connectors) ---------- */
