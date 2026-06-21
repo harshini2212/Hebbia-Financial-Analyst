@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -27,6 +28,11 @@ _SSE_HEADERS = {"Cache-Control": "no-cache", "Connection": "keep-alive",
 _STATIC = Path(__file__).parent / "static"
 
 app = FastAPI(title="tieout", docs_url="/api/docs")
+
+# Public read-only demo API: allow any origin so a separately-hosted UI (or the
+# static export) can stream from it. (No GZipMiddleware — it would buffer SSE.)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
+                   allow_headers=["*"])
 
 # Protect a public "Run live" button from running up the Anthropic bill: cap live
 # runs per rolling hour. Tune via the TIEOUT_RUN_LIMIT env var (0 = unlimited).

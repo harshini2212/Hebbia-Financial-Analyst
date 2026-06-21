@@ -1,5 +1,7 @@
-# Full server (live runs): FastAPI + Claude + XBRL parsing.
+# Full server (live runs): FastAPI + Claude + XBRL parsing + the synthetic engine.
 fastapi>=0.110
 uvicorn[standard]>=0.27
 anthropic>=0.40
 arelle-release>=2.20
+numpy>=1.26          # synthetic engine: distributions + IPF
+scipy>=1.11          # synthetic engine: stats

@@ -1,0 +1,16 @@
+.git/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.cache/
+.arelle/
+out/
+public/
+.venv/
+venv/
+*.env
+credentials*
+.claude/
+docs/img/
+# keep data/ — cached web + QoE artifacts are served at runtime
