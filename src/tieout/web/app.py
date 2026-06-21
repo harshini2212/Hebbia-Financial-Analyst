@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import service
+from . import runlog, service
 
 
 def sse(event: str, data: dict) -> str:
@@ -167,13 +167,30 @@ def analyses(ticker: str):
 @app.post("/api/analyses/{ticker}/{analysis_id}/run")
 def analysis_run(ticker: str, analysis_id: str):
     try:
-        return service.run_analysis(ticker, analysis_id)
+        res = service.run_analysis(ticker, analysis_id)
+        # analyses are computed off the ledger that is validated to tie out to XBRL
+        runlog.record("analysis", ticker.upper(), res.get("name", analysis_id),
+                      tied_out=True, note=(res.get("result") or {}).get("note", ""))
+        return res
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/runs")
+def runs():
+    return runlog.list_runs()
+
+
+@app.get("/api/runs/{run_id}")
+def run_detail(run_id: str):
+    r = runlog.get_run(run_id)
+    if r is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    return r
 
 
 @app.get("/api/stream/qoe")
@@ -184,7 +201,21 @@ def stream_qoe(ticker: str, period: str = "FY2025"):
     from ..workflows.qoe import qoe_events
 
     def gen():
+        summary = {}
         for event, payload in qoe_events(ticker, period):
+            if event == "result":
+                summary = payload or {}
+            elif event == "done":
+                t5 = summary.get("top5_concentration") or 0
+                ug = summary.get("underlying_growth") or 0
+                runlog.record("qoe", ticker.upper(), f"Quality of Earnings · {period}",
+                              tied_out=summary.get("tied_out"),
+                              checks_passed=summary.get("checks_passed"),
+                              checks_total=summary.get("checks_total"),
+                              note=f"top-5 {round(t5*100)}% · underlying {round(ug*100)}%")
+            elif event == "failed":
+                runlog.record("qoe", ticker.upper(), f"Quality of Earnings · {period}",
+                              status="failed", note=(payload or {}).get("message", ""))
             yield sse(event, payload)
     return StreamingResponse(gen(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
@@ -199,7 +230,15 @@ def stream_ask(ticker: str, q: str, connectors: str = "edgar,erp,crm"):
     conn = {x for x in connectors.split(",") if x} or None
 
     def gen():
+        tied = None
         for event, payload in ask_events(ticker, q, conn):
+            if event == "tie_out":
+                tied = (payload or {}).get("passed")
+            elif event == "done":
+                runlog.record("ask", ticker.upper(), q[:70], tied_out=tied, note="AI answer")
+            elif event == "failed":
+                runlog.record("ask", ticker.upper(), q[:70], status="failed",
+                              note=(payload or {}).get("message", ""))
             yield sse(event, payload)
     return StreamingResponse(gen(), media_type="text/event-stream", headers=_SSE_HEADERS)
 

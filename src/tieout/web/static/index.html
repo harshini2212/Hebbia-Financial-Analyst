@@ -172,12 +172,12 @@
 <div class="drawer" id="drawer"></div>
 
 <script>
-const NAV=[['qoe','QoE workspace','▦'],['ask','Ask anything','✦'],['analyses','Analyses','▥'],['companies','Companies','▤'],
+const NAV=[['home','Dashboard','◆'],['qoe','QoE workspace','▦'],['ask','Ask anything','✦'],['analyses','Analyses','▥'],['companies','Companies','▤'],
   ['sources','Connectors','⇄'],['runs','Runs','↻'],['artifacts','Investor memo','▭'],['evals','Trust','✓']];
 // same-origin by default (works on localhost + a whole-app deploy); set to the deployed
 // API URL only if the UI is hosted on a different origin than the API.
 const API='';
-const S={tab:'qoe',company:null,companies:[],qoe:null,sources:[],conn:new Set(),analyses:null,evals:null,bench:null,inspect:null,busy:false};
+const S={tab:'home',company:null,companies:[],qoe:null,sources:[],conn:new Set(),analyses:null,evals:null,bench:null,inspect:null,busy:false};
 function have(id){return id==='edgar'||S.conn.has(id);}
 const $=h=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
 function pct(v){return v==null?'—':(v*100).toFixed(Math.abs(v*100)>=10?0:1)+'%';}
@@ -211,8 +211,55 @@ function renderCtx(){
   c.innerHTML=`<div class="co"><span class="tk">${q.ticker}</span> · ${q.issuer} · FY${q.fiscal_year}</div><div class="srcs">${chips}</div>`;
 }
 function render(){const v=document.getElementById('view');
-  v.innerHTML='';v.appendChild(({workflows:vWorkflows,qoe:vQoE,ask:vAsk,analyses:vAnalyses,companies:vCompanies,sources:vSources,
-    runs:vRuns,artifacts:vArtifacts,evals:vEvals}[S.tab]||vQoE)());}
+  v.innerHTML='';v.appendChild(({home:vHome,workflows:vWorkflows,qoe:vQoE,ask:vAsk,analyses:vAnalyses,companies:vCompanies,sources:vSources,
+    runs:vRuns,artifacts:vArtifacts,evals:vEvals}[S.tab]||vHome)());}
+
+/* ---------- Dashboard (landing) ---------- */
+function vHome(){
+  const el=$('<div></div>');const q=S.qoe;
+  el.appendChild($(`<div class="phead"><h1>Financial diligence, verified</h1><p>Pick a company and a focus. Every number ties out to SEC EDGAR/XBRL; connect ERP/CRM/HRIS to go deeper. <b>Calibrated demo data — not real.</b></p></div>`));
+  el.appendChild($(`<div class="search" style="margin-bottom:18px;position:relative"><input id="home-q" autocomplete="off" placeholder="Search any public company — e.g. NVIDIA, Microsoft, AMD…" style="flex:1"/><div id="home-ac" class="ac"></div></div>`));
+  el.appendChild($(`<div id="home-msg" class="muted" style="font-size:12px;margin:-8px 0 14px;min-height:16px"></div>`));
+  const tiles=[
+    ['qoe','Quality of Earnings','▦','Reconcile reported vs underlying growth — concentration, one-time items, retention.'],
+    ['analyses','Company & SEC analysis','▥','Margins, cash flow, ROI by segment, headcount — from filings + the ledger.'],
+    ['ask','Ask anything (AI)','✦','A grounded AI analyst answers any question with citations + a tie-out badge.'],
+    ['artifacts','Investor / hedge-fund memo','▭','A finished, source-cited diligence memo you can download.']];
+  const grid=$('<div class="cards"></div>');
+  tiles.forEach(([tab,name,ic,desc])=>{const c=$(`<div class="card" style="cursor:pointer"><div class="ct">${ic} ${name}</div><div class="cd">${desc}</div><div style="margin-top:10px"><span class="chip acc">open ▸</span></div></div>`);
+    c.onclick=()=>{S.tab=tab;renderNav();render();};grid.appendChild(c);});
+  el.appendChild(grid);
+  if(q&&q.ticker){
+    el.appendChild($(`<div class="ulabel" style="margin:20px 0 8px">Active company · ${esc(q.issuer)} (${esc(q.ticker)}) · FY${q.fiscal_year}</div>`));
+    el.appendChild($(`<div class="kpis">
+      <div class="kpi"><div class="kl">Reported growth</div><div class="kv">${pct(q.reported_growth)}</div></div>
+      <div class="kpi"><div class="kl">Underlying (ex-largest)</div><div class="kv">${pct(q.underlying_growth)}</div></div>
+      <div class="kpi"><div class="kl">Top-5 concentration</div><div class="kv">${pct(q.top5_concentration)}</div></div>
+      <div class="kpi"><div class="kl">Net retention</div><div class="kv">${q.net_retention!=null?pct(q.net_retention):'—'}</div></div>
+      <div class="kpi"><div class="kl">Reconciliation</div><div class="kv">${q.tied_out?'tied ✓':'variance'}</div></div>
+    </div>`));
+  }
+  setTimeout(wireHomeSearch,0);
+  return el;
+}
+function wireHomeSearch(){
+  const inp=document.getElementById('home-q'),ac=document.getElementById('home-ac');if(!inp)return;
+  let timer;
+  inp.oninput=()=>{clearTimeout(timer);const v=inp.value.trim();if(v.length<2){ac.innerHTML='';return;}
+    timer=setTimeout(async()=>{let res=[];try{res=await(await fetch(`${API}/api/search?q=`+encodeURIComponent(v))).json();}catch(e){}
+      ac.innerHTML=(res||[]).slice(0,8).map(c=>`<div class="acitem" data-t="${c.ticker}" data-n="${esc(c.name)}"><span class="mono" style="color:var(--accent);font-weight:700;min-width:54px">${c.ticker}</span><span>${esc(c.name)}</span></div>`).join('')||'<div class="acitem muted">no match — try the ticker</div>';
+      ac.querySelectorAll('.acitem[data-t]').forEach(it=>it.onclick=()=>selectCompanyByTicker(it.getAttribute('data-t'),it.getAttribute('data-n')));
+    },180);};
+  inp.onkeydown=e=>{if(e.key==='Enter'){const f=ac.querySelector('.acitem[data-t]');if(f)f.click();}};
+  inp.onblur=()=>setTimeout(()=>{ac.innerHTML='';},200);
+}
+async function selectCompanyByTicker(ticker,name){
+  const msg=document.getElementById('home-msg');const ac=document.getElementById('home-ac');if(ac)ac.innerHTML='';
+  if(msg)msg.innerHTML='<span class="spin" style="margin:0"></span> ingesting '+esc(name||ticker)+' from SEC EDGAR… (~30s first time)';
+  try{const r=await fetch(`${API}/api/qoe/${ticker}/run`,{method:'POST'});if(!r.ok)throw new Error(((await r.json())||{}).detail||r.statusText);
+    S.company=ticker;S.companies=await(await fetch(`${API}/api/qoe/companies`)).json();await loadCompany();S.tab='qoe';renderNav();render();}
+  catch(e){if(msg)msg.textContent='Could not load '+ticker+': '+e.message;}
+}
 
 /* ---------- Ask anything (live AI query agent) ---------- */
 function vAsk(){
@@ -592,64 +639,108 @@ function renderAnalysis(data){
     <div class="pb">${r.note?`<div class="callout" style="margin-bottom:12px">${esc(r.note)}</div>`:''}${body}</div></div>`;
 }
 
-/* ---------- Runs ---------- */
+/* ---------- Runs (live activity log) ---------- */
 function vRuns(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="phead"><h1>Runs</h1><p>Workflows are a standing process, not a one-off. They re-run when a new filing lands or ERP data refreshes, and diff against the prior run.</p></div>`));
-  let rows=S.companies.map(co=>`<tr><td><b>Quality of Earnings</b></td><td class="mono">${co.ticker}</td>
-    <td>${co.tied_out?'<span class="chip ok">tied out ✓</span>':'—'}</td><td class="muted">on latest 10-K</td>
-    <td><span class="chip slate">watch: re-run on new filing</span></td></tr>`).join('');
-  el.appendChild($(`<div class="panel flush"><table><thead><tr><th>Workflow</th><th>Company</th><th>Status</th><th>Trigger</th><th>Monitor</th></tr></thead><tbody>${rows}</tbody></table></div>`));
-  el.appendChild($(`<div class="note">Continuous monitoring (scheduled re-runs + delta alerts on concentration / DSO / covenant headroom) is wired as a scheduler hook — roadmap.</div>`));
+  el.appendChild($(`<div class="phead"><h1>Runs — activity log</h1><p>Every QoE stream, AI question, and analysis you run is recorded here (this session). Click a row to re-open it.</p></div>`));
+  el.appendChild($(`<div style="margin-bottom:10px"><button class="btn ghost" id="runs-refresh">↻ Refresh</button></div>`));
+  el.appendChild($(`<div id="runs-body"><div class="loading"><span class="spin"></span>loading…</div></div>`));
+  setTimeout(()=>{loadRuns();const b=document.getElementById('runs-refresh');if(b)b.onclick=loadRuns;},0);
   return el;
 }
+async function loadRuns(){
+  const body=document.getElementById('runs-body');if(!body)return;
+  let runs;try{runs=await(await fetch(`${API}/api/runs`)).json();}catch(e){body.innerHTML='<div class="muted">backend offline</div>';return;}
+  if(!runs||!runs.length){body.innerHTML='<div class="note">No runs yet this session. Stream a QoE run, ask a question, or run an analysis — they\'ll appear here.</div>';return;}
+  const ICON={qoe:'▦',ask:'✦',analysis:'▥',grid:'▤'};
+  const rows=runs.map(r=>{
+    const tied=r.tied_out===true?'<span class="chip ok">tied ✓</span>':(r.tied_out===false?'<span class="chip bad">variance</span>':'');
+    const st=r.status==='failed'?'<span class="chip bad">failed</span>':'<span class="chip ok">done</span>';
+    const checks=r.checks_total?`<span class="muted" style="font-size:11px">${r.checks_passed}/${r.checks_total} checks</span>`:'';
+    return `<tr class="runrow" data-rid="${r.run_id}" data-wf="${esc(r.workflow)}" data-co="${esc(r.company)}" style="cursor:pointer">
+      <td>${ICON[r.workflow]||'•'} <b>${esc((r.workflow||'').toUpperCase())}</b></td>
+      <td class="mono">${esc(r.company)}</td><td style="max-width:320px">${esc(r.label||'')}${r.note?`<div class="muted" style="font-size:11px">${esc(r.note)}</div>`:''}</td>
+      <td>${st} ${tied} ${checks}</td><td class="muted">${relTime(r.ts)}</td></tr>`;
+  }).join('');
+  body.innerHTML=`<div class="panel flush"><table><thead><tr><th>Workflow</th><th>Company</th><th>Detail</th><th>Result</th><th>When</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  body.querySelectorAll('.runrow').forEach(tr=>tr.onclick=()=>openRun(tr.dataset.wf,tr.dataset.co));
+}
+function openRun(wf,co){
+  const tab=(wf==='analysis'?'analyses':(wf==='ask'?'ask':'qoe'));
+  if(co&&co!==S.company&&S.companies.find(c=>c.ticker===co)){S.company=co;loadCompany().then(()=>{S.tab=tab;renderNav();render();});return;}
+  S.tab=tab;renderNav();render();
+}
+function relTime(ts){if(!ts)return '';const s=Math.max(0,Date.now()/1000-ts);
+  if(s<60)return Math.floor(s)+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 
-/* ---------- Artifacts (memo) ---------- */
+/* ---------- Investor memo (Artifacts) ---------- */
 function vArtifacts(){
   const q=S.qoe;const el=$('<div></div>');
-  el.appendChild($(`<div class="phead"><h1>Artifacts</h1><p>A finished, source-cited deliverable generated from the run. Citations travel with it (public → filing; private → ledger).</p></div>`));
-  if(!q||!q.ticker){el.appendChild($('<div class="note">No run loaded.</div>'));return el;}
-  const ins=(q.insights||[]).map(i=>`<li>${esc(i.headline)} <span class="cite">— ${esc(i.evidence)}</span></li>`).join('');
-  el.appendChild($(`<div class="memo">
-    <h2>Quality-of-Earnings — ${q.issuer} (${q.ticker})</h2>
-    <div class="by">FY${q.fiscal_year} · calibrated demo data anchored to SEC EDGAR/XBRL · ${q.tied_out?'reconciliation tied out ✓':'reconciliation variance'}</div>
-    <h3>Summary</h3>
-    <div style="font-size:13px">Reported growth of ${pct(q.reported_growth)} is concentrated: the top 5 customers are ${pct(q.top5_concentration)} of revenue and ex-largest underlying growth is ${pct(q.underlying_growth)}. Net retention ${q.net_retention!=null?pct(q.net_retention):'—'}; pipeline covers ${q.pipeline&&q.pipeline.coverage!=null?pct(q.pipeline.coverage):'—'} of next-year growth.</div>
-    <h3>Findings</h3><ul>${ins}</ul>
-    <h3>Reconciliation</h3>
-    <div style="font-size:12.5px" class="muted">${(q.reconciliation||[]).filter(r=>r.fiscal_year===q.fiscal_year).length} public marginals checked against the private ledger — ${q.tied_out?'all tie out within tolerance':'see variances'}.</div>
-    <div style="margin-top:18px"><button class="btn" onclick="dlMemo()">Download memo (.md)</button> <span class="faint" style="font-size:11px">Word / PPTX export — roadmap</span></div>
-  </div>`));
+  el.appendChild($(`<div class="phead"><h1>Investor memo${q?` — ${esc(q.issuer)}`:''}</h1><p>A finished, source-cited diligence memo generated from the run. Public figures cite the 10-K (XBRL); granular figures cite the synthetic ERP/CRM ledger. <b>Calibrated demo data.</b></p></div>`));
+  if(!q||!q.ticker){el.appendChild($('<div class="note">No company loaded — pick one on the Dashboard.</div>'));return el;}
+  el.appendChild($(`<div style="margin-bottom:14px"><button class="btn" id="dl-md">Download .md</button> <button class="btn ghost" id="dl-txt">Download .txt</button> ${have('erp')&&have('crm')?'<span class="chip ok">ERP + CRM connected — full memo</span>':'<span class="chip slate">connect ERP + CRM for the full memo</span>'}</div>`));
+  el.appendChild($(`<div class="memo">${memoHTML(q)}</div>`));
+  setTimeout(()=>{const a=document.getElementById('dl-md'),b=document.getElementById('dl-txt');if(a)a.onclick=()=>dlMemo('md');if(b)b.onclick=()=>dlMemo('txt');},0);
   return el;
 }
-function dlMemo(){const q=S.qoe;
-  let md=`# Quality of Earnings — ${q.issuer} (${q.ticker}) FY${q.fiscal_year}\n\n_Calibrated demo data anchored to SEC EDGAR/XBRL. Reconciliation ${q.tied_out?'tied out.':'has variance.'}_\n\n## Findings\n`;
-  (q.insights||[]).forEach(i=>{md+=`- **${i.headline}** — ${i.detail} (${i.evidence})\n`;});
-  const b=new Blob([md],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`QoE_${q.ticker}.md`;a.click();}
+function memoSections(q){
+  const top5=pct(q.top5_concentration),rep=pct(q.reported_growth),und=pct(q.underlying_growth);
+  const nrr=q.net_retention!=null?pct(q.net_retention):'—',cov=q.pipeline&&q.pipeline.coverage!=null?pct(q.pipeline.coverage):'—';
+  const wc=q.working_capital||{};const lg=q.largest_customer?(typeof q.largest_customer==='string'?q.largest_customer:(q.largest_customer.name||'')):'';
+  const out=[];
+  out.push(['Thesis',`${q.issuer} (${q.ticker}) reports FY${q.fiscal_year} revenue growth of ${rep}. The headline is flattered by concentration — the top 5 customers are ${top5} of revenue and underlying growth ex-largest is ${und}. Quality-of-earnings reconciliation ${q.tied_out?'ties out to the filed XBRL within tolerance':'shows variances against the filing'}.`]);
+  out.push(['Revenue quality',`Reported growth ${rep} vs underlying ${und} ex-largest customer${q.one_time_pct!=null?`; one-time items are ${pct(q.one_time_pct)} of revenue`:''}${q.recurring_growth!=null?`; recurring base grows ${pct(q.recurring_growth)}`:''}.`]);
+  out.push(['Customer concentration',`Top 5 customers = ${top5} of revenue${lg?`; largest is ${lg}`:''}. This is not broken out in the 10-K — it is surfaced from the ledger.`]);
+  if(wc.dso!=null)out.push(['Working capital',`DSO ${wc.dso}d${wc.dso_change!=null?` (${wc.dso_change>0?'+':''}${wc.dso_change}d YoY)`:''}${wc.dio!=null?`, DIO ${wc.dio}d`:''}${wc.dpo!=null?`, DPO ${wc.dpo}d`:''}.`]);
+  out.push(['Retention & pipeline',`Net revenue retention ${nrr}; win-rate-weighted pipeline covers ${cov} of next-year growth.`]);
+  if((q.insights||[]).length)out.push(['Key findings',(q.insights||[]).map(i=>`• ${i.headline}${i.evidence?` — ${i.evidence}`:''}`).join('\n')]);
+  out.push(['Reconciliation & trust',`${(q.reconciliation||[]).filter(r=>r.fiscal_year===q.fiscal_year).length} public marginals checked against the private ledger — ${q.tied_out?'all tie out within tolerance.':'see variances.'} Every figure is traceable to either the 10-K (XBRL) or the calibrated ledger.`]);
+  return out;
+}
+function memoHTML(q){
+  return `<h2>Diligence memo — ${esc(q.issuer)} (${esc(q.ticker)})</h2>
+    <div class="by">FY${q.fiscal_year} · calibrated demo data anchored to SEC EDGAR/XBRL · ${q.tied_out?'reconciliation tied out ✓':'reconciliation variance'}</div>`+
+    memoSections(q).map(([h,b])=>`<h3>${esc(h)}</h3><div style="font-size:13px;white-space:pre-wrap;line-height:1.55">${esc(b)}</div>`).join('');
+}
+function dlMemo(fmt){const q=S.qoe;const secs=memoSections(q);let body;
+  if(fmt==='md'){body=`# Diligence memo — ${q.issuer} (${q.ticker}) FY${q.fiscal_year}\n\n_Calibrated demo data anchored to SEC EDGAR/XBRL. Reconciliation ${q.tied_out?'tied out.':'has variance.'}_\n\n`;
+    secs.forEach(([h,b])=>{body+=`## ${h}\n\n${b}\n\n`;});}
+  else{body=`DILIGENCE MEMO — ${q.issuer} (${q.ticker}) FY${q.fiscal_year}\nCalibrated demo data anchored to SEC EDGAR/XBRL. Reconciliation ${q.tied_out?'tied out.':'has variance.'}\n\n`;
+    secs.forEach(([h,b])=>{body+=`${h.toUpperCase()}\n${b}\n\n`;});}
+  const blob=new Blob([body],{type:fmt==='md'?'text/markdown':'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`memo_${q.ticker}.${fmt}`;a.click();}
 
-/* ---------- Evals ---------- */
+/* ---------- Trust & validation (Evals) ---------- */
 function vEvals(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="phead"><h1>Evals — the trust layer</h1><p>The tie-out harness, surfaced globally. It validates real extraction <i>and</i> synthetic generation — one trust layer doing both jobs.</p></div>`));
-  const tied=S.companies.filter(c=>c.tied_out).length;
-  el.appendChild($(`<div class="kpis">
-    <div class="kc good"><div class="k">QoE reconciliations</div><div class="v">${tied}/${S.companies.length}</div><div class="d">synthetic ledger ties to XBRL</div></div>
-    <div class="kc good"><div class="k">Tie-out tolerance</div><div class="v">±1%</div><div class="d">interval, rounding-aware</div></div>
-    <div class="kc"><div class="k">Constraints / company</div><div class="v">6+</div><div class="d">revenue, segments, COGS, AR…</div></div>
-    <div class="kc"><div class="k">Ground truth</div><div class="v">XBRL</div><div class="d">machine-readable, free</div></div>
+  el.appendChild($(`<div class="phead"><h1>Trust &amp; validation</h1><p>One tie-out harness validates both real extraction <i>and</i> synthetic generation. This is whether you can believe the numbers.</p></div>`));
+  el.appendChild($(`<div id="trust-live"><div class="loading"><span class="spin"></span>computing live tie-out stats…</div></div>`));
+  el.appendChild($(`<div class="kpis" style="margin-top:14px">
+    <div class="kc good"><div class="k">Reconciliation tolerance</div><div class="v">±1%</div><div class="d">rounding-aware interval</div></div>
+    <div class="kc"><div class="k">Ground truth</div><div class="v">XBRL</div><div class="d">machine-readable filings</div></div>
+    <div class="kc good"><div class="k">Generation gate</div><div class="v">ON</div><div class="d">ledger rejected unless it sums to XBRL</div></div>
   </div>`));
-  if(!S.evals){fetch('/api/eval/metrics').then(r=>r.json()).then(m=>{S.evals=m||{};if(S.tab==='evals')render();}).catch(()=>{S.evals={};});
-    el.appendChild($('<div class="loading"><span class="spin"></span>loading verified-grid metrics…</div>'));return el;}
-  const m=S.evals;
-  if(m&&m.tie_out_accuracy!=null){
-    el.appendChild($(`<div class="panel"><div class="ph"><h3>Verified Query Grid — extraction eval</h3><span class="sub">the other half of the trust layer</span></div><div class="pb"><div class="miniwc">
-      <div class="wccell"><div class="k">Tie-out</div><div class="v">${pct(m.tie_out_accuracy)}</div></div>
-      <div class="wccell"><div class="k">Hallucination</div><div class="v">${pct(m.hallucination_rate)}</div></div>
-      <div class="wccell"><div class="k">Grounding</div><div class="v">${pct(m.grounding_rate)}</div></div>
-      <div class="wccell"><div class="k">Escalations</div><div class="v">${m.gate?m.gate.escalated:'—'}</div></div></div></div></div>`));
-  }
-  el.appendChild($(`<div class="callout">Generation tie-out: every synthetic ledger is rejected unless it sums back to the reported XBRL within tolerance. Same harness as real-extraction verification.</div>`));
+  el.appendChild($(`<div class="callout" style="margin-top:14px"><b>What we validate:</b> (1) <b>Generation tie-out</b> — every synthetic ledger must sum back to the reported XBRL within tolerance or it is rejected. (2) <b>Extraction tie-out</b> — every AI figure is re-checked against the filing. Same harness, two jobs.</div>`));
+  el.appendChild($(`<div id="trust-grid"></div>`));
+  setTimeout(loadTrust,0);
   return el;
+}
+async function loadTrust(){
+  const live=document.getElementById('trust-live');
+  let runs=[];try{runs=await(await fetch(`${API}/api/runs`)).json();}catch(e){}
+  const cp=runs.reduce((a,r)=>a+(r.checks_passed||0),0),ct=runs.reduce((a,r)=>a+(r.checks_total||0),0);
+  const tiedRuns=runs.filter(r=>r.tied_out===true).length,totRuns=runs.filter(r=>r.tied_out!=null).length;
+  if(live)live.innerHTML=`<div class="kpis">
+    <div class="kc good"><div class="k">Tie-out checks passed</div><div class="v">${ct?Math.round(cp/ct*100)+'%':'—'}</div><div class="d">${cp}/${ct} across your runs</div></div>
+    <div class="kc good"><div class="k">Runs fully tied out</div><div class="v">${totRuns?tiedRuns+'/'+totRuns:'—'}</div><div class="d">this session</div></div>
+    <div class="kc"><div class="k">Companies</div><div class="v">${S.companies.length}</div><div class="d">EDGAR-anchored</div></div>
+  </div>`+(ct?'':'<div class="note" style="margin-top:8px">Run a QoE stream or an analysis to populate live tie-out stats.</div>');
+  if(!S.evals){try{S.evals=await(await fetch(`${API}/api/eval/metrics`)).json();}catch(e){S.evals={};}}
+  const m=S.evals||{},g=document.getElementById('trust-grid');
+  if(g&&m.tie_out_accuracy!=null)g.innerHTML=`<div class="panel" style="margin-top:14px"><div class="ph"><h3>Verified Query Grid — extraction eval</h3><span class="sub">the other half of the trust layer</span></div><div class="pb"><div class="kpis">
+    <div class="kpi"><div class="kl">Tie-out</div><div class="kv">${pct(m.tie_out_accuracy)}</div></div>
+    <div class="kpi"><div class="kl">Hallucination</div><div class="kv">${pct(m.hallucination_rate)}</div></div>
+    <div class="kpi"><div class="kl">Grounding</div><div class="kv">${pct(m.grounding_rate)}</div></div>
+    <div class="kpi"><div class="kl">Escalations</div><div class="kv">${m.gate?m.gate.escalated:'—'}</div></div></div></div></div>`;
 }
 
 document.getElementById('scrim').onclick=closeInspect;
