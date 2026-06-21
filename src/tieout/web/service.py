@@ -436,6 +436,70 @@ def eval_metrics() -> dict:
     return grid().get("metrics", {})
 
 
+# --- Quality-of-Earnings workflow + connectors ---------------------------------
+
+def qoe(ticker: str) -> dict:
+    p = _CACHE_DIR / f"qoe_{ticker.upper()}.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+
+
+def qoe_companies() -> list[dict]:
+    out = []
+    for p in sorted(_CACHE_DIR.glob("qoe_*.json")):
+        d = json.loads(p.read_text(encoding="utf-8"))
+        out.append({"ticker": d.get("ticker"), "issuer": d.get("issuer"),
+                    "fiscal_year": d.get("fiscal_year"), "tied_out": d.get("tied_out")})
+    return out
+
+
+def qoe_run(ticker: str) -> dict:
+    """Live: pull XBRL constraints, generate the calibrated ledger, validate + run QoE."""
+    import dataclasses
+    from ..synth import build_workspace
+    from ..workflows import run_qoe
+    ws = build_workspace(ticker)
+    rep = run_qoe(ws.constraints, ws.ledger)
+    out = dataclasses.asdict(rep)
+    out["tied_out"] = ws.tied_out
+    out["constraints"] = [dataclasses.asdict(p) for p in ws.constraints.periods]
+    out["ledger_summary"] = {
+        "customers": len(ws.ledger.customers),
+        "products": [dataclasses.asdict(p) for p in ws.ledger.products],
+        "revenue_lines": len(ws.ledger.revenue_lines), "ar_invoices": len(ws.ledger.ar_invoices),
+        "pipeline_opps": len(ws.ledger.pipeline), "cohorts": len(ws.ledger.cohorts),
+        "anomalies": ws.ledger.anomalies}
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    (_CACHE_DIR / f"qoe_{ticker.upper()}.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
+    return out
+
+
+def sources(ticker: str) -> list[dict]:
+    """The connector layer — EDGAR (public) + synthetic ERP/CRM + Merge (live), all
+    behind one adapter interface. Record counts come from the generated ledger."""
+    d = qoe(ticker)
+    ls = d.get("ledger_summary", {})
+    n_periods = len(d.get("constraints", []))
+    cust = ls.get("customers", 0)
+    return [
+        {"id": "edgar", "name": "SEC EDGAR", "vendor": "Public filings", "kind": "public",
+         "status": "connected", "tied_out": True,
+         "provides": "10-K/Q XBRL — the ground-truth marginals",
+         "detail": f"{n_periods} periods of consolidated XBRL"},
+        {"id": "erp", "name": "NetSuite", "vendor": "Synthetic ERP", "kind": "synthetic",
+         "status": "connected", "tied_out": d.get("tied_out"),
+         "provides": "GL · revenue by customer/SKU · AR aging · inventory",
+         "detail": f"{cust} customers · {ls.get('revenue_lines', 0)} revenue lines · {ls.get('ar_invoices', 0)} AR invoices"},
+        {"id": "crm", "name": "Salesforce", "vendor": "Synthetic CRM", "kind": "synthetic",
+         "status": "connected", "tied_out": True,
+         "provides": "pipeline · bookings · win-rates · cohort retention",
+         "detail": f"{ls.get('pipeline_opps', 0)} open opps · {ls.get('cohorts', 0)} cohorts"},
+        {"id": "merge", "name": "Merge.dev", "vendor": "Live ERP/CRM (production)", "kind": "live",
+         "status": "available", "tied_out": None,
+         "provides": "real ERP/CRM via one unified connector — same interface as synthetic",
+         "detail": "swap in for a real customer; workflows unchanged"},
+    ]
+
+
 _search_client: EdgarClient | None = None
 
 

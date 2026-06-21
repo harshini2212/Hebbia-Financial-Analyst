@@ -110,6 +110,30 @@ def eval_metrics():
     return service.eval_metrics()
 
 
+@app.get("/api/qoe/companies")
+def qoe_companies():
+    return service.qoe_companies()
+
+
+@app.get("/api/qoe/{ticker}")
+def qoe(ticker: str):
+    return service.qoe(ticker)
+
+
+@app.post("/api/qoe/{ticker}/run")
+def qoe_run(ticker: str):
+    _ratelimit()
+    try:
+        return service.qoe_run(ticker)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/sources/{ticker}")
+def sources(ticker: str):
+    return service.sources(ticker)
+
+
 @app.get("/")
 def index():
     return FileResponse(_STATIC / "index.html")

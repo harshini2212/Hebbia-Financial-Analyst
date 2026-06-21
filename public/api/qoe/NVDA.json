@@ -1,0 +1,398 @@
+{
+  "ticker": "NVDA",
+  "issuer": "NVIDIA CORP",
+  "fiscal_year": 2026,
+  "prior_year": 2025,
+  "reconciliation": [
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2024,
+      "target": 60922000000.0,
+      "synthetic": 60922000000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Compute And Networking Segment",
+      "fiscal_year": 2024,
+      "target": 47405000000.0,
+      "synthetic": 47405000451.68125,
+      "variance": 451.6812515258789,
+      "pct": 9.528135249992172e-09,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Graphics Segment",
+      "fiscal_year": 2024,
+      "target": 13517000000.0,
+      "synthetic": 13516999548.318752,
+      "variance": -451.68124771118164,
+      "pct": -3.341579105653485e-08,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2024,
+      "target": 16621000000.0,
+      "synthetic": 16620999981.25183,
+      "variance": -18.748170852661133,
+      "pct": -1.127980918877392e-09,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2025,
+      "target": 130497000000.0,
+      "synthetic": 130496999999.99997,
+      "variance": -3.0517578125e-05,
+      "pct": -2.3385654938427705e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Compute And Networking Segment",
+      "fiscal_year": 2025,
+      "target": 116193000000.0,
+      "synthetic": 116192971475.99947,
+      "variance": -28524.000534057617,
+      "pct": -2.454881148955412e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Graphics Segment",
+      "fiscal_year": 2025,
+      "target": 14304000000.0,
+      "synthetic": 14304028524.000542,
+      "variance": 28524.00054168701,
+      "pct": 1.994127554648141e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2025,
+      "target": 32639000000.0,
+      "synthetic": 32638999949.49846,
+      "variance": -50.50154113769531,
+      "pct": -1.5472759930664332e-09,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2025,
+      "target": 23065000000.0,
+      "synthetic": 23065000000.000004,
+      "variance": 3.814697265625e-06,
+      "pct": 1.6538899915998267e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2026,
+      "target": 215938000000.0,
+      "synthetic": 215937999999.99997,
+      "variance": -3.0517578125e-05,
+      "pct": -1.413256496077578e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Compute And Networking Segment",
+      "fiscal_year": 2026,
+      "target": 193479000000.0,
+      "synthetic": 193478915637.41208,
+      "variance": -84362.58792114258,
+      "pct": -4.3602968756889676e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Graphics Segment",
+      "fiscal_year": 2026,
+      "target": 22459000000.0,
+      "synthetic": 22459084362.58781,
+      "variance": 84362.58781051636,
+      "pct": 3.7562931479814932e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2026,
+      "target": 62475000000.0,
+      "synthetic": 62474999996.11075,
+      "variance": -3.889251708984375,
+      "pct": -6.225292851515607e-11,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2026,
+      "target": 38466000000.0,
+      "synthetic": 38465999999.99999,
+      "variance": -7.62939453125e-06,
+      "pct": -1.9834125022747362e-16,
+      "ties_out": true
+    }
+  ],
+  "tied_out": true,
+  "top_customers": [
+    {
+      "id": "C0116",
+      "name": "Harbor Group",
+      "segment": "Compute And Networking Segment",
+      "revenue": 40630496774,
+      "pct_of_total": 0.1882,
+      "yoy": null
+    },
+    {
+      "id": "C0096",
+      "name": "Sterling Systems",
+      "segment": "Compute And Networking Segment",
+      "revenue": 14528564313,
+      "pct_of_total": 0.0673,
+      "yoy": 0.189
+    },
+    {
+      "id": "C0126",
+      "name": "Cascade Group",
+      "segment": "Graphics Segment",
+      "revenue": 8472660270,
+      "pct_of_total": 0.0392,
+      "yoy": null
+    },
+    {
+      "id": "C0099",
+      "name": "Cascade Systems",
+      "segment": "Compute And Networking Segment",
+      "revenue": 4948924579,
+      "pct_of_total": 0.0229,
+      "yoy": null
+    },
+    {
+      "id": "C0063",
+      "name": "Meridian Holdings",
+      "segment": "Compute And Networking Segment",
+      "revenue": 4850764097,
+      "pct_of_total": 0.0225,
+      "yoy": 0.189
+    },
+    {
+      "id": "C0065",
+      "name": "Orion Holdings",
+      "segment": "Compute And Networking Segment",
+      "revenue": 4370141718,
+      "pct_of_total": 0.0202,
+      "yoy": 0.189
+    },
+    {
+      "id": "C0084",
+      "name": "Cobalt Systems",
+      "segment": "Compute And Networking Segment",
+      "revenue": 4237357621,
+      "pct_of_total": 0.0196,
+      "yoy": 0.189
+    },
+    {
+      "id": "C0114",
+      "name": "Beacon Group",
+      "segment": "Compute And Networking Segment",
+      "revenue": 4171160090,
+      "pct_of_total": 0.0193,
+      "yoy": 0.189
+    }
+  ],
+  "top5_concentration": 0.3401,
+  "reported_growth": 0.6547,
+  "underlying_growth": 0.3434,
+  "largest_customer": "Harbor Group",
+  "one_time_revenue": 9332517649,
+  "one_time_pct": 0.0432,
+  "recurring_growth": 0.5832,
+  "margin_bridge": {
+    "blended_margin": 0.7107,
+    "lowest_margin_line": "Legacy",
+    "lowest_margin": 0.511,
+    "share_now": 0.2005,
+    "share_prior": 0.108,
+    "products": [
+      {
+        "name": "Platform",
+        "margin": 0.871,
+        "share": 0.2429
+      },
+      {
+        "name": "Core Suite",
+        "margin": 0.791,
+        "share": 0.2127
+      },
+      {
+        "name": "Analytics",
+        "margin": 0.711,
+        "share": 0.1862
+      },
+      {
+        "name": "Services",
+        "margin": 0.611,
+        "share": 0.1578
+      },
+      {
+        "name": "Legacy",
+        "margin": 0.511,
+        "share": 0.2005
+      }
+    ]
+  },
+  "working_capital": {
+    "dso": 65.0,
+    "dso_prior": 64.5,
+    "dio": 125.0,
+    "dpo": 57.3
+  },
+  "insights": [
+    {
+      "headline": "Top 5 customers = 34% of revenue \u2014 undisclosed in the filing",
+      "severity": "high",
+      "detail": "Customer concentration the consolidated 10-K never breaks out.",
+      "evidence": "Largest: Harbor Group, Sterling Systems, Cascade Group"
+    },
+    {
+      "headline": "Ex-largest customer, underlying growth is 34%, not the reported 65%",
+      "severity": "high",
+      "detail": "Harbor Group's share is rising YoY, so the headline growth overstates the base.",
+      "evidence": "Reported 65.5% vs underlying 34.3%"
+    },
+    {
+      "headline": "$9,333M of revenue is one-time \u2014 4% of the top line",
+      "severity": "medium",
+      "detail": "Non-recurring revenue inflating the latest period; the recurring base is softer.",
+      "evidence": "4.3% of FY2026 revenue tagged one-time"
+    },
+    {
+      "headline": "Legacy (lowest margin, 51%) gaining share",
+      "severity": "medium",
+      "detail": "Mix shift toward the lowest-margin line \u2014 gross-margin pressure ahead.",
+      "evidence": "Share 11% \u2192 20%"
+    },
+    {
+      "headline": "Net revenue retention 156%",
+      "severity": "low",
+      "detail": "Cohort expansion net of churn, from the CRM/ERP customer base.",
+      "evidence": "\u03a3 cohort current / starting across 4 cohorts"
+    },
+    {
+      "headline": "Pipeline covers 166% of next-year growth need",
+      "severity": "low",
+      "detail": "Win-rate-weighted CRM pipeline vs the dollars to repeat this year's growth.",
+      "evidence": "$141.38B weighted across 45 open opps"
+    }
+  ],
+  "net_retention": 1.559,
+  "pipeline": {
+    "weighted": 141382243713,
+    "count": 45,
+    "coverage": 1.655,
+    "open_value": 352610067602
+  },
+  "constraints": [
+    {
+      "fiscal_year": 2026,
+      "revenue_total": 215938000000.0,
+      "segments": {
+        "Compute And Networking Segment": 193479000000.0,
+        "Graphics Segment": 22459000000.0
+      },
+      "cogs": 62475000000.0,
+      "gross_margin": 0.7106808435754708,
+      "accounts_receivable": 38466000000.0,
+      "inventory": 21403000000.0,
+      "accounts_payable": 9812000000.0
+    },
+    {
+      "fiscal_year": 2025,
+      "revenue_total": 130497000000.0,
+      "segments": {
+        "Compute And Networking Segment": 116193000000.0,
+        "Graphics Segment": 14304000000.0
+      },
+      "cogs": 32639000000.0,
+      "gross_margin": 0.7498869705816992,
+      "accounts_receivable": 23065000000.0,
+      "inventory": 10080000000.0,
+      "accounts_payable": 6310000000.0
+    },
+    {
+      "fiscal_year": 2024,
+      "revenue_total": 60922000000.0,
+      "segments": {
+        "Compute And Networking Segment": 47405000000.0,
+        "Graphics Segment": 13517000000.0
+      },
+      "cogs": 16621000000.0,
+      "gross_margin": 0.7271757329043695,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": null
+    }
+  ],
+  "ledger_summary": {
+    "customers": 140,
+    "products": [
+      {
+        "id": "P0",
+        "name": "Platform",
+        "unit_margin": 0.8706808435754708
+      },
+      {
+        "id": "P1",
+        "name": "Core Suite",
+        "unit_margin": 0.7906808435754707
+      },
+      {
+        "id": "P2",
+        "name": "Analytics",
+        "unit_margin": 0.7106808435754708
+      },
+      {
+        "id": "P3",
+        "name": "Services",
+        "unit_margin": 0.6106808435754708
+      },
+      {
+        "id": "P4",
+        "name": "Legacy",
+        "unit_margin": 0.5106808435754708
+      }
+    ],
+    "revenue_lines": 1910,
+    "ar_invoices": 1076,
+    "pipeline_opps": 45,
+    "cohorts": 4,
+    "anomalies": [
+      {
+        "type": "concentration",
+        "severity": "high",
+        "customer": "Harbor Group",
+        "customer_id": "C0116",
+        "pct_of_segment": 0.21,
+        "segment": "Compute And Networking Segment"
+      },
+      {
+        "type": "one_time_revenue",
+        "severity": "medium",
+        "amount": 4199632942,
+        "note": "one-time revenue inflating the latest period"
+      },
+      {
+        "type": "margin_erosion",
+        "severity": "medium",
+        "product": "Legacy",
+        "unit_margin": 0.511,
+        "note": "lowest-margin line gaining revenue share YoY"
+      },
+      {
+        "type": "dso_drift",
+        "severity": "medium",
+        "dso_now": 65.0,
+        "dso_prior": 64.5,
+        "delta_days": 0.5
+      }
+    ]
+  }
+}

@@ -54,6 +54,8 @@ class QoEReport:
     margin_bridge: dict
     working_capital: dict
     insights: list                 # [Insight as dict]
+    net_retention: float | None = None
+    pipeline: dict = field(default_factory=dict)
 
 
 def _pct(a, b):
@@ -138,6 +140,28 @@ def run_qoe(cons: CompanyConstraints, ledger: SyntheticLedger) -> QoEReport:
 
     insights = _insights(ledger, cust, top5, latest, fy, reported_growth,
                          underlying_growth, whale, ot, tot, margin_bridge, working_capital)
+
+    # --- CRM: cohort net retention + win-rate-weighted pipeline coverage ---
+    coh = [c for c in ledger.cohorts if c.starting_revenue > 0]
+    nrr = (sum(c.current_revenue for c in coh) / sum(c.starting_revenue for c in coh)
+           if coh else None)
+    pl_weighted = sum(o.amount * o.win_prob for o in ledger.pipeline)
+    growth_dollars = (total[fy] - total[prior]) if prior and total.get(prior) else None
+    coverage = round(pl_weighted / growth_dollars, 3) if growth_dollars else None
+    pipeline = {"weighted": round(pl_weighted), "count": len(ledger.pipeline),
+                "coverage": coverage, "open_value": round(sum(o.amount for o in ledger.pipeline))}
+    if nrr is not None:
+        insights.append(Insight(
+            f"Net revenue retention {nrr*100:.0f}%", "medium" if nrr < 0.97 else "low",
+            "Cohort expansion net of churn, from the CRM/ERP customer base.",
+            f"Σ cohort current / starting across {len(coh)} cohorts"))
+    if coverage is not None:
+        insights.append(Insight(
+            f"Pipeline covers {coverage*100:.0f}% of next-year growth need",
+            "low" if coverage >= 1 else "medium",
+            "Win-rate-weighted CRM pipeline vs the dollars to repeat this year's growth.",
+            f"${pl_weighted/1e9:.2f}B weighted across {len(ledger.pipeline)} open opps"))
+
     return QoEReport(
         cons.ticker, cons.issuer, fy, prior,
         [asdict(c) for c in checks], tied,
@@ -146,7 +170,8 @@ def run_qoe(cons: CompanyConstraints, ledger: SyntheticLedger) -> QoEReport:
         round(underlying_growth, 4) if underlying_growth is not None else None,
         whale.name if whale else "", round(ot), round(ot / tot, 4),
         round(rec_growth, 4) if rec_growth is not None else None,
-        margin_bridge, working_capital, [asdict(i) for i in insights])
+        margin_bridge, working_capital, [asdict(i) for i in insights],
+        net_retention=round(nrr, 3) if nrr is not None else None, pipeline=pipeline)
 
 
 def _insights(ledger, cust, top5, latest, fy, reported, underlying, whale, ot, tot,

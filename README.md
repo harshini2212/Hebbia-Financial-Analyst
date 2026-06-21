@@ -1,10 +1,31 @@
 # tieout
 
-**Eval-first document intelligence over SEC filings.** A Matrix-style document-QA system where the differentiator isn't the grid — it's a **grounding + evaluation layer wired into the execution loop**. Every answer is gated against the filing's own XBRL ground truth before it's shown; answers that fail are re-run on a stronger model, and answers that never pass are held back as low-confidence — so a confident, plausible, *wrong* number never reaches the user.
+**Public + private financial intelligence, reconciled and tied out.** A workspace that fuses a company's real SEC filings (EDGAR/XBRL) with a *calibrated synthetic* ERP/CRM ledger, then reconciles the consolidated public numbers against the granular private ones to surface what the filing hides — customer concentration, reported-vs-underlying growth, one-time revenue, DSO drift. Every figure rolls up to the public total, validated by a deterministic tie-out.
 
-> Built as an ML/software-engineering application project targeting **Hebbia**, whose product bet is auditable, accurate, traceable answers over large document sets in domains where one wrong number kills a deal. The research and reframing rationale are in **[HEBBIA_RESEARCH.md](HEBBIA_RESEARCH.md)**.
+> Built as an ML/software-engineering application project targeting **Hebbia** — auditable, accurate answers over financial documents where one wrong number kills a deal. Design rationale in **[HEBBIA_RESEARCH.md](HEBBIA_RESEARCH.md)**.
 
-![tieout — query grid](docs/img/ui-overview.png)
+## The two ideas that make it work
+
+1. **The synthetic engine is constrained generation, not fabrication.** It fits a private ledger (customers, SKUs, AR aging, CRM pipeline, cohorts) to the company's real XBRL marginals via **iterative proportional fitting** — so it *sums back to the reported numbers*, deterministic by CIK. Always framed as **calibrated demo data**, never real. The same tie-out harness that checks real extraction validates the synthetic generation — one trust layer, two jobs.
+2. **The reconciliation join is the IP.** Rolling the granular ledger up to each public figure and exposing the variance is what produces *"top-5 = 30% of revenue (undisclosed); underlying growth 10% not 12%"* — the analysis that only exists when you join public + private.
+
+**Connectors:** EDGAR (public) · Synthetic ERP/CRM (demo) · Merge (production) all sit behind one `SourceAdapter` interface — demo on synthetic, a real customer connects Merge, the workflows never change.
+
+### Proven on real Amazon XBRL
+```
+Tie-out (synthetic ledger → reported XBRL):  17/17 across 3 years —
+  revenue $716.9B, the 3 real segments, COGS, AR $67.7B all reconcile exactly.
+QoE findings:  top-5 = 30% · reported 12% vs underlying 10% · $22.9B one-time ·
+  DSO 31.7→34.5d · DPO 124.8 (Amazon's real ratios) · NRR 111% · pipeline cov 112%.
+```
+
+Run it: `python scripts/run_qoe.py AMZN` (headless) or `python serve.py` → the **Quality-of-Earnings workspace** (Workflows · Sources/connectors · Companies · Runs · Artifacts · Evals).
+
+---
+
+The **verification/trust layer** underneath — the deterministic accounting-identity engine, the eval-gate that does the same job for *extraction* — is documented below.
+
+![tieout — workspace](docs/img/ui-overview.png)
 
 ---
 

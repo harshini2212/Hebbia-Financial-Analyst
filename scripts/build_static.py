@@ -50,6 +50,19 @@ def main() -> None:
     if grid.exists():
         shutil.copy(grid, OUT / "api" / "grid.json")
 
+    # QoE workflow artifacts + connector descriptors (the product shell's data)
+    comps = service.qoe_companies()
+    (OUT / "api" / "qoe").mkdir(parents=True, exist_ok=True)
+    (OUT / "api" / "qoe" / "companies.json").write_text(json.dumps(comps), encoding="utf-8")
+    (OUT / "api" / "sources").mkdir(parents=True, exist_ok=True)
+    for co in comps:
+        t = co["ticker"]
+        if (DATA / f"qoe_{t}.json").exists():
+            shutil.copy(DATA / f"qoe_{t}.json", OUT / "api" / "qoe" / f"{t}.json")
+        (OUT / "api" / "sources" / f"{t}.json").write_text(
+            json.dumps(service.sources(t)), encoding="utf-8")
+    print("qoe companies:", [c["ticker"] for c in comps])
+
     for f in filings:
         shutil.copy(DATA / f"{f['ticker']}.json",
                     OUT / "api" / "analysis" / f"{f['ticker']}.json")

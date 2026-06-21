@@ -79,6 +79,8 @@ out["ledger_summary"] = {"customers": len(ws.ledger.customers),
                          "products": [dataclasses.asdict(p) for p in ws.ledger.products],
                          "revenue_lines": len(ws.ledger.revenue_lines),
                          "ar_invoices": len(ws.ledger.ar_invoices),
+                         "pipeline_opps": len(ws.ledger.pipeline),
+                         "cohorts": len(ws.ledger.cohorts),
                          "anomalies": ws.ledger.anomalies}
 Path("data/web").mkdir(parents=True, exist_ok=True)
 Path(f"data/web/qoe_{ticker}.json").write_text(json.dumps(out, indent=2), encoding="utf-8")

@@ -72,6 +72,25 @@ class ARInvoice:
 
 
 @dataclass
+class PipelineOpp:
+    id: str
+    account: str
+    stage: str
+    amount: float
+    win_prob: float
+    expected_close_year: int
+
+
+@dataclass
+class Cohort:
+    cohort_year: int
+    n_customers: int
+    starting_revenue: float
+    current_revenue: float
+    net_retention: float | None
+
+
+@dataclass
 class SyntheticLedger:
     ticker: str
     issuer: str
@@ -81,6 +100,8 @@ class SyntheticLedger:
     products: list[Product]
     revenue_lines: list[RevenueLine]
     ar_invoices: list[ARInvoice]
+    pipeline: list = field(default_factory=list)   # [PipelineOpp]  (CRM)
+    cohorts: list = field(default_factory=list)    # [Cohort]       (CRM)
     anomalies: list[dict] = field(default_factory=list)
 
     def customer(self, cid: str) -> Customer:
@@ -143,6 +164,7 @@ def generate(cons: CompanyConstraints, *, n_customers: int = 140) -> SyntheticLe
     whale_rev_by_year: dict[int, float] = {}
     onetime_by_year: dict[int, float] = {}
     prod_share_by_year: dict[int, np.ndarray] = {}
+    cust_year_rev: dict = {}
 
     for i, y in enumerate(years):
         pc = by_year[y]
@@ -214,6 +236,7 @@ def generate(cons: CompanyConstraints, *, n_customers: int = 140) -> SyntheticLe
                     recurring = False
                     onetime += amt * 0.45
                 rev_lines.append(RevenueLine(cid, prod.id, y, amt, recurring))
+                cust_year_rev[(cid, y)] = cust_year_rev.get((cid, y), 0.0) + amt
         onetime_by_year[y] = onetime
 
         # ---- AR aging: total ties to reported AR, weighted age ~ DSO ----
@@ -221,10 +244,50 @@ def generate(cons: CompanyConstraints, *, n_customers: int = 140) -> SyntheticLe
             _gen_ar(rng, cids, cust_total, pc, whale.id if i == len(years) - 1 else None,
                     ar_invoices)
 
+    cohorts = _cohorts(customers, cust_year_rev, years)
+    pipeline = _pipeline(rng, customers, by_year, years)
     anomalies = _anomalies(cons, years, whale, products[erode_idx], whale_rev_by_year,
                            onetime_by_year, by_year)
     return SyntheticLedger(cons.ticker, cons.issuer, cons.cik, years, customers,
-                           products, rev_lines, ar_invoices, anomalies)
+                           products, rev_lines, ar_invoices, pipeline=pipeline,
+                           cohorts=cohorts, anomalies=anomalies)
+
+
+def _cohorts(customers, cyr: dict, years) -> list[Cohort]:
+    out = []
+    for cy in sorted({c.cohort_year for c in customers}):
+        members = [c for c in customers if c.cohort_year == cy]
+        start_year = max(cy, years[0])
+        start = sum(cyr.get((c.id, start_year), 0.0) for c in members)
+        cur = sum(cyr.get((c.id, years[-1]), 0.0) for c in members)
+        nr = (cur / start) if start else None
+        out.append(Cohort(cy, len(members), round(start), round(cur),
+                          round(nr, 3) if nr is not None else None))
+    return out
+
+
+def _pipeline(rng, customers, by_year, years) -> list[PipelineOpp]:
+    fy = years[-1]
+    rev = by_year[fy].revenue_total or 0.0
+    growth = 0.10
+    if len(years) >= 2 and by_year[years[-2]].revenue_total:
+        growth = rev / by_year[years[-2]].revenue_total - 1
+    target = rev * max(growth, 0.05)  # implied next-year new bookings
+    stages = [("Prospecting", 0.10), ("Qualified", 0.25), ("Proposal", 0.45),
+              ("Negotiation", 0.70), ("Commit", 0.90)]
+    n = 45
+    amounts = rng.lognormal(mean=0.0, sigma=1.0, size=n)
+    picks = rng.integers(0, len(stages), size=n)
+    weighted = sum(float(amounts[k]) * stages[picks[k]][1] for k in range(n))
+    scale = (target / weighted) if weighted else 1.0
+    pool = [c for c in customers if c.cohort_year <= fy]
+    opps = []
+    for k in range(n):
+        st, wp = stages[picks[k]]
+        expansion = rng.random() < 0.6 and bool(pool)
+        acct = pool[int(rng.integers(0, len(pool)))].name if expansion else "New logo"
+        opps.append(PipelineOpp(f"O{k:03d}", acct, st, round(float(amounts[k]) * scale), wp, fy + 1))
+    return opps
 
 
 def self_is_whale(customers, cid) -> bool:

@@ -16,7 +16,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         p = self.path.split("?")[0]
         if p in ("/api/filings", "/api/registry", "/api/health", "/api/benchmark", "/api/grid"):
             self.path = p + ".json"
-        elif p.startswith("/api/analysis/") and not p.endswith(".json"):
+        elif ((p.startswith("/api/analysis/") or p.startswith("/api/qoe/")
+               or p.startswith("/api/sources/")) and not p.endswith(".json")):
             self.path = p + ".json"
         elif p == "/":
             self.path = "/index.html"
