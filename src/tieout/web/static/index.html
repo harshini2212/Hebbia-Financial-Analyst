@@ -218,7 +218,7 @@ function render(){const v=document.getElementById('view');
 function vHome(){
   const el=$('<div></div>');const q=S.qoe;
   el.appendChild($(`<div class="phead"><h1>Financial diligence, verified</h1><p>Pick a company and a focus. Every number ties out to SEC EDGAR/XBRL; connect ERP/CRM/HRIS to go deeper. <b>Calibrated demo data — not real.</b></p></div>`));
-  el.appendChild($(`<div class="search" style="margin-bottom:18px;position:relative"><input id="home-q" autocomplete="off" placeholder="Search any public company — e.g. NVIDIA, Microsoft, AMD…" style="flex:1"/><div id="home-ac" class="ac"></div></div>`));
+  el.appendChild($(`<div class="search" style="margin-bottom:18px;position:relative"><input id="home-q" autocomplete="off" placeholder="Search any public company — e.g. NVIDIA, Microsoft, AMD…" style="flex:0 0 420px;max-width:100%"/><div id="home-ac" class="acbox"></div></div>`));
   el.appendChild($(`<div id="home-msg" class="muted" style="font-size:12px;margin:-8px 0 14px;min-height:16px"></div>`));
   const tiles=[
     ['qoe','Quality of Earnings','▦','Reconcile reported vs underlying growth — concentration, one-time items, retention.'],
