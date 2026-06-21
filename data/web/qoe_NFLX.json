@@ -1,0 +1,349 @@
+{
+  "ticker": "NFLX",
+  "issuer": "NETFLIX INC",
+  "fiscal_year": 2025,
+  "prior_year": 2024,
+  "reconciliation": [
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2023,
+      "target": 33723297000.0,
+      "synthetic": 33723297000.000004,
+      "variance": 3.814697265625e-06,
+      "pct": 1.1311756574764918e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Reportable Segment",
+      "fiscal_year": 2023,
+      "target": 33723297000.0,
+      "synthetic": 33723297000.000004,
+      "variance": 3.814697265625e-06,
+      "pct": 1.1311756574764918e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2023,
+      "target": 19715368000.0,
+      "synthetic": 19715368014.917942,
+      "variance": 14.91794204711914,
+      "pct": 7.566656654402363e-10,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2024,
+      "target": 39000966000.0,
+      "synthetic": 39000966000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Reportable Segment",
+      "fiscal_year": 2024,
+      "target": 39000966000.0,
+      "synthetic": 39000966000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2024,
+      "target": 21038464000.0,
+      "synthetic": 21038464011.70261,
+      "variance": 11.70261001586914,
+      "pct": 5.562483086155501e-10,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2025,
+      "target": 45183036000.0,
+      "synthetic": 45183036000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Reportable Segment",
+      "fiscal_year": 2025,
+      "target": 45183036000.0,
+      "synthetic": 45183036000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2025,
+      "target": 23275329000.0,
+      "synthetic": 23275328999.186207,
+      "variance": -0.8137931823730469,
+      "pct": -3.496376710176887e-11,
+      "ties_out": true
+    }
+  ],
+  "tied_out": true,
+  "top_customers": [
+    {
+      "id": "C0116",
+      "name": "Harbor Group",
+      "segment": "Reportable Segment",
+      "revenue": 9488436307,
+      "pct_of_total": 0.21,
+      "yoy": 0.3516
+    },
+    {
+      "id": "C0137",
+      "name": "Vertex Industries",
+      "segment": "Reportable Segment",
+      "revenue": 1391542585,
+      "pct_of_total": 0.0308,
+      "yoy": -0.0137
+    },
+    {
+      "id": "C0085",
+      "name": "Summit Systems",
+      "segment": "Reportable Segment",
+      "revenue": 1388975538,
+      "pct_of_total": 0.0307,
+      "yoy": -0.0137
+    },
+    {
+      "id": "C0066",
+      "name": "Quanta Holdings",
+      "segment": "Reportable Segment",
+      "revenue": 1189925473,
+      "pct_of_total": 0.0263,
+      "yoy": -0.0137
+    },
+    {
+      "id": "C0099",
+      "name": "Cascade Systems",
+      "segment": "Reportable Segment",
+      "revenue": 1149924815,
+      "pct_of_total": 0.0255,
+      "yoy": -0.0137
+    },
+    {
+      "id": "C0094",
+      "name": "Ironclad Systems",
+      "segment": "Reportable Segment",
+      "revenue": 1132252699,
+      "pct_of_total": 0.0251,
+      "yoy": -0.0137
+    },
+    {
+      "id": "C0092",
+      "name": "Orion Systems",
+      "segment": "Reportable Segment",
+      "revenue": 988244100,
+      "pct_of_total": 0.0219,
+      "yoy": -0.0137
+    },
+    {
+      "id": "C0029",
+      "name": "Vertex Labs",
+      "segment": "Reportable Segment",
+      "revenue": 931361242,
+      "pct_of_total": 0.0206,
+      "yoy": -0.0137
+    }
+  ],
+  "top5_concentration": 0.3233,
+  "reported_growth": 0.1585,
+  "underlying_growth": 0.1161,
+  "largest_customer": "Harbor Group",
+  "one_time_revenue": 2117232088,
+  "one_time_pct": 0.0469,
+  "recurring_growth": 0.1042,
+  "margin_bridge": {
+    "blended_margin": 0.4849,
+    "lowest_margin_line": "Legacy",
+    "lowest_margin": 0.285,
+    "share_now": 0.2005,
+    "share_prior": 0.2465,
+    "products": [
+      {
+        "name": "Platform",
+        "margin": 0.645,
+        "share": 0.2429
+      },
+      {
+        "name": "Core Suite",
+        "margin": 0.565,
+        "share": 0.2127
+      },
+      {
+        "name": "Analytics",
+        "margin": 0.485,
+        "share": 0.1862
+      },
+      {
+        "name": "Services",
+        "margin": 0.385,
+        "share": 0.1578
+      },
+      {
+        "name": "Legacy",
+        "margin": 0.285,
+        "share": 0.2005
+      }
+    ]
+  },
+  "working_capital": {
+    "dso": null,
+    "dso_prior": null,
+    "dio": null,
+    "dpo": 14.1
+  },
+  "insights": [
+    {
+      "headline": "Top 5 customers = 32% of revenue \u2014 undisclosed in the filing",
+      "severity": "high",
+      "detail": "Customer concentration the consolidated 10-K never breaks out.",
+      "evidence": "Largest: Harbor Group, Vertex Industries, Summit Systems"
+    },
+    {
+      "headline": "Ex-largest customer, underlying growth is 12%, not the reported 16%",
+      "severity": "high",
+      "detail": "Harbor Group's share is rising YoY, so the headline growth overstates the base.",
+      "evidence": "Reported 15.9% vs underlying 11.6%"
+    },
+    {
+      "headline": "$2,117M of revenue is one-time \u2014 5% of the top line",
+      "severity": "medium",
+      "detail": "Non-recurring revenue inflating the latest period; the recurring base is softer.",
+      "evidence": "4.7% of FY2025 revenue tagged one-time"
+    },
+    {
+      "headline": "Net revenue retention 108%",
+      "severity": "low",
+      "detail": "Cohort expansion net of churn, from the CRM/ERP customer base.",
+      "evidence": "\u03a3 cohort current / starting across 4 cohorts"
+    },
+    {
+      "headline": "Pipeline covers 116% of next-year growth need",
+      "severity": "low",
+      "detail": "Win-rate-weighted CRM pipeline vs the dollars to repeat this year's growth.",
+      "evidence": "$7.16B weighted across 45 open opps"
+    }
+  ],
+  "net_retention": 1.076,
+  "pipeline": {
+    "weighted": 7161994175,
+    "count": 45,
+    "coverage": 1.159,
+    "open_value": 17142582784
+  },
+  "constraints": [
+    {
+      "fiscal_year": 2025,
+      "revenue_total": 45183036000.0,
+      "segments": {
+        "Reportable Segment": 45183036000.0
+      },
+      "cogs": 23275329000.0,
+      "gross_margin": 0.48486575802475956,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": 900612000.0,
+      "net_income": 10981201000.0,
+      "operating_income": 13326603000.0,
+      "cfo": 10149273000.0,
+      "capex": 688220000.0
+    },
+    {
+      "fiscal_year": 2024,
+      "revenue_total": 39000966000.0,
+      "segments": {
+        "Reportable Segment": 39000966000.0
+      },
+      "cogs": 21038464000.0,
+      "gross_margin": 0.46056556650417324,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": 899909000.0,
+      "net_income": 8711631000.0,
+      "operating_income": 10417614000.0,
+      "cfo": 7361364000.0,
+      "capex": 439538000.0
+    },
+    {
+      "fiscal_year": 2023,
+      "revenue_total": 33723297000.0,
+      "segments": {
+        "Reportable Segment": 33723297000.0
+      },
+      "cogs": 19715368000.0,
+      "gross_margin": 0.4153783955346952,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": null,
+      "net_income": 5407990000.0,
+      "operating_income": 6954003000.0,
+      "cfo": 7274301000.0,
+      "capex": 348552000.0
+    }
+  ],
+  "ledger_summary": {
+    "customers": 140,
+    "products": [
+      {
+        "id": "P0",
+        "name": "Platform",
+        "unit_margin": 0.6448657580247595
+      },
+      {
+        "id": "P1",
+        "name": "Core Suite",
+        "unit_margin": 0.5648657580247596
+      },
+      {
+        "id": "P2",
+        "name": "Analytics",
+        "unit_margin": 0.48486575802475956
+      },
+      {
+        "id": "P3",
+        "name": "Services",
+        "unit_margin": 0.38486575802475953
+      },
+      {
+        "id": "P4",
+        "name": "Legacy",
+        "unit_margin": 0.28486575802475955
+      }
+    ],
+    "revenue_lines": 1905,
+    "ar_invoices": 0,
+    "pipeline_opps": 45,
+    "cohorts": 4,
+    "anomalies": [
+      {
+        "type": "concentration",
+        "severity": "high",
+        "customer": "Harbor Group",
+        "customer_id": "C0116",
+        "pct_of_segment": 0.21,
+        "segment": "Reportable Segment"
+      },
+      {
+        "type": "one_time_revenue",
+        "severity": "medium",
+        "amount": 952754439,
+        "note": "one-time revenue inflating the latest period"
+      },
+      {
+        "type": "margin_erosion",
+        "severity": "medium",
+        "product": "Legacy",
+        "unit_margin": 0.285,
+        "note": "lowest-margin line gaining revenue share YoY"
+      }
+    ]
+  }
+}

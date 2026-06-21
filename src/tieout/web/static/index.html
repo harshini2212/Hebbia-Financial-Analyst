@@ -244,6 +244,7 @@ function vHome(){
 }
 function wireHomeSearch(){
   const inp=document.getElementById('home-q'),ac=document.getElementById('home-ac');if(!inp)return;
+  ac.onmousedown=e=>e.preventDefault();   // don't blur the input on item click -> the click always lands
   let timer;
   inp.oninput=()=>{clearTimeout(timer);const v=inp.value.trim();if(v.length<2){ac.innerHTML='';return;}
     timer=setTimeout(async()=>{let res=[];try{res=await(await fetch(`${API}/api/search?q=`+encodeURIComponent(v))).json();}catch(e){}
@@ -254,14 +255,21 @@ function wireHomeSearch(){
   inp.onblur=()=>setTimeout(()=>{ac.innerHTML='';},200);
 }
 async function selectCompanyByTicker(ticker,name){
-  const msg=document.getElementById('home-msg');const ac=document.getElementById('home-ac');if(ac)ac.innerHTML='';
   const known=(S.companies||[]).some(c=>c.ticker===ticker);
-  if(msg)msg.innerHTML='<span class="spin" style="margin:0"></span> '+(known?'loading ':'ingesting ')+esc(name||ticker)+(known?'…':' from SEC EDGAR… (~30s first time)');
+  const v=document.getElementById('view');
+  // immediately replace the view with a loud loading state so it's obvious something is happening
+  v.innerHTML=`<div class="phead"><h1>${known?'Loading':'Ingesting'} ${esc(name||ticker)} <span class="mono" style="color:var(--accent)">${esc(ticker)}</span>…</h1>
+    <p>${known?'Reading the latest filing data.':'Pulling '+esc(ticker)+' from SEC EDGAR — the first time takes ~30s. Building the synthetic ledger and tying it out to the filing.'}</p></div>
+    <div class="loading" style="font-size:14px"><span class="spin"></span> working…</div>`;
   try{
     if(!known){const r=await fetch(`${API}/api/qoe/${ticker}/run`,{method:'POST'});if(!r.ok)throw new Error(((await r.json())||{}).detail||r.statusText);
       S.companies=await(await fetch(`${API}/api/qoe/companies`)).json();}
     S.company=ticker;await loadCompany();S.tab='qoe';renderNav();render();}
-  catch(e){if(msg)msg.textContent='Could not load '+ticker+': '+e.message;}
+  catch(e){
+    v.innerHTML=`<div class="phead"><h1>Couldn't load ${esc(ticker)}</h1><p>${esc(e.message||'ingest failed')}</p></div>
+      <div class="note">Some tickers can't be ingested — foreign filers (20-F like NetEase), funds/ETFs, or names without machine-readable XBRL. Try a US-listed operating company, e.g. <b>NVDA, MSFT, AMZN, CRM, COST, NFLX</b>.</div>
+      <div style="margin-top:14px"><button class="btn" onclick="S.tab='home';renderNav();render();">← Back to search</button></div>`;
+  }
 }
 
 /* ---------- Ask anything (live AI query agent) ---------- */
@@ -513,6 +521,7 @@ function vCompanies(){
 /* typeahead: resolve a NAME -> ticker via /api/search, then run live (fixes 'NVIDIA not found') */
 function wireCompanySearch(sb){
   const inp=sb.querySelector('#csearch'), ac=sb.querySelector('#cac'), msg=sb.querySelector('#cmsg');
+  ac.onmousedown=e=>e.preventDefault();   // don't blur the input on item click -> the click always lands
   let timer;
   const run=async(ticker,name)=>{
     ac.innerHTML=''; msg.innerHTML='<span class="spin" style="margin:0"></span> ingesting '+esc(name||ticker)+' from SEC EDGAR… (~30s first time)';

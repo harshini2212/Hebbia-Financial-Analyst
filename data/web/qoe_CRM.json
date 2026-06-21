@@ -1,0 +1,347 @@
+{
+  "ticker": "CRM",
+  "issuer": "Salesforce, Inc.",
+  "fiscal_year": 2025,
+  "prior_year": 2024,
+  "reconciliation": [
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2023,
+      "target": 34857000000.0,
+      "synthetic": 34857000000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2023,
+      "target": 8541000000.0,
+      "synthetic": 8541000006.447238,
+      "variance": 6.447237968444824,
+      "pct": 7.548575071355607e-10,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2024,
+      "target": 37895000000.0,
+      "synthetic": 37895000000.00002,
+      "variance": 2.288818359375e-05,
+      "pct": 6.039895393521573e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2024,
+      "target": 8643000000.0,
+      "synthetic": 8642999973.767437,
+      "variance": -26.232563018798828,
+      "pct": -3.03512241337485e-09,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2024,
+      "target": 11945000000.0,
+      "synthetic": 11944999999.99998,
+      "variance": -1.9073486328125e-05,
+      "pct": -1.5967757495290917e-15,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2025,
+      "target": 41525000000.0,
+      "synthetic": 41524999999.99999,
+      "variance": -7.62939453125e-06,
+      "pct": -1.8373015126429862e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2025,
+      "target": 9270000000.0,
+      "synthetic": 9269999999.252087,
+      "variance": -0.7479133605957031,
+      "pct": -8.068105292294531e-11,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2025,
+      "target": 14339000000.0,
+      "synthetic": 14339000000.000008,
+      "variance": 7.62939453125e-06,
+      "pct": 5.32072984953623e-16,
+      "ties_out": true
+    }
+  ],
+  "tied_out": true,
+  "top_customers": [
+    {
+      "id": "C0106",
+      "name": "Onyx Systems",
+      "segment": "Total",
+      "revenue": 8720249697,
+      "pct_of_total": 0.21,
+      "yoy": 0.2784
+    },
+    {
+      "id": "C0026",
+      "name": "Dovetail Corp",
+      "segment": "Total",
+      "revenue": 1849220898,
+      "pct_of_total": 0.0445,
+      "yoy": null
+    },
+    {
+      "id": "C0119",
+      "name": "Orion Group",
+      "segment": "Total",
+      "revenue": 1492955540,
+      "pct_of_total": 0.036,
+      "yoy": -0.0457
+    },
+    {
+      "id": "C0138",
+      "name": "Cobalt Industries",
+      "segment": "Total",
+      "revenue": 1092919040,
+      "pct_of_total": 0.0263,
+      "yoy": -0.0457
+    },
+    {
+      "id": "C0065",
+      "name": "Orion Holdings",
+      "segment": "Total",
+      "revenue": 1075063710,
+      "pct_of_total": 0.0259,
+      "yoy": -0.0457
+    },
+    {
+      "id": "C0059",
+      "name": "Granite Holdings",
+      "segment": "Total",
+      "revenue": 996229076,
+      "pct_of_total": 0.024,
+      "yoy": -0.0457
+    },
+    {
+      "id": "C0126",
+      "name": "Cascade Group",
+      "segment": "Total",
+      "revenue": 975793545,
+      "pct_of_total": 0.0235,
+      "yoy": -0.0457
+    },
+    {
+      "id": "C0028",
+      "name": "Northwind Labs",
+      "segment": "Total",
+      "revenue": 870320100,
+      "pct_of_total": 0.021,
+      "yoy": -0.0457
+    }
+  ],
+  "top5_concentration": 0.3427,
+  "reported_growth": 0.0958,
+  "underlying_growth": 0.0557,
+  "largest_customer": "Onyx Systems",
+  "one_time_revenue": 2155792660,
+  "one_time_pct": 0.0519,
+  "recurring_growth": 0.0389,
+  "margin_bridge": {
+    "blended_margin": 0.7768,
+    "lowest_margin_line": "Legacy",
+    "lowest_margin": 0.577,
+    "share_now": 0.2005,
+    "share_prior": 0.1993,
+    "products": [
+      {
+        "name": "Platform",
+        "margin": 0.937,
+        "share": 0.2429
+      },
+      {
+        "name": "Core Suite",
+        "margin": 0.857,
+        "share": 0.2127
+      },
+      {
+        "name": "Analytics",
+        "margin": 0.777,
+        "share": 0.1862
+      },
+      {
+        "name": "Services",
+        "margin": 0.677,
+        "share": 0.1578
+      },
+      {
+        "name": "Legacy",
+        "margin": 0.577,
+        "share": 0.2005
+      }
+    ]
+  },
+  "working_capital": {
+    "dso": 126.0,
+    "dso_prior": 115.1,
+    "dio": null,
+    "dpo": null
+  },
+  "insights": [
+    {
+      "headline": "Top 5 customers = 34% of revenue \u2014 undisclosed in the filing",
+      "severity": "high",
+      "detail": "Customer concentration the consolidated 10-K never breaks out.",
+      "evidence": "Largest: Onyx Systems, Dovetail Corp, Orion Group"
+    },
+    {
+      "headline": "Ex-largest customer, underlying growth is 6%, not the reported 10%",
+      "severity": "high",
+      "detail": "Onyx Systems's share is rising YoY, so the headline growth overstates the base.",
+      "evidence": "Reported 9.6% vs underlying 5.6%"
+    },
+    {
+      "headline": "$2,156M of revenue is one-time \u2014 5% of the top line",
+      "severity": "medium",
+      "detail": "Non-recurring revenue inflating the latest period; the recurring base is softer.",
+      "evidence": "5.2% of FY2025 revenue tagged one-time"
+    },
+    {
+      "headline": "DSO up 11 days YoY \u2014 collections slowing",
+      "severity": "medium",
+      "detail": "Receivables growing faster than revenue; cash conversion deteriorating ahead of the cash-flow statement.",
+      "evidence": "DSO 115 \u2192 126 days"
+    },
+    {
+      "headline": "Net revenue retention 97%",
+      "severity": "low",
+      "detail": "Cohort expansion net of churn, from the CRM/ERP customer base.",
+      "evidence": "\u03a3 cohort current / starting across 4 cohorts"
+    },
+    {
+      "headline": "Pipeline covers 110% of next-year growth need",
+      "severity": "low",
+      "detail": "Win-rate-weighted CRM pipeline vs the dollars to repeat this year's growth.",
+      "evidence": "$3.98B weighted across 45 open opps"
+    }
+  ],
+  "net_retention": 0.972,
+  "pipeline": {
+    "weighted": 3977721334,
+    "count": 45,
+    "coverage": 1.096,
+    "open_value": 7792270892
+  },
+  "constraints": [
+    {
+      "fiscal_year": 2025,
+      "revenue_total": 41525000000.0,
+      "segments": {},
+      "cogs": 9270000000.0,
+      "gross_margin": 0.7767609873570138,
+      "accounts_receivable": 14339000000.0,
+      "inventory": null,
+      "accounts_payable": null,
+      "net_income": 7457000000.0,
+      "operating_income": 8331000000.0,
+      "cfo": 14996000000.0,
+      "capex": 594000000.0
+    },
+    {
+      "fiscal_year": 2024,
+      "revenue_total": 37895000000.0,
+      "segments": {},
+      "cogs": 8643000000.0,
+      "gross_margin": 0.7719224172054361,
+      "accounts_receivable": 11945000000.0,
+      "inventory": null,
+      "accounts_payable": null,
+      "net_income": 6197000000.0,
+      "operating_income": 7205000000.0,
+      "cfo": 13092000000.0,
+      "capex": 658000000.0
+    },
+    {
+      "fiscal_year": 2023,
+      "revenue_total": 34857000000.0,
+      "segments": {},
+      "cogs": 8541000000.0,
+      "gross_margin": 0.7549703072553576,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": null,
+      "net_income": 4136000000.0,
+      "operating_income": 5011000000.0,
+      "cfo": 10234000000.0,
+      "capex": 736000000.0
+    }
+  ],
+  "ledger_summary": {
+    "customers": 140,
+    "products": [
+      {
+        "id": "P0",
+        "name": "Platform",
+        "unit_margin": 0.9367609873570139
+      },
+      {
+        "id": "P1",
+        "name": "Core Suite",
+        "unit_margin": 0.8567609873570138
+      },
+      {
+        "id": "P2",
+        "name": "Analytics",
+        "unit_margin": 0.7767609873570138
+      },
+      {
+        "id": "P3",
+        "name": "Services",
+        "unit_margin": 0.6767609873570138
+      },
+      {
+        "id": "P4",
+        "name": "Legacy",
+        "unit_margin": 0.5767609873570139
+      }
+    ],
+    "revenue_lines": 1890,
+    "ar_invoices": 1076,
+    "pipeline_opps": 45,
+    "cohorts": 4,
+    "anomalies": [
+      {
+        "type": "concentration",
+        "severity": "high",
+        "customer": "Onyx Systems",
+        "customer_id": "C0106",
+        "pct_of_segment": 0.21,
+        "segment": "Total"
+      },
+      {
+        "type": "one_time_revenue",
+        "severity": "medium",
+        "amount": 970106697,
+        "note": "one-time revenue inflating the latest period"
+      },
+      {
+        "type": "margin_erosion",
+        "severity": "medium",
+        "product": "Legacy",
+        "unit_margin": 0.577,
+        "note": "lowest-margin line gaining revenue share YoY"
+      },
+      {
+        "type": "dso_drift",
+        "severity": "medium",
+        "dso_now": 126.0,
+        "dso_prior": 115.1,
+        "delta_days": 11.0
+      }
+    ]
+  }
+}
