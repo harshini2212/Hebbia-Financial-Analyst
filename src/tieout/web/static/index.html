@@ -690,9 +690,11 @@ function vArtifacts(){
   const q=S.qoe;const el=$('<div></div>');
   el.appendChild($(`<div class="phead"><h1>Investor memo${q?` — ${esc(q.issuer)}`:''}</h1><p>A finished, source-cited diligence memo generated from the run. Public figures cite the 10-K (XBRL); granular figures cite the synthetic ERP/CRM ledger. <b>Calibrated demo data.</b></p></div>`));
   if(!q||!q.ticker){el.appendChild($('<div class="note">No company loaded — pick one on the Dashboard.</div>'));return el;}
-  el.appendChild($(`<div style="margin-bottom:14px"><button class="btn" id="dl-md">Download .md</button> <button class="btn ghost" id="dl-txt">Download .txt</button> ${have('erp')&&have('crm')?'<span class="chip ok">ERP + CRM connected — full memo</span>':'<span class="chip slate">connect ERP + CRM for the full memo</span>'}</div>`));
+  el.appendChild($(`<div style="margin-bottom:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" id="dl-pdf">⤓ Download PDF</button> <button class="btn ghost" id="dl-md">.md</button> <button class="btn ghost" id="dl-txt">.txt</button> ${have('erp')&&have('crm')?'<span class="chip ok">ERP + CRM connected — full detail</span>':'<span class="chip slate">connect ERP + CRM (+ investor) in Connectors for the fullest memo</span>'}</div>`));
+  el.appendChild($(`<div class="muted" style="font-size:11px;margin-bottom:14px">The PDF pulls in margins, cash flow, holdings &amp; headcount from whatever you've connected, with plain-English explanations. Opens the print dialog — choose <b>Save as PDF</b>.</div>`));
   el.appendChild($(`<div class="memo">${memoHTML(q)}</div>`));
-  setTimeout(()=>{const a=document.getElementById('dl-md'),b=document.getElementById('dl-txt');if(a)a.onclick=()=>dlMemo('md');if(b)b.onclick=()=>dlMemo('txt');},0);
+  setTimeout(()=>{const p=document.getElementById('dl-pdf'),a=document.getElementById('dl-md'),b=document.getElementById('dl-txt');
+    if(p)p.onclick=()=>downloadMemoPDF();if(a)a.onclick=()=>dlMemo('md');if(b)b.onclick=()=>dlMemo('txt');},0);
   return el;
 }
 function memoSections(q){
@@ -720,6 +722,103 @@ function dlMemo(fmt){const q=S.qoe;const secs=memoSections(q);let body;
   else{body=`DILIGENCE MEMO — ${q.issuer} (${q.ticker}) FY${q.fiscal_year}\nCalibrated demo data anchored to SEC EDGAR/XBRL. Reconciliation ${q.tied_out?'tied out.':'has variance.'}\n\n`;
     secs.forEach(([h,b])=>{body+=`${h.toUpperCase()}\n${b}\n\n`;});}
   const blob=new Blob([body],{type:fmt==='md'?'text/markdown':'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`memo_${q.ticker}.${fmt}`;a.click();}
+
+/* ---- rich print-to-PDF memo (browser 'Save as PDF', no dependency) ---- */
+function mTable(headers,rows){
+  return '<table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr>'+r.map((c,i)=>'<td'+(i>0?' class="num"':'')+'>'+esc(String(c))+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+async function downloadMemoPDF(){
+  const q=S.qoe; if(!q||!q.ticker) return;
+  const w=window.open('','memo','width=920,height=1000');   // open inside the click gesture (avoids pop-up block)
+  if(!w){toast('Allow pop-ups for this site, then click Download PDF again');return;}
+  w.document.write('<!doctype html><title>Building memo…</title><body style="font-family:sans-serif;padding:48px;color:#475569">Building the diligence memo… running connected analyses. The print dialog will open automatically — choose <b>Save as PDF</b>.</body>');
+  const extra={};
+  await Promise.all(['net_profit','annual_cash_flow','concentration','retention','investor_analysis','headcount','revenue_analysis'].map(async id=>{
+    try{const r=await fetch(`${API}/api/analyses/${S.company}/${id}/run`,{method:'POST'});if(r.ok)extra[id]=(await r.json()).result;}catch(e){}}));
+  w.document.open();w.document.write(memoPrintHTML(q,extra));w.document.close();
+  setTimeout(()=>{try{w.focus();w.print();}catch(e){}},650);
+}
+function memoPrintHTML(q,extra){
+  extra=extra||{};
+  const np=extra.net_profit||{},cf=extra.annual_cash_flow||{},con=extra.concentration||{},ret=extra.retention||{},inv=extra.investor_analysis||{},hc=extra.headcount||{},rev=extra.revenue_analysis||{};
+  const wc=q.working_capital||{};
+  let date='';try{date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}catch(e){}
+  const lg=q.largest_customer?(typeof q.largest_customer==='string'?q.largest_customer:(q.largest_customer.name||'')):'';
+  const verdict=q.tied_out?'Reconciliation tied out to the filed XBRL within tolerance.':'Reconciliation shows variances vs the filing — see methodology.';
+  const card=(l,v)=>'<div class="kpi"><div class="kl">'+l+'</div><div class="kv">'+v+'</div></div>';
+  const kpis=[card('Reported growth',pct(q.reported_growth)),card('Underlying (ex-largest)',pct(q.underlying_growth)),
+    card('Top-5 concentration',pct(q.top5_concentration)),
+    (np.net_margin!=null?card('Net margin',pct(np.net_margin)):''),
+    (cf.free_cash_flow!=null?card('Free cash flow',money(cf.free_cash_flow)):''),
+    (q.net_retention!=null?card('Net rev. retention',pct(q.net_retention)):'')].filter(Boolean).join('');
+  const sec=(t,body,plain)=>'<section><h2>'+esc(t)+'</h2>'+body+(plain?'<p class="plain"><b>Plain English:</b> '+esc(plain)+'</p>':'')+'</section>';
+  let S2='';
+  S2+=sec('Executive summary',
+    '<p>'+esc(q.issuer)+' ('+esc(q.ticker)+') reported FY'+q.fiscal_year+' revenue growth of <b>'+pct(q.reported_growth)+'</b>. The headline is flattered by customer concentration: the top 5 customers are <b>'+pct(q.top5_concentration)+'</b> of revenue and underlying growth excluding the largest customer is <b>'+pct(q.underlying_growth)+'</b>.</p><p>'+esc(verdict)+'</p>',
+    'How fast the company is really growing once you strip out its biggest customer, and whether the private detail reconciles to the public filing.');
+  S2+=sec('Revenue quality',
+    '<ul><li>Reported growth: <b>'+pct(q.reported_growth)+'</b></li><li>Underlying growth (ex-largest customer): <b>'+pct(q.underlying_growth)+'</b></li>'+(q.recurring_growth!=null?'<li>Recurring base growth: <b>'+pct(q.recurring_growth)+'</b></li>':'')+(q.one_time_pct!=null?'<li>One-time revenue: <b>'+pct(q.one_time_pct)+'</b> of total</li>':'')+'</ul>'+(rev.by_segment?mTable(['Segment','Revenue'],Object.entries(rev.by_segment).map(function(e){return [e[0],money(e[1])];})):''),
+    'A big gap between reported and underlying growth means growth leans on one customer or one-time items — lower quality than it looks.');
+  var custs=(con.customers||q.top_customers||[]);
+  var concBody='<ul><li>Top-5 concentration: <b>'+pct(con.top5_pct!=null?con.top5_pct:q.top5_concentration)+'</b></li>'+(con.hhi!=null?'<li>Herfindahl index (HHI): <b>'+Math.round(con.hhi).toLocaleString()+'</b></li>':'')+(lg?'<li>Largest customer: <b>'+esc(lg)+'</b></li>':'')+'</ul>';
+  if(custs.length)concBody+=mTable(['Customer','Segment','Revenue','% of total'],custs.slice(0,8).map(function(c){return [c.name,c.segment||'',money(c.revenue),pct(c.pct_of_total)];}));
+  S2+=sec('Customer concentration',concBody,'The 10-K never breaks out customers; this is reconstructed from the ledger so you can see how dependent revenue is on a few accounts.');
+  if(np.net_margin!=null||np.gross_margin!=null)S2+=sec('Profitability & margins',
+    '<ul>'+(np.gross_margin!=null?'<li>Gross margin: <b>'+pct(np.gross_margin)+'</b></li>':'')+(np.operating_margin!=null?'<li>Operating margin: <b>'+pct(np.operating_margin)+'</b></li>':'')+(np.net_margin!=null?'<li>Net margin: <b>'+pct(np.net_margin)+'</b>'+(np.net_margin_prior!=null?' (vs '+pct(np.net_margin_prior)+' prior year)':'')+'</li>':'')+(np.net_income!=null?'<li>Net income: <b>'+money(np.net_income)+'</b></li>':'')+'</ul>',
+    'Whether the company keeps more of each sales dollar than last year — margin expansion is good, compression is a warning.');
+  if(cf.free_cash_flow!=null||cf.operating_cash_flow!=null)S2+=sec('Cash flow & conversion',
+    '<ul>'+(cf.operating_cash_flow!=null?'<li>Operating cash flow: <b>'+money(cf.operating_cash_flow)+'</b></li>':'')+(cf.capex!=null?'<li>Capital expenditure: <b>'+money(cf.capex)+'</b></li>':'')+(cf.free_cash_flow!=null?'<li>Free cash flow: <b>'+money(cf.free_cash_flow)+'</b>'+(cf.fcf_margin!=null?' ('+pct(cf.fcf_margin)+' of revenue)':'')+'</li>':'')+(cf.cash_conversion_cycle_days!=null?'<li>Cash conversion cycle: <b>'+cf.cash_conversion_cycle_days+' days</b></li>':'')+'</ul>',
+    'Free cash flow is what is left after running and investing in the business. Positive and growing means it funds itself; negative means it needs outside cash.');
+  if(wc.dso!=null)S2+=sec('Working capital',
+    '<ul><li>Days sales outstanding (DSO): <b>'+wc.dso+' days</b>'+(wc.dso_change!=null?' ('+(wc.dso_change>0?'+':'')+wc.dso_change+'d YoY)':'')+'</li>'+(wc.dio!=null?'<li>Days inventory outstanding (DIO): <b>'+wc.dio+' days</b></li>':'')+(wc.dpo!=null?'<li>Days payable outstanding (DPO): <b>'+wc.dpo+' days</b></li>':'')+'</ul>',
+    'Rising DSO means customers pay more slowly — it can flatter revenue while quietly draining cash.');
+  var rpBody='<ul>'+(q.net_retention!=null?'<li>Net revenue retention: <b>'+pct(q.net_retention)+'</b></li>':'')+(q.pipeline&&q.pipeline.coverage!=null?'<li>Pipeline coverage of next-year growth: <b>'+pct(q.pipeline.coverage)+'</b></li>':'')+'</ul>';
+  if((ret.cohorts||[]).length)rpBody+=mTable(['Cohort','# customers','Net retention'],ret.cohorts.map(function(c){return [c.cohort_year,c.n_customers,pct(c.net_retention)];}));
+  S2+=sec('Retention & pipeline',rpBody,'Net retention above 100% means existing customers spend more each year even after churn — the strongest signal of durable growth.');
+  if((inv.top_holders||[]).length)S2+=sec('Investor base & ownership',
+    '<ul><li>Hedge-fund ownership: <b>'+pct(inv.hedge_fund_pct)+'</b></li><li>Institutional ownership: <b>'+pct(inv.institutional_pct)+'</b></li></ul>'+
+    mTable(['Holder','% held','Type','QoQ change'],inv.top_holders.slice(0,10).map(function(h){return [h.name,pct(h.pct_held),h.is_hedge_fund?'Hedge fund':'Institution',(h.qoq_change_pct>0?'+':'')+h.qoq_change_pct+'%'];})),
+    'Who owns the stock and whether fast-money hedge funds are building or trimming — a read on smart-money conviction. (Synthetic 13F-style data.)');
+  if((hc.years||[]).length){var last=hc.years[hc.years.length-1];S2+=sec('Headcount & efficiency',
+    '<p>~'+(last.headcount||0).toLocaleString()+' employees; '+money(last.revenue_per_employee)+' revenue per employee.</p>'+
+    mTable(['Fiscal year','Headcount','Revenue / employee'],hc.years.map(function(y){return [y.fiscal_year,(y.headcount||0).toLocaleString(),money(y.revenue_per_employee)];})),
+    'Revenue per employee rising over time means the business gets more efficient as it scales.');}
+  if((q.insights||[]).length)S2+=sec('Key findings','<ul>'+q.insights.map(function(i){return '<li><b>'+esc(i.headline)+'</b>'+(i.evidence?' — '+esc(i.evidence):'')+'</li>';}).join('')+'</ul>','');
+  var reconN=(q.reconciliation||[]).filter(function(r){return r.fiscal_year===q.fiscal_year;}).length;
+  S2+=sec('Methodology & reconciliation',
+    '<p>'+reconN+' public marginals from the 10-K (XBRL) were checked against the granular ledger. '+esc(verdict)+'</p><p>Granular figures come from a <b>calibrated synthetic</b> ERP/CRM ledger fit to the company’s real reported totals by iterative proportional fitting, then validated by the same tie-out harness used to check real extraction. Every number traces to either the 10-K (XBRL) or the calibrated ledger.</p>',
+    'Each detailed number was forced to add back up to the company’s real reported totals before it was allowed into this memo.');
+  var css='*{box-sizing:border-box}@page{margin:15mm 14mm}'
+    +'body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#15233b;font-size:10.5pt;line-height:1.5;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.cover{border-bottom:3px solid #1f4e79;padding-bottom:14px;margin-bottom:18px}'
+    +'.badge{font-size:8pt;letter-spacing:.13em;color:#1f4e79;font-weight:700}'
+    +'h1{font-size:23pt;margin:6px 0 4px;font-weight:700;letter-spacing:-.4px}'
+    +'h1 .tk{font-size:13pt;color:#1f4e79;font-weight:600;margin-left:7px}'
+    +'.meta{color:#5a6b85;font-size:9.5pt}'
+    +'.disclosure{background:#fbf6e7;border-left:3px solid #c9a227;padding:7px 11px;font-size:8.5pt;color:#6b5a1f;margin-top:12px;border-radius:0 4px 4px 0}'
+    +'.kpis{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}'
+    +'.kpi{flex:1 1 150px;border:1px solid #dde3ec;border-radius:7px;padding:9px 12px;background:#f8fafc}'
+    +'.kpi .kl{font-size:7.5pt;text-transform:uppercase;letter-spacing:.06em;color:#6b7a93;font-weight:600}'
+    +'.kpi .kv{font-size:15pt;font-weight:700;margin-top:2px}'
+    +'section{margin-bottom:15px;page-break-inside:avoid}'
+    +'h2{font-size:12.5pt;color:#1f4e79;border-bottom:1px solid #e4e9f1;padding-bottom:3px;margin:0 0 8px}'
+    +'ul{margin:0 0 6px;padding-left:18px}li{margin:2px 0}p{margin:0 0 6px}'
+    +'.plain{background:#f4f7fb;border-radius:5px;padding:6px 10px;font-size:9pt;color:#41526e}'
+    +'table{width:100%;border-collapse:collapse;font-size:9pt;margin:8px 0}'
+    +'th{text-align:left;background:#1f4e79;color:#fff;padding:5px 8px;font-size:8pt;text-transform:uppercase;letter-spacing:.03em}'
+    +'td{padding:4px 8px;border-bottom:1px solid #eef1f6}td.num{text-align:right;font-variant-numeric:tabular-nums}'
+    +'tbody tr:nth-child(even){background:#f8fafc}'
+    +'.foot{margin-top:20px;border-top:1px solid #e4e9f1;padding-top:8px;font-size:8pt;color:#8a98ad}';
+  return '<!doctype html><html><head><meta charset="utf-8"><title>'+esc(q.issuer)+' — Diligence memo</title><style>'+css+'</style></head><body>'
+    +'<div class="cover"><div class="badge">QUALITY-OF-EARNINGS · DILIGENCE MEMO</div>'
+    +'<h1>'+esc(q.issuer)+'<span class="tk">'+esc(q.ticker)+'</span></h1>'
+    +'<div class="meta">Fiscal year '+q.fiscal_year+(date?' · '+date:'')+' · '+(q.tied_out?'Reconciliation tied out ✓':'Reconciliation variance')+'</div>'
+    +'<div class="disclosure"><b>Calibrated demo data</b> — anchored to SEC EDGAR/XBRL filings, not real ERP/CRM data. For demonstration only; not investment advice.</div></div>'
+    +'<div class="kpis">'+kpis+'</div>'+S2
+    +'<div class="foot">Generated by the tie-out engine · public figures cite the 10-K (XBRL); granular figures cite the calibrated synthetic ledger.</div>'
+    +'</body></html>';
+}
 
 /* ---------- Trust & validation (Evals) ---------- */
 function vEvals(){

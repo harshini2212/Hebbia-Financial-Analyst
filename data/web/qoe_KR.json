@@ -1,0 +1,353 @@
+{
+  "ticker": "KR",
+  "issuer": "KROGER CO",
+  "fiscal_year": 2025,
+  "prior_year": 2024,
+  "reconciliation": [
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2023,
+      "target": 150039000000.0,
+      "synthetic": 150039000000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Reportable Segment Aggregation Before Other Operating Segment",
+      "fiscal_year": 2023,
+      "target": 150039000000.0,
+      "synthetic": 150039000000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2024,
+      "target": 147123000000.0,
+      "synthetic": 147123000000.0001,
+      "variance": 9.1552734375e-05,
+      "pct": 6.222870276911156e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Reportable Segment Aggregation Before Other Operating Segment",
+      "fiscal_year": 2024,
+      "target": 147123000000.0,
+      "synthetic": 147123000000.0001,
+      "variance": 9.1552734375e-05,
+      "pct": 6.222870276911156e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2024,
+      "target": 2195000000.0,
+      "synthetic": 2194999999.999966,
+      "variance": -3.3855438232421875e-05,
+      "pct": -1.5423889855317482e-14,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2025,
+      "target": 147642000000.0,
+      "synthetic": 147642000000.00003,
+      "variance": 3.0517578125e-05,
+      "pct": 2.066998423551564e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Reportable Segment Aggregation Before Other Operating Segment",
+      "fiscal_year": 2025,
+      "target": 147642000000.0,
+      "synthetic": 147642000000.00003,
+      "variance": 3.0517578125e-05,
+      "pct": 2.066998423551564e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2025,
+      "target": 2192000000.0,
+      "synthetic": 2191999999.99998,
+      "variance": -2.002716064453125e-05,
+      "pct": -9.13647839622776e-15,
+      "ties_out": true
+    }
+  ],
+  "tied_out": true,
+  "top_customers": [
+    {
+      "id": "C0063",
+      "name": "Meridian Holdings",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 31004815643,
+      "pct_of_total": 0.21,
+      "yoy": 0.1708
+    },
+    {
+      "id": "C0115",
+      "name": "Pinnacle Group",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 4492483443,
+      "pct_of_total": 0.0304,
+      "yoy": null
+    },
+    {
+      "id": "C0073",
+      "name": "Sequoia Holdings",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 4411041047,
+      "pct_of_total": 0.0299,
+      "yoy": -0.1709
+    },
+    {
+      "id": "C0101",
+      "name": "Vanguard Systems",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 4112374579,
+      "pct_of_total": 0.0279,
+      "yoy": -0.1709
+    },
+    {
+      "id": "C0059",
+      "name": "Granite Holdings",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 4027662785,
+      "pct_of_total": 0.0273,
+      "yoy": -0.1709
+    },
+    {
+      "id": "C0099",
+      "name": "Cascade Systems",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 3794183586,
+      "pct_of_total": 0.0257,
+      "yoy": -0.1709
+    },
+    {
+      "id": "C0089",
+      "name": "Harbor Systems",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 3153807350,
+      "pct_of_total": 0.0214,
+      "yoy": -0.1709
+    },
+    {
+      "id": "C0057",
+      "name": "Cobalt Holdings",
+      "segment": "Reportable Segment Aggregation Before Other Operating Segment",
+      "revenue": 3054236075,
+      "pct_of_total": 0.0207,
+      "yoy": -0.1709
+    }
+  ],
+  "top5_concentration": 0.3254,
+  "reported_growth": 0.0035,
+  "underlying_growth": -0.0332,
+  "largest_customer": "Meridian Holdings",
+  "one_time_revenue": 7694029204,
+  "one_time_pct": 0.0521,
+  "recurring_growth": -0.0488,
+  "margin_bridge": {
+    "blended_margin": null,
+    "lowest_margin_line": "Legacy",
+    "lowest_margin": 0.2,
+    "share_now": 0.2005,
+    "share_prior": 0.1882,
+    "products": [
+      {
+        "name": "Platform",
+        "margin": 0.56,
+        "share": 0.2429
+      },
+      {
+        "name": "Core Suite",
+        "margin": 0.48,
+        "share": 0.2127
+      },
+      {
+        "name": "Analytics",
+        "margin": 0.4,
+        "share": 0.1862
+      },
+      {
+        "name": "Services",
+        "margin": 0.3,
+        "share": 0.1578
+      },
+      {
+        "name": "Legacy",
+        "margin": 0.2,
+        "share": 0.2005
+      }
+    ]
+  },
+  "working_capital": {
+    "dso": 5.4,
+    "dso_prior": 5.4,
+    "dio": null,
+    "dpo": null
+  },
+  "insights": [
+    {
+      "headline": "Top 5 customers = 33% of revenue \u2014 undisclosed in the filing",
+      "severity": "high",
+      "detail": "Customer concentration the consolidated 10-K never breaks out.",
+      "evidence": "Largest: Meridian Holdings, Pinnacle Group, Sequoia Holdings"
+    },
+    {
+      "headline": "Ex-largest customer, underlying growth is -3%, not the reported 0%",
+      "severity": "high",
+      "detail": "Meridian Holdings's share is rising YoY, so the headline growth overstates the base.",
+      "evidence": "Reported 0.4% vs underlying -3.3%"
+    },
+    {
+      "headline": "$7,694M of revenue is one-time \u2014 5% of the top line",
+      "severity": "medium",
+      "detail": "Non-recurring revenue inflating the latest period; the recurring base is softer.",
+      "evidence": "5.2% of FY2025 revenue tagged one-time"
+    },
+    {
+      "headline": "Legacy (lowest margin, 20%) gaining share",
+      "severity": "medium",
+      "detail": "Mix shift toward the lowest-margin line \u2014 gross-margin pressure ahead.",
+      "evidence": "Share 19% \u2192 20%"
+    },
+    {
+      "headline": "Net revenue retention 84%",
+      "severity": "medium",
+      "detail": "Cohort expansion net of churn, from the CRM/ERP customer base.",
+      "evidence": "\u03a3 cohort current / starting across 4 cohorts"
+    },
+    {
+      "headline": "Pipeline covers 1422% of next-year growth need",
+      "severity": "low",
+      "detail": "Win-rate-weighted CRM pipeline vs the dollars to repeat this year's growth.",
+      "evidence": "$7.38B weighted across 45 open opps"
+    }
+  ],
+  "net_retention": 0.835,
+  "pipeline": {
+    "weighted": 7382100001,
+    "count": 45,
+    "coverage": 14.224,
+    "open_value": 12758023858
+  },
+  "constraints": [
+    {
+      "fiscal_year": 2025,
+      "revenue_total": 147642000000.0,
+      "segments": {
+        "Reportable Segment Aggregation Before Other Operating Segment": 147642000000.0
+      },
+      "cogs": null,
+      "gross_margin": null,
+      "accounts_receivable": 2192000000.0,
+      "inventory": null,
+      "accounts_payable": 10488000000.0,
+      "net_income": 1016000000.0,
+      "operating_income": 1890000000.0,
+      "cfo": 7311000000.0,
+      "capex": 3855000000.0
+    },
+    {
+      "fiscal_year": 2024,
+      "revenue_total": 147123000000.0,
+      "segments": {
+        "Reportable Segment Aggregation Before Other Operating Segment": 147123000000.0
+      },
+      "cogs": null,
+      "gross_margin": null,
+      "accounts_receivable": 2195000000.0,
+      "inventory": null,
+      "accounts_payable": 10124000000.0,
+      "net_income": 2665000000.0,
+      "operating_income": 3849000000.0,
+      "cfo": 5794000000.0,
+      "capex": 4017000000.0
+    },
+    {
+      "fiscal_year": 2023,
+      "revenue_total": 150039000000.0,
+      "segments": {
+        "Reportable Segment Aggregation Before Other Operating Segment": 150039000000.0
+      },
+      "cogs": null,
+      "gross_margin": null,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": null,
+      "net_income": 2164000000.0,
+      "operating_income": 3096000000.0,
+      "cfo": 6788000000.0,
+      "capex": 3904000000.0
+    }
+  ],
+  "ledger_summary": {
+    "customers": 140,
+    "products": [
+      {
+        "id": "P0",
+        "name": "Platform",
+        "unit_margin": 0.56
+      },
+      {
+        "id": "P1",
+        "name": "Core Suite",
+        "unit_margin": 0.48000000000000004
+      },
+      {
+        "id": "P2",
+        "name": "Analytics",
+        "unit_margin": 0.4
+      },
+      {
+        "id": "P3",
+        "name": "Services",
+        "unit_margin": 0.30000000000000004
+      },
+      {
+        "id": "P4",
+        "name": "Legacy",
+        "unit_margin": 0.2
+      }
+    ],
+    "revenue_lines": 1845,
+    "ar_invoices": 264,
+    "pipeline_opps": 45,
+    "cohorts": 4,
+    "anomalies": [
+      {
+        "type": "concentration",
+        "severity": "high",
+        "customer": "Meridian Holdings",
+        "customer_id": "C0063",
+        "pct_of_segment": 0.21,
+        "segment": "Reportable Segment Aggregation Before Other Operating Segment"
+      },
+      {
+        "type": "one_time_revenue",
+        "severity": "medium",
+        "amount": 3462313142,
+        "note": "one-time revenue inflating the latest period"
+      },
+      {
+        "type": "margin_erosion",
+        "severity": "medium",
+        "product": "Legacy",
+        "unit_margin": 0.2,
+        "note": "lowest-margin line gaining revenue share YoY"
+      },
+      {
+        "type": "dso_drift",
+        "severity": "medium",
+        "dso_now": 5.4,
+        "dso_prior": 5.4,
+        "delta_days": -0.0
+      }
+    ]
+  }
+}
