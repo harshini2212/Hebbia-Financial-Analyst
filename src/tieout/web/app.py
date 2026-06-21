@@ -151,6 +151,31 @@ def sources(ticker: str):
     return service.sources(ticker)
 
 
+@app.post("/api/sources/{ticker}/{source}/toggle")
+def toggle_source(ticker: str, source: str, payload: dict = Body(default={})):
+    try:
+        return service.toggle_source(ticker, source, bool((payload or {}).get("connect", True)))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/api/analyses/{ticker}")
+def analyses(ticker: str):
+    return service.analyses(ticker)
+
+
+@app.post("/api/analyses/{ticker}/{analysis_id}/run")
+def analysis_run(ticker: str, analysis_id: str):
+    try:
+        return service.run_analysis(ticker, analysis_id)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @app.get("/api/stream/qoe")
 def stream_qoe(ticker: str, period: str = "FY2025"):
     """Stream a Quality-of-Earnings run as it computes (Server-Sent Events).

@@ -462,31 +462,110 @@ def qoe_run(ticker: str) -> dict:
     return out
 
 
+# --- user-controlled connectors + the progressive analysis catalog ------------
+# Connection state is per-process, per-ticker (resets on restart — a session, not a DB).
+_CONNECTIONS: dict[str, set] = {}
+_LEDGER_CACHE: dict[str, tuple] = {}
+
+_SOURCE_DEFS = [
+    {"id": "edgar", "name": "SEC EDGAR", "vendor": "Public filings", "kind": "public",
+     "security": "Public XBRL — no PII; the ground-truth marginals.",
+     "provides": "10-K/Q XBRL marginals", "unlocks": []},
+    {"id": "erp", "name": "NetSuite", "vendor": "ERP", "kind": "erp",
+     "security": "Most sensitive financial system — connect in a clean room.",
+     "provides": "GL · revenue by customer/SKU · AR aging · inventory",
+     "unlocks": ["concentration", "revenue_analysis", "net_profit", "annual_cash_flow", "burn_rate", "roi_by_segment"]},
+    {"id": "crm", "name": "Salesforce", "vendor": "CRM", "kind": "crm",
+     "security": "Customer-identifying — governed by your DPA.",
+     "provides": "pipeline · bookings · cohort retention",
+     "unlocks": ["retention", "pipeline_to_revenue"]},
+    {"id": "hris", "name": "Workday", "vendor": "HRIS", "kind": "hris",
+     "security": "Employee PII — highest sensitivity; connect last.",
+     "provides": "headcount · org · efficiency", "unlocks": ["headcount"]},
+    {"id": "investor", "name": "13F holdings", "vendor": "Capital markets", "kind": "investor",
+     "security": "Ownership data — commercially sensitive.",
+     "provides": "institutional + hedge-fund ownership", "unlocks": ["investor_analysis"]},
+    {"id": "merge", "name": "Merge.dev", "vendor": "Live ERP/CRM (production)", "kind": "live",
+     "security": "Swap in real production data via one connector — same interface.",
+     "provides": "real ERP/CRM in production", "unlocks": []},
+]
+_TOGGLEABLE = {"erp", "crm", "hris", "investor"}
+
+
+def _connected(ticker: str) -> set:
+    return _CONNECTIONS.setdefault(ticker.upper(), set())
+
+
+def _ledger_for(ticker: str):
+    """Cache (ledger, constraints) per ticker — reuses the EDGAR pull from qoe."""
+    t = ticker.upper()
+    if t not in _LEDGER_CACHE:
+        from ..workflows.qoe import _CONS_CACHE
+        from ..synth.constraints import pull_constraints
+        from ..synth.generate import generate
+        cons = _CONS_CACHE.get(t) or pull_constraints(t)
+        _CONS_CACHE[t] = cons
+        _LEDGER_CACHE[t] = (generate(cons), cons)
+    return _LEDGER_CACHE[t]
+
+
 def sources(ticker: str) -> list[dict]:
-    """The connector layer — EDGAR (public) + synthetic ERP/CRM + Merge (live), all
-    behind one adapter interface. Record counts come from the generated ledger."""
+    """Connector cards reflecting the user's current connections (EDGAR always on)."""
+    t = ticker.upper()
+    conn = _connected(t)
     d = qoe(ticker)
-    ls = d.get("ledger_summary", {})
-    n_periods = len(d.get("constraints", []))
-    cust = ls.get("customers", 0)
-    return [
-        {"id": "edgar", "name": "SEC EDGAR", "vendor": "Public filings", "kind": "public",
-         "status": "connected", "tied_out": True,
-         "provides": "10-K/Q XBRL — the ground-truth marginals",
-         "detail": f"{n_periods} periods of consolidated XBRL"},
-        {"id": "erp", "name": "NetSuite", "vendor": "Synthetic ERP", "kind": "synthetic",
-         "status": "connected", "tied_out": d.get("tied_out"),
-         "provides": "GL · revenue by customer/SKU · AR aging · inventory",
-         "detail": f"{cust} customers · {ls.get('revenue_lines', 0)} revenue lines · {ls.get('ar_invoices', 0)} AR invoices"},
-        {"id": "crm", "name": "Salesforce", "vendor": "Synthetic CRM", "kind": "synthetic",
-         "status": "connected", "tied_out": True,
-         "provides": "pipeline · bookings · win-rates · cohort retention",
-         "detail": f"{ls.get('pipeline_opps', 0)} open opps · {ls.get('cohorts', 0)} cohorts"},
-        {"id": "merge", "name": "Merge.dev", "vendor": "Live ERP/CRM (production)", "kind": "live",
-         "status": "available", "tied_out": None,
-         "provides": "real ERP/CRM via one unified connector — same interface as synthetic",
-         "detail": "swap in for a real customer; workflows unchanged"},
-    ]
+    counts = {"edgar": f"{len(d.get('constraints', []))} periods of XBRL"}
+    if conn:
+        try:
+            ledger, _ = _ledger_for(t)
+            counts.update({
+                "erp": f"{len(ledger.customers)} customers · {len(ledger.revenue_lines)} lines · {len(ledger.ar_invoices)} AR invoices",
+                "crm": f"{len(ledger.pipeline)} open opps · {len(ledger.cohorts)} cohorts",
+                "hris": "headcount by segment", "investor": "institutional + hedge-fund holders"})
+        except Exception:
+            pass
+    out = []
+    for s in _SOURCE_DEFS:
+        on = (s["id"] == "edgar") or (s["id"] in conn)
+        out.append({**{k: s[k] for k in ("id", "name", "vendor", "kind", "security", "provides", "unlocks")},
+                    "status": "connected" if on else ("locked" if s["id"] == "edgar" else "available"),
+                    "toggleable": s["id"] in _TOGGLEABLE,
+                    "tied_out": (True if (on and s["id"] not in ("edgar", "merge")) else None),
+                    "detail": counts.get(s["id"]) if on else None})
+    return out
+
+
+def toggle_source(ticker: str, source: str, connect: bool) -> dict:
+    t, source = ticker.upper(), source.lower()
+    if source not in _TOGGLEABLE:
+        raise ValueError("only erp / crm / hris / investor can be connected")
+    from ..workflows.catalog import catalog
+    conn = _connected(t)
+    before = {a["id"] for a in catalog(conn) if a["unlocked"]}
+    if connect:
+        conn.add(source); _ledger_for(t)
+    else:
+        conn.discard(source)
+    after = {a["id"] for a in catalog(conn) if a["unlocked"]}
+    return {"sources": sources(t), "connected": sorted(conn),
+            "unlocked": sorted(after - before)}
+
+
+def analyses(ticker: str) -> dict:
+    from ..workflows.catalog import catalog
+    conn = _connected(ticker)
+    return {"ticker": ticker.upper(), "connected": sorted(conn), "catalog": catalog(conn)}
+
+
+def run_analysis(ticker: str, analysis_id: str) -> dict:
+    from ..workflows.catalog import ANALYSES, run_analysis as _run
+    a = ANALYSES.get(analysis_id)
+    if a is None:
+        raise KeyError(f"unknown analysis {analysis_id!r}")
+    if not set(a.requires) <= ({"edgar"} | _connected(ticker)):
+        raise PermissionError(f"connect {', '.join(a.requires)} to run {analysis_id}")
+    ledger, cons = _ledger_for(ticker)
+    return _run(cons, ledger, analysis_id)
 
 
 _search_client: EdgarClient | None = None
