@@ -19,7 +19,15 @@ QoE findings:  top-5 = 30% · reported 12% vs underlying 10% · $22.9B one-time 
   DSO 31.7→34.5d · DPO 124.8 (Amazon's real ratios) · NRR 111% · pipeline cov 112%.
 ```
 
-Run it: `python scripts/run_qoe.py AMZN` (headless) or `python serve.py` → the **Quality-of-Earnings workspace** (Workflows · Sources/connectors · Companies · Runs · Artifacts · Evals).
+**Run it live** — opening the workspace *streams the run*: the trace ticks step-by-step, tie-out checks turn green one at a time, reconciliation rows + KPI cards fill as they compute, findings land last.
+
+```bash
+python serve.py                  # -> http://localhost:8050 · open the QoE workspace
+RUN_PACE=0.3 python serve.py     # paced for a live demo (drips the stream)
+python scripts/run_qoe.py AMZN   # headless: the same workflow, printed
+```
+
+Opening a workflow hits an SSE endpoint (`/api/stream/qoe`); the *same generator* materializes the cached `/api/qoe/{ticker}` and the static export — one workflow definition, no fork. **Deploy:** `render.yaml` (Render) or the `Dockerfile` (Cloud Run) — a single FastAPI origin serves UI + streaming API. Tabs: Workflows · QoE workspace · Companies · Sources/connectors · Runs · Artifacts · Evals.
 
 ---
 

@@ -139,6 +139,12 @@
   .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-3px;margin-right:7px}
   @keyframes s{to{transform:rotate(360deg)}}
   .loading{color:var(--muted);padding:50px;text-align:center}
+  .qstatus{font-size:12.5px;padding:8px 13px;border-radius:8px;margin-bottom:14px;background:var(--panel2);border:1px solid var(--line2);color:var(--muted);display:flex;align-items:center;gap:8px}
+  .qstatus.run{background:var(--accent-soft);border-color:#cfdcff;color:var(--accent)}
+  .qstatus.ok{background:var(--ok-soft);border-color:#bfe6cb;color:var(--ok);font-weight:600}
+  .qstatus.warn{background:var(--warn-soft);border-color:#f0dcbf;color:var(--warn)}
+  .tev2{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0}
+  .tickok{color:var(--ok);font-weight:700} .tickdim{color:var(--faint)}
   .memo{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:26px 30px;max-width:760px;box-shadow:var(--shadow-sm)}
   .memo h2{font-size:18px;margin:0 0 2px} .memo .by{color:var(--faint);font-size:11.5px;margin-bottom:16px}
   .memo h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin:18px 0 8px}
@@ -164,6 +170,9 @@
 <script>
 const NAV=[['workflows','Workflows','◧'],['qoe','QoE workspace','▦'],['companies','Companies','▤'],
   ['sources','Sources','⇄'],['runs','Runs','↻'],['artifacts','Artifacts','▭'],['evals','Evals','✓']];
+// same-origin by default (works on localhost + a whole-app deploy); set to the deployed
+// API URL only if the UI is hosted on a different origin than the API.
+const API='';
 const S={tab:'qoe',company:null,companies:[],qoe:null,sources:[],evals:null,bench:null,inspect:null,busy:false};
 const $=h=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
 function pct(v){return v==null?'—':(v*100).toFixed(Math.abs(v*100)>=10?0:1)+'%';}
@@ -223,48 +232,121 @@ function vWorkflows(){
 
 /* ---------- QoE workspace (the hero) ---------- */
 function vQoE(){
-  const q=S.qoe;const el=$('<div></div>');
-  if(!q||!q.ticker){el.appendChild($(`<div class="note">No Quality-of-Earnings run yet. Pick a company in <b>Companies</b>.</div>`));return el;}
-  el.appendChild($(`<div class="phead"><h1>Quality of Earnings — ${q.issuer}</h1>
-    <p>The filed consolidated numbers, reconciled against the granular private ledger. Every figure rolls up to the public total (tied out); the findings are what the 10-K never breaks out.</p></div>`));
-  // KPI cards
-  const ug=q.underlying_growth, rg=q.reported_growth;
-  el.appendChild($(`<div class="kpis">
-    <div class="kc"><div class="k">Reported growth</div><div class="v">${pct(rg)}</div><div class="d">consolidated, from the filing</div></div>
-    <div class="kc ${ug!=null&&rg!=null&&ug<rg-0.02?'danger':''}"><div class="k">Underlying growth</div><div class="v">${pct(ug)}</div><div class="d">ex-largest customer (${esc(q.largest_customer||'')})</div></div>
-    <div class="kc ${q.top5_concentration>=0.3?'warn':''}"><div class="k">Top-5 concentration</div><div class="v">${pct(q.top5_concentration)}</div><div class="d">undisclosed in the filing</div></div>
-    <div class="kc ${q.net_retention!=null&&q.net_retention<0.97?'warn':'good'}"><div class="k">Net retention</div><div class="v">${q.net_retention!=null?pct(q.net_retention):'—'}</div><div class="d">CRM cohort expansion</div></div>
+  const el=$('<div></div>');
+  const issuer=(S.qoe&&S.qoe.issuer)||((S.companies.find(c=>c.ticker===S.company)||{}).issuer)||S.company||'';
+  el.appendChild($(`<div class="phead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+    <div><h1>Quality of Earnings — ${esc(issuer)}</h1>
+    <p>Watch it run: filed consolidated numbers reconciled against the granular private ledger, live. Every figure rolls up to the public total (tie-out); the findings are what the 10-K never breaks out. <b>Calibrated demo data.</b></p></div>
+    <button class="btn sm" id="qoe-rerun" style="flex-shrink:0">↻ Re-run live</button></div>`));
+  el.appendChild($(`<div id="qoe-status" class="qstatus"></div>`));
+  el.appendChild($(`<div class="kpis" id="qoe-kpis" style="grid-template-columns:repeat(5,minmax(0,1fr))">
+    ${[['reported_growth','Reported growth','consolidated'],['underlying_growth','Underlying growth','ex-largest'],
+       ['top5_concentration','Top-5 concentration','undisclosed'],['net_retention','Net retention','CRM cohorts'],
+       ['pipeline_coverage','Pipeline coverage','next-yr growth']]
+      .map(x=>`<div class="kc" id="kpi-${x[0]}"><div class="k">${x[1]}</div><div class="v">—</div><div class="d">${x[2]}</div></div>`).join('')}
   </div>`));
-  // two-pane: reconciliation + concentration | findings + WC + pipeline
-  const recon=(q.reconciliation||[]).filter(r=>r.fiscal_year===q.fiscal_year);
-  let rrows=recon.map(r=>`<tr><td>${r.marginal}</td><td class="num">${money(r.target)}</td><td class="num">${money(r.synthetic)}</td>
-    <td class="num">${(r.pct*100).toFixed(2)}%</td><td>${r.ties_out?'<span class="chip ok">ties ✓</span>':'<span class="chip bad">off</span>'}</td></tr>`).join('');
-  const conc=(q.top_customers||[]).map((c,i)=>`<tr class="click" data-i="${i}"><td>${esc(c.name)}${c.name===q.largest_customer?' <span class="chip warn">whale</span>':''}</td>
-    <td class="num">${money(c.revenue)}</td><td class="num">${pct(c.pct_of_total)}</td><td class="num">${c.yoy!=null?(c.yoy>=0?'+':'')+pct(c.yoy):'—'}</td></tr>`).join('');
   const left=$(`<div>
-    <div class="panel flush"><div class="ph"><h3>Reconciliation — public filing → private ledger</h3><span class="sub">${q.tied_out?'all tied out':'variance present'}</span></div>
-      <table class="recon"><thead><tr><th>Public marginal (XBRL)</th><th class="num">Filed</th><th class="num">ERP roll-up</th><th class="num">Var</th><th>Tie-out</th></tr></thead><tbody>${rrows}</tbody></table></div>
+    <div class="panel"><div class="ph"><h3>Run trace</h3><span class="sub">live</span></div>
+      <div class="pb"><div id="qoe-trace"></div><div id="qoe-tieouts" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px"></div></div></div>
+    <div class="panel flush"><div class="ph"><h3>Reconciliation — public filing → private ledger</h3></div>
+      <table class="recon"><thead><tr><th>Public marginal (XBRL)</th><th class="num">Filed</th><th class="num">ERP roll-up</th><th class="num">Var</th><th>Tie-out</th></tr></thead><tbody id="qoe-recon"></tbody></table></div>
     <div class="panel flush"><div class="ph"><h3>Customer concentration · the granular story</h3><span class="sub">click a row to inspect</span></div>
-      <table><thead><tr><th>Customer</th><th class="num">Revenue</th><th class="num">% total</th><th class="num">YoY</th></tr></thead><tbody id="conc">${conc}</tbody></table></div>
+      <table><thead><tr><th>Customer</th><th class="num">Revenue</th><th class="num">% total</th><th class="num">YoY</th></tr></thead><tbody id="qoe-conc"></tbody></table></div>
   </div>`);
-  const wc=q.working_capital||{}, pl=q.pipeline||{};
-  const findings=(q.insights||[]).map(i=>`<div class="ins ${i.severity}"><div class="sv"></div><div>
-    <div class="hl">${esc(i.headline)}</div><div class="dt">${esc(i.detail)}</div><div class="ev">${esc(i.evidence)}</div></div></div>`).join('');
   const right=$(`<div>
-    <div class="panel"><div class="ph"><h3>Findings the filing hides</h3></div><div class="pb">${findings||'<div class="muted">No flags.</div>'}</div></div>
-    <div class="panel"><div class="ph"><h3>Working capital</h3><span class="sub">from the balance sheet</span></div><div class="pb"><div class="miniwc">
-      <div class="wccell"><div class="k">DSO</div><div class="v">${wc.dso??'—'}${wc.dso_prior?` <span class="faint" style="font-size:11px">↑${(wc.dso-wc.dso_prior).toFixed(0)}d</span>`:''}</div></div>
-      <div class="wccell"><div class="k">DIO</div><div class="v">${wc.dio??'—'}</div></div>
-      <div class="wccell"><div class="k">DPO</div><div class="v">${wc.dpo??'—'}</div></div></div></div></div>
-    <div class="panel"><div class="ph"><h3>CRM pipeline</h3><span class="sub">Salesforce (synthetic)</span></div><div class="pb"><div class="miniwc">
-      <div class="wccell"><div class="k">Weighted</div><div class="v">${money(pl.weighted)}</div></div>
-      <div class="wccell"><div class="k">Coverage</div><div class="v">${pl.coverage!=null?pct(pl.coverage):'—'}</div></div>
-      <div class="wccell"><div class="k">Open opps</div><div class="v">${pl.count??'—'}</div></div></div></div></div>
+    <div class="panel"><div class="ph"><h3>Findings the filing hides</h3></div><div class="pb"><div id="qoe-findings"></div></div></div>
+    <div class="panel"><div class="ph"><h3>Working capital</h3><span class="sub">from the balance sheet</span></div><div class="pb"><div id="qoe-wc"></div></div></div>
+    <div class="panel"><div class="ph"><h3>CRM pipeline</h3><span class="sub">Salesforce (synthetic)</span></div><div class="pb"><div id="qoe-pipe"></div></div></div>
   </div>`);
   const two=$('<div class="two"></div>');two.appendChild(left);two.appendChild(right);el.appendChild(two);
-  setTimeout(()=>{el.querySelectorAll('#conc tr').forEach(tr=>tr.onclick=()=>inspectCustomer(+tr.getAttribute('data-i')));},0);
+  setTimeout(()=>{const b=document.getElementById('qoe-rerun');if(b)b.onclick=()=>runQoE(S.company);runQoE(S.company);},0);
   return el;
 }
+
+/* the streaming run — open a workflow and watch it compute */
+function runQoE(ticker){
+  if(!ticker)return;
+  qoeReset(); setQoeStatus('running');
+  let got=false, finished=false; const t0=Date.now();
+  clearInterval(S.qoeTimer);
+  S.qoeTimer=setInterval(()=>{const t=document.getElementById('qoe-timer');if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+'s';},100);
+  let es;
+  try{ es=new EventSource(`${API}/api/stream/qoe?ticker=${encodeURIComponent(ticker)}`); }
+  catch(e){ clearInterval(S.qoeTimer); qoeFallback(ticker); return; }
+  const stop=()=>{clearInterval(S.qoeTimer); if(es) es.close();};
+  es.addEventListener('run_started',()=>{got=true;qoeReset();setQoeStatus('running');});
+  es.addEventListener('step',e=>{got=true;const s=JSON.parse(e.data);upsertStep(s.id,s.label,s.status);});
+  es.addEventListener('count',e=>{const c=JSON.parse(e.data);appendTrace(`${c.label}: ${c.n.toLocaleString()}`);});
+  es.addEventListener('tie_out',e=>{const c=JSON.parse(e.data);addTieOut(c.check,c.passed);});
+  es.addEventListener('cell',e=>{appendReconRow(JSON.parse(e.data));});
+  es.addEventListener('metric',e=>{const m=JSON.parse(e.data);setKpi(m.key,m.value,m.unit,m.flag);});
+  es.addEventListener('finding',e=>{const f=JSON.parse(e.data);addFinding(f.severity,f.text,f.detail,f.evidence);});
+  es.addEventListener('result',e=>{onResult(JSON.parse(e.data));});
+  es.addEventListener('failed',e=>{finished=true;stop();showError(JSON.parse(e.data).message);});
+  es.addEventListener('done',e=>{const d=JSON.parse(e.data);finished=true;stop();setQoeStatus('done',d.checks_passed,d.elapsed_ms);});
+  es.onerror=()=>{if(finished)return;stop();if(!got)qoeFallback(ticker);else setQoeStatus('warn','disconnected');};
+}
+/* no live backend (e.g. the static export) -> replay the cached run */
+function qoeFallback(ticker){
+  fetch(`${API}/api/qoe/${ticker}`).then(r=>r.json()).then(rep=>{
+    if(rep&&rep.ticker){replayCached(rep);} else {setQoeStatus('warn','disconnected');}
+  }).catch(()=>setQoeStatus('warn','disconnected'));
+}
+function replayCached(rep){
+  qoeReset();
+  (rep.reconciliation||[]).filter(r=>r.fiscal_year===rep.fiscal_year).forEach(r=>{
+    const label=r.marginal.includes('·')?r.marginal.split('·')[1].trim():r.marginal;
+    appendReconRow({segment:label,filed:r.target,rollup:r.synthetic,variance:r.pct,ties:r.ties_out});
+    addTieOut(label,r.ties_out);});
+  (rep.insights||[]).forEach(i=>addFinding(i.severity,i.headline,i.detail,i.evidence));
+  upsertStep('cache','run loaded from cache','done'); onResult(rep);
+  const e=document.getElementById('qoe-status');if(e){e.className='qstatus';e.innerHTML='<span class="muted">replaying cached run (no live backend)</span>';}
+}
+
+/* --- incremental DOM helpers: each does one small update (the live mechanic) --- */
+function qoeReset(){
+  ['qoe-trace','qoe-tieouts','qoe-recon','qoe-conc','qoe-findings'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});
+  ['reported_growth','underlying_growth','top5_concentration','net_retention','pipeline_coverage'].forEach(k=>{
+    const c=document.getElementById('kpi-'+k);if(c){const v=c.querySelector('.v');if(v)v.textContent='—';c.classList.remove('danger','warn','good');}});
+  const wc=document.getElementById('qoe-wc');if(wc)wc.innerHTML='<span class="muted" style="font-size:12px">computing…</span>';
+  const pp=document.getElementById('qoe-pipe');if(pp)pp.innerHTML='<span class="muted" style="font-size:12px">computing…</span>';
+}
+function upsertStep(id,label,status){
+  let row=document.getElementById('step-'+id);
+  if(!row){row=document.createElement('div');row.id='step-'+id;row.className='tev2';const t=document.getElementById('qoe-trace');if(t)t.appendChild(row);}
+  row.innerHTML=(status==='done'?'<span class="tickok">✓</span>':'<span class="spin" style="margin:0"></span>')+`<span>${esc(label)}</span>`;
+}
+function appendTrace(t){const e=document.getElementById('qoe-trace');if(e)e.appendChild($(`<div class="tev2 muted" style="font-size:11.5px"><span class="tickdim">·</span><span>${esc(t)}</span></div>`));}
+function addTieOut(check,passed){const e=document.getElementById('qoe-tieouts');if(e)e.appendChild($(`<span class="chip ${passed?'ok':'bad'}">${passed?'✓':'✗'} ${esc(check)}</span>`));}
+function appendReconRow(r){const tb=document.getElementById('qoe-recon');if(tb)tb.insertAdjacentHTML('beforeend',`<tr><td>${esc(r.segment)}</td><td class="num">${money(r.filed)}</td><td class="num">${money(r.rollup)}</td><td class="num">${(r.variance*100).toFixed(2)}%</td><td>${r.ties?'<span class="chip ok">ties ✓</span>':'<span class="chip bad">off</span>'}</td></tr>`);}
+function setKpi(key,value,unit,flag){const c=document.getElementById('kpi-'+key);if(!c)return;
+  const v=c.querySelector('.v');if(v)v.textContent=(Math.round(value*10)/10)+(unit||'');
+  c.classList.remove('danger','warn','good'); if(flag)c.classList.add(flag);}
+function addFinding(sev,text,detail,ev){const e=document.getElementById('qoe-findings');if(e)e.appendChild($(`<div class="ins ${sev}"><div class="sv"></div><div><div class="hl">${esc(text)}</div>${detail?`<div class="dt">${esc(detail)}</div>`:''}${ev?`<div class="ev">${esc(ev)}</div>`:''}</div></div>`));}
+function setQoeStatus(state,a,b){const e=document.getElementById('qoe-status');if(!e)return;
+  if(state==='running'){e.className='qstatus run';e.innerHTML='<span class="spin" style="margin:0"></span><span>running… <span id="qoe-timer" class="mono">0.0s</span></span>';}
+  else if(state==='done'){e.className='qstatus ok';e.innerHTML=`<span class="tickok">✓</span><span>tied out · ${a} checks · <span class="mono">${(b/1000).toFixed(1)}s</span></span>`;}
+  else{e.className='qstatus warn';e.innerHTML=`<span>${esc(b||a||'')}</span>`;}}
+function onResult(rep){S.qoe=rep;fillKpisFromReport(rep);renderConcentration(rep);renderWC(rep.working_capital||{});renderPipe(rep.pipeline||{});}
+function fillKpisFromReport(r){
+  if(r.reported_growth!=null)setKpi('reported_growth',r.reported_growth*100,'%');
+  if(r.underlying_growth!=null)setKpi('underlying_growth',r.underlying_growth*100,'%',(r.reported_growth!=null&&r.underlying_growth<r.reported_growth-0.02)?'danger':null);
+  if(r.top5_concentration!=null)setKpi('top5_concentration',r.top5_concentration*100,'%',r.top5_concentration>=0.3?'danger':null);
+  if(r.net_retention!=null)setKpi('net_retention',r.net_retention*100,'%');
+  if(r.pipeline&&r.pipeline.coverage!=null)setKpi('pipeline_coverage',r.pipeline.coverage*100,'%');
+}
+function renderConcentration(rep){const tb=document.getElementById('qoe-conc');if(!tb)return;tb.innerHTML='';
+  (rep.top_customers||[]).forEach((c,i)=>{tb.insertAdjacentHTML('beforeend',`<tr class="click" data-i="${i}"><td>${esc(c.name)}${c.name===rep.largest_customer?' <span class="chip warn">whale</span>':''}</td><td class="num">${money(c.revenue)}</td><td class="num">${pct(c.pct_of_total)}</td><td class="num">${c.yoy!=null?(c.yoy>=0?'+':'')+pct(c.yoy):'—'}</td></tr>`);});
+  tb.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>inspectCustomer(+tr.getAttribute('data-i')));}
+function renderWC(wc){const e=document.getElementById('qoe-wc');if(!e)return;
+  e.innerHTML=`<div class="miniwc"><div class="wccell"><div class="k">DSO</div><div class="v">${wc.dso??'—'}${wc.dso_prior?` <span class="faint" style="font-size:11px">↑${(wc.dso-wc.dso_prior).toFixed(0)}d</span>`:''}</div></div>
+    <div class="wccell"><div class="k">DIO</div><div class="v">${wc.dio??'—'}</div></div>
+    <div class="wccell"><div class="k">DPO</div><div class="v">${wc.dpo??'—'}</div></div></div>`;}
+function renderPipe(pl){const e=document.getElementById('qoe-pipe');if(!e)return;
+  e.innerHTML=`<div class="miniwc"><div class="wccell"><div class="k">Weighted</div><div class="v">${money(pl.weighted)}</div></div>
+    <div class="wccell"><div class="k">Coverage</div><div class="v">${pl.coverage!=null?pct(pl.coverage):'—'}</div></div>
+    <div class="wccell"><div class="k">Open opps</div><div class="v">${pl.count??'—'}</div></div></div>`;}
+function showError(msg){const e=document.getElementById('qoe-status');if(e){e.className='qstatus warn';e.innerHTML=`<span>⚠ ${esc(msg)}</span>`;}}
 
 function inspectCustomer(i){
   const q=S.qoe;const c=q.top_customers[i];if(!c)return;
