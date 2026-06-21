@@ -29,6 +29,19 @@ class PeriodConstraints:
     accounts_receivable: float | None = None
     inventory: float | None = None
     accounts_payable: float | None = None
+    net_income: float | None = None
+    operating_income: float | None = None
+    cfo: float | None = None         # operating cash flow
+    capex: float | None = None
+
+    def free_cash_flow(self) -> float | None:
+        return (self.cfo - self.capex) if (self.cfo is not None and self.capex is not None) else None
+
+    def net_margin(self) -> float | None:
+        return (self.net_income / self.revenue_total) if (self.net_income is not None and self.revenue_total) else None
+
+    def operating_margin(self) -> float | None:
+        return (self.operating_income / self.revenue_total) if (self.operating_income is not None and self.revenue_total) else None
 
     def dso(self) -> float | None:
         if self.accounts_receivable and self.revenue_total:
@@ -117,6 +130,10 @@ def pull_constraints(ticker: str, *, store: FactStore | None = None,
             accounts_receivable=_val(store, "accounts_receivable.total", fy),
             inventory=_val(store, "inventory.total", fy),
             accounts_payable=_val(store, "accounts_payable.total", fy),
+            net_income=_val(store, "net_income.parent", fy),
+            operating_income=_val(store, "operating_income.total", fy),
+            cfo=_val(store, "cfo.total", fy),
+            capex=_val(store, "capex.total", fy),
         ))
     return CompanyConstraints(ticker.upper(), issuer or ticker.upper(),
                               cik or ticker.upper(), periods)

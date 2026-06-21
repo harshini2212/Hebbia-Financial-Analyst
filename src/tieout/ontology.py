@@ -138,6 +138,10 @@ _CONCEPTS: tuple[Concept, ...] = (
     Concept("cfo.total", "Net cash from operating activities", Statement.CASH_FLOW,
             DataType.MONETARY, PeriodType.DURATION,
             gaap_tags=("NetCashProvidedByUsedInOperatingActivities",)),
+    Concept("capex.total", "Capital expenditures (PP&E)", Statement.CASH_FLOW,
+            DataType.MONETARY, PeriodType.DURATION,
+            gaap_tags=("PaymentsToAcquirePropertyPlantAndEquipment",
+                       "PaymentsToAcquireProductiveAssets")),
 
     # --- Derived ratios ---
     _R("gross_margin.ratio", "Gross margin", ("gross margin",)),
