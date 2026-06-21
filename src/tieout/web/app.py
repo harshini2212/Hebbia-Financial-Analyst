@@ -148,17 +148,13 @@ def sources(ticker: str):
 @app.get("/api/stream/qoe")
 def stream_qoe(ticker: str, period: str = "FY2025"):
     """Stream a Quality-of-Earnings run as it computes (Server-Sent Events).
-    Phase 1: a stub that proves the transport before the workflow is wired in."""
+    The same generator that `materialize_qoe`/`/api/qoe/.../run` drain — one workflow
+    definition, streamed live here and materialized there."""
+    from ..workflows.qoe import qoe_events
+
     def gen():
-        yield sse("run_started", {"run_id": "r_stub", "workflow": "qoe",
-                                  "company": ticker, "period": period})
-        yield sse("step", {"id": "pull_public", "label": "Pull filed marginals from XBRL",
-                           "status": "running"})
-        yield sse("step", {"id": "pull_public", "label": "Pull filed marginals from XBRL",
-                           "status": "done"})
-        yield sse("tie_out", {"check": "us-gaap:Revenues", "value": 716900000000,
-                              "variance": 0.0, "passed": True})
-        yield sse("done", {"run_id": "r_stub", "checks_passed": 1, "elapsed_ms": 10})
+        for event, payload in qoe_events(ticker, period):
+            yield sse(event, payload)
     return StreamingResponse(gen(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 

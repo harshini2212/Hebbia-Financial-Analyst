@@ -453,21 +453,10 @@ def qoe_companies() -> list[dict]:
 
 
 def qoe_run(ticker: str) -> dict:
-    """Live: pull XBRL constraints, generate the calibrated ledger, validate + run QoE."""
-    import dataclasses
-    from ..synth import build_workspace
-    from ..workflows import run_qoe
-    ws = build_workspace(ticker)
-    rep = run_qoe(ws.constraints, ws.ledger)
-    out = dataclasses.asdict(rep)
-    out["tied_out"] = ws.tied_out
-    out["constraints"] = [dataclasses.asdict(p) for p in ws.constraints.periods]
-    out["ledger_summary"] = {
-        "customers": len(ws.ledger.customers),
-        "products": [dataclasses.asdict(p) for p in ws.ledger.products],
-        "revenue_lines": len(ws.ledger.revenue_lines), "ar_invoices": len(ws.ledger.ar_invoices),
-        "pipeline_opps": len(ws.ledger.pipeline), "cohorts": len(ws.ledger.cohorts),
-        "anomalies": ws.ledger.anomalies}
+    """Live recompute: drain the QoE workflow generator into the report dict + cache it.
+    Shares one definition with the live stream (`/api/stream/qoe`)."""
+    from ..workflows.qoe import materialize_qoe
+    out = materialize_qoe(ticker)
     _CACHE_DIR.mkdir(parents=True, exist_ok=True)
     (_CACHE_DIR / f"qoe_{ticker.upper()}.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
     return out

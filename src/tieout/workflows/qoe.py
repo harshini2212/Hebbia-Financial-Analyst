@@ -9,11 +9,14 @@ carries its evidence — the analysis that only exists when you join public + pr
 
 from __future__ import annotations
 
+import os
+import time
+import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 
-from ..synth.constraints import CompanyConstraints
-from ..synth.generate import SyntheticLedger
+from ..synth.constraints import CompanyConstraints, pull_constraints
+from ..synth.generate import SyntheticLedger, generate
 from ..synth.validate import TieOut, validate
 
 
@@ -204,3 +207,141 @@ def _insights(ledger, cust, top5, latest, fy, reported, underlying, whale, ot, t
             "medium", "Receivables growing faster than revenue; cash conversion deteriorating ahead of the cash-flow statement.",
             f"DSO {wc['dso_prior']:.0f} → {wc['dso']:.0f} days"))
     return out
+
+
+# --- Streaming: the workflow as an event generator -----------------------------
+# A workflow is a generator that emits typed events as it computes. The live SSE
+# stream forwards them; `materialize_qoe` drains them into the report dict. One
+# definition of the workflow, no duplicated logic.
+
+_CONS_CACHE: dict[str, CompanyConstraints] = {}   # cache the EDGAR/XBRL pull per process
+PACE = float(os.getenv("RUN_PACE", "0.0"))         # >0 drips events for demo pacing
+
+
+def _pace() -> None:
+    if PACE:
+        time.sleep(PACE)
+
+
+def _ledger_summary(ledger: SyntheticLedger) -> dict:
+    return {"customers": len(ledger.customers),
+            "products": [asdict(p) for p in ledger.products],
+            "revenue_lines": len(ledger.revenue_lines), "ar_invoices": len(ledger.ar_invoices),
+            "pipeline_opps": len(ledger.pipeline), "cohorts": len(ledger.cohorts),
+            "anomalies": ledger.anomalies}
+
+
+def _report_dict(cons: CompanyConstraints, ledger: SyntheticLedger, rep: QoEReport) -> dict:
+    out = asdict(rep)
+    recon = out.get("reconciliation") or []
+    out["tied_out"] = bool(recon) and all(c["ties_out"] for c in recon)
+    out["constraints"] = [asdict(p) for p in cons.periods]
+    out["ledger_summary"] = _ledger_summary(ledger)
+    return out
+
+
+def qoe_events(ticker: str, period: str = "FY2025"):
+    """Run a Quality-of-Earnings analysis, yielding (event, payload) as it computes."""
+    ticker = ticker.upper()
+    run_id = "r_" + uuid.uuid4().hex[:6]
+    t0 = time.time()
+    yield "run_started", {"run_id": run_id, "workflow": "qoe", "company": ticker, "period": period}
+    try:
+        # 1 — public marginals from XBRL (EDGAR pull, cached per process)
+        yield "step", {"id": "pull_public", "label": "Pull filed marginals from SEC XBRL",
+                       "status": "running"}
+        _pace()
+        cons = _CONS_CACHE.get(ticker)
+        if cons is None:
+            cons = pull_constraints(ticker)
+            _CONS_CACHE[ticker] = cons
+        fy = cons.periods[0].fiscal_year if cons.periods else None
+        yield "count", {"label": "Reporting periods", "n": len(cons.periods)}
+        yield "step", {"id": "pull_public",
+                       "label": f"Pulled {cons.issuer} XBRL — {len(cons.periods)} periods",
+                       "status": "done"}
+
+        # 2 — private ledger, IPF-fit to the filings
+        yield "step", {"id": "pull_private",
+                       "label": "Generate ERP/CRM ledger, IPF-fit to the filings",
+                       "status": "running"}
+        _pace()
+        ledger = generate(cons)
+        for lbl, n in (("Customers", len(ledger.customers)),
+                       ("Revenue lines", len(ledger.revenue_lines)),
+                       ("AR invoices", len(ledger.ar_invoices)),
+                       ("Pipeline opps", len(ledger.pipeline))):
+            yield "count", {"label": lbl, "n": n}
+        yield "step", {"id": "pull_private",
+                       "label": f"Generated {len(ledger.customers)} customers · "
+                                f"{len(ledger.revenue_lines)} revenue lines",
+                       "status": "done"}
+
+        # 3 — reconcile + tie-out, one event per check
+        yield "step", {"id": "reconcile", "label": "Reconcile ledger to filed figures (tie-out)",
+                       "status": "running"}
+        passed = 0
+        for chk in validate(ledger, cons):
+            if chk.fiscal_year != fy:
+                continue
+            passed += int(chk.ties_out)
+            if chk.marginal.startswith("segment revenue"):
+                seg = chk.marginal.split("·", 1)[-1].strip()
+                yield "cell", {"segment": seg, "filed": chk.target, "rollup": chk.synthetic,
+                               "variance": round(chk.pct, 6), "ties": chk.ties_out}
+            yield "tie_out", {"check": chk.marginal, "value": chk.target,
+                              "variance": round(chk.pct, 6), "passed": chk.ties_out}
+            _pace()
+        yield "step", {"id": "reconcile", "label": f"Reconciled — {passed} checks tie out",
+                       "status": "done"}
+
+        # 4 — decompose → metrics + findings
+        yield "step", {"id": "decompose", "label": "Decompose: concentration, growth, retention",
+                       "status": "running"}
+        rep = run_qoe(cons, ledger)
+        _pace()
+        yield "step", {"id": "decompose", "label": "Decomposed the granular ledger", "status": "done"}
+
+        if rep.reported_growth is not None:
+            yield "metric", {"key": "reported_growth", "label": "Reported growth",
+                             "value": round(rep.reported_growth * 100, 1), "unit": "%"}
+        if rep.underlying_growth is not None:
+            flag = ("danger" if rep.reported_growth is not None
+                    and rep.underlying_growth < rep.reported_growth - 0.02 else None)
+            yield "metric", {"key": "underlying_growth", "label": "Underlying growth (ex-largest)",
+                             "value": round(rep.underlying_growth * 100, 1), "unit": "%", "flag": flag}
+        yield "metric", {"key": "top5_concentration", "label": "Top-5 concentration",
+                         "value": round(rep.top5_concentration * 100, 0), "unit": "%",
+                         "flag": "danger" if rep.top5_concentration >= 0.3 else None}
+        if rep.net_retention is not None:
+            yield "metric", {"key": "net_retention", "label": "Net retention",
+                             "value": round(rep.net_retention * 100, 0), "unit": "%"}
+        if rep.pipeline and rep.pipeline.get("coverage") is not None:
+            yield "metric", {"key": "pipeline_coverage", "label": "Pipeline coverage",
+                             "value": round(rep.pipeline["coverage"] * 100, 0), "unit": "%"}
+
+        for ins in rep.insights:
+            conf = {"high": 0.97, "medium": 0.92, "low": 0.88}.get(ins.get("severity"), 0.9)
+            yield "finding", {"severity": ins["severity"], "text": ins["headline"],
+                              "detail": ins.get("detail", ""), "evidence": ins.get("evidence", ""),
+                              "confidence": conf}
+            _pace()
+
+        # 5 — the full report (for the concentration table, panels, inspector)
+        yield "result", _report_dict(cons, ledger, rep)
+        yield "done", {"run_id": run_id, "checks_passed": passed,
+                       "elapsed_ms": int((time.time() - t0) * 1000)}
+    except Exception as exc:  # surface as a stream event, never a 500 mid-stream
+        yield "failed", {"message": str(exc)}
+
+
+def materialize_qoe(ticker: str, period: str = "FY2025") -> dict:
+    """Drain qoe_events into the full report dict — the single definition shared by the
+    cached recompute (`/api/qoe/{ticker}/run`) and the headless CLI."""
+    report: dict = {}
+    for event, payload in qoe_events(ticker, period):
+        if event == "result":
+            report = payload
+        elif event == "failed":
+            raise RuntimeError(payload["message"])
+    return report
