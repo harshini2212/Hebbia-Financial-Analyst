@@ -1,0 +1,395 @@
+{
+  "ticker": "AMZN",
+  "issuer": "AMAZON COM INC",
+  "fiscal_year": 2025,
+  "prior_year": 2024,
+  "reconciliation": [
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2023,
+      "target": 574785000000.0,
+      "synthetic": 574785000000.0007,
+      "variance": 0.000732421875,
+      "pct": 1.2742536339674835e-15,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 North America Segment",
+      "fiscal_year": 2023,
+      "target": 352828000000.0,
+      "synthetic": 352827950988.0837,
+      "variance": -49011.91632080078,
+      "pct": -1.3891164057501328e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 International Segment",
+      "fiscal_year": 2023,
+      "target": 131200000000.0,
+      "synthetic": 131200024528.04442,
+      "variance": 24528.04441833496,
+      "pct": 1.8695155806657745e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Amazon Web Services Segment",
+      "fiscal_year": 2023,
+      "target": 90757000000.0,
+      "synthetic": 90757024483.87213,
+      "variance": 24483.872131347656,
+      "pct": 2.6977392522172015e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2023,
+      "target": 304739000000.0,
+      "synthetic": 304739000119.2942,
+      "variance": 119.294189453125,
+      "pct": 3.9146348007024046e-10,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2024,
+      "target": 637959000000.0,
+      "synthetic": 637958999999.9998,
+      "variance": -0.000244140625,
+      "pct": -3.826901493669656e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 North America Segment",
+      "fiscal_year": 2024,
+      "target": 387497000000.0,
+      "synthetic": 387496527600.8845,
+      "variance": -472399.1154785156,
+      "pct": -1.2191039297814322e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 International Segment",
+      "fiscal_year": 2024,
+      "target": 142906000000.0,
+      "synthetic": 142906415464.24222,
+      "variance": 415464.2422180176,
+      "pct": 2.907255414174475e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Amazon Web Services Segment",
+      "fiscal_year": 2024,
+      "target": 107556000000.0,
+      "synthetic": 107556056934.8734,
+      "variance": 56934.87339782715,
+      "pct": 5.293509743559369e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2024,
+      "target": 326288000000.0,
+      "synthetic": 326288000079.05853,
+      "variance": 79.05853271484375,
+      "pct": 2.4229678294894004e-10,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2024,
+      "target": 55451000000.0,
+      "synthetic": 55451000000.0,
+      "variance": 0.0,
+      "pct": 0.0,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2025,
+      "target": 716924000000.0,
+      "synthetic": 716923999999.9999,
+      "variance": -0.0001220703125,
+      "pct": -1.7026952996412452e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 North America Segment",
+      "fiscal_year": 2025,
+      "target": 426305000000.0,
+      "synthetic": 426305063401.09595,
+      "variance": 63401.095947265625,
+      "pct": 1.4872238408478817e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 International Segment",
+      "fiscal_year": 2025,
+      "target": 161894000000.0,
+      "synthetic": 161894078140.13333,
+      "variance": 78140.13333129883,
+      "pct": 4.826623181297567e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Amazon Web Services Segment",
+      "fiscal_year": 2025,
+      "target": 128725000000.0,
+      "synthetic": 128724858458.77078,
+      "variance": -141541.2292175293,
+      "pct": -1.0995628604974116e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2025,
+      "target": 356414000000.0,
+      "synthetic": 356413999987.08765,
+      "variance": -12.912353515625,
+      "pct": -3.622852501760593e-11,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2025,
+      "target": 67729000000.0,
+      "synthetic": 67729000000.000015,
+      "variance": 1.52587890625e-05,
+      "pct": 2.252918109303253e-16,
+      "ties_out": true
+    }
+  ],
+  "tied_out": true,
+  "top_customers": [
+    {
+      "id": "C0055",
+      "name": "Northwind Holdings",
+      "segment": "North America Segment",
+      "revenue": 89523991661,
+      "pct_of_total": 0.1249,
+      "yoy": 0.2835
+    },
+    {
+      "id": "C0040",
+      "name": "Ironclad Labs",
+      "segment": "North America Segment",
+      "revenue": 50984243390,
+      "pct_of_total": 0.0711,
+      "yoy": 0.0468
+    },
+    {
+      "id": "C0103",
+      "name": "Aspen Systems",
+      "segment": "International Segment",
+      "revenue": 26685225744,
+      "pct_of_total": 0.0372,
+      "yoy": 0.097
+    },
+    {
+      "id": "C0129",
+      "name": "Monarch Group",
+      "segment": "Amazon Web Services Segment",
+      "revenue": 23501077058,
+      "pct_of_total": 0.0328,
+      "yoy": 0.1365
+    },
+    {
+      "id": "C0062",
+      "name": "Harbor Holdings",
+      "segment": "North America Segment",
+      "revenue": 22595500524,
+      "pct_of_total": 0.0315,
+      "yoy": 0.0468
+    },
+    {
+      "id": "C0119",
+      "name": "Orion Group",
+      "segment": "Amazon Web Services Segment",
+      "revenue": 17418436081,
+      "pct_of_total": 0.0243,
+      "yoy": 0.1365
+    },
+    {
+      "id": "C0117",
+      "name": "Meridian Group",
+      "segment": "Amazon Web Services Segment",
+      "revenue": 17045630974,
+      "pct_of_total": 0.0238,
+      "yoy": 0.1365
+    },
+    {
+      "id": "C0088",
+      "name": "Pinnacle Systems",
+      "segment": "International Segment",
+      "revenue": 16860099334,
+      "pct_of_total": 0.0235,
+      "yoy": 0.0971
+    }
+  ],
+  "top5_concentration": 0.2975,
+  "reported_growth": 0.1238,
+  "underlying_growth": 0.1042,
+  "largest_customer": "Northwind Holdings",
+  "one_time_revenue": 22927189068,
+  "one_time_pct": 0.032,
+  "recurring_growth": 0.0878,
+  "margin_bridge": {
+    "blended_margin": 0.5029,
+    "lowest_margin_line": "Legacy",
+    "lowest_margin": 0.303,
+    "share_now": 0.2005,
+    "share_prior": 0.2218,
+    "products": [
+      {
+        "name": "Platform",
+        "margin": 0.663,
+        "share": 0.2429
+      },
+      {
+        "name": "Core Suite",
+        "margin": 0.583,
+        "share": 0.2127
+      },
+      {
+        "name": "Analytics",
+        "margin": 0.503,
+        "share": 0.1862
+      },
+      {
+        "name": "Services",
+        "margin": 0.403,
+        "share": 0.1578
+      },
+      {
+        "name": "Legacy",
+        "margin": 0.303,
+        "share": 0.2005
+      }
+    ]
+  },
+  "working_capital": {
+    "dso": 34.5,
+    "dso_prior": 31.7,
+    "dio": 39.2,
+    "dpo": 124.8
+  },
+  "insights": [
+    {
+      "headline": "Top 5 customers = 30% of revenue \u2014 undisclosed in the filing",
+      "severity": "high",
+      "detail": "Customer concentration the consolidated 10-K never breaks out.",
+      "evidence": "Largest: Northwind Holdings, Ironclad Labs, Aspen Systems"
+    },
+    {
+      "headline": "$22,927M of revenue is one-time \u2014 3% of the top line",
+      "severity": "medium",
+      "detail": "Non-recurring revenue inflating the latest period; the recurring base is softer.",
+      "evidence": "3.2% of FY2025 revenue tagged one-time"
+    }
+  ],
+  "constraints": [
+    {
+      "fiscal_year": 2025,
+      "revenue_total": 716924000000.0,
+      "segments": {
+        "North America Segment": 426305000000.0,
+        "International Segment": 161894000000.0,
+        "Amazon Web Services Segment": 128725000000.0
+      },
+      "cogs": 356414000000.0,
+      "gross_margin": 0.5028566486824266,
+      "accounts_receivable": 67729000000.0,
+      "inventory": 38325000000.0,
+      "accounts_payable": 121909000000.0
+    },
+    {
+      "fiscal_year": 2024,
+      "revenue_total": 637959000000.0,
+      "segments": {
+        "North America Segment": 387497000000.0,
+        "International Segment": 142906000000.0,
+        "Amazon Web Services Segment": 107556000000.0
+      },
+      "cogs": 326288000000.0,
+      "gross_margin": 0.48854393464156787,
+      "accounts_receivable": 55451000000.0,
+      "inventory": 34214000000.0,
+      "accounts_payable": 94363000000.0
+    },
+    {
+      "fiscal_year": 2023,
+      "revenue_total": 574785000000.0,
+      "segments": {
+        "North America Segment": 352828000000.0,
+        "International Segment": 131200000000.0,
+        "Amazon Web Services Segment": 90757000000.0
+      },
+      "cogs": 304739000000.0,
+      "gross_margin": 0.46982088955000567,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": null
+    }
+  ],
+  "ledger_summary": {
+    "customers": 140,
+    "products": [
+      {
+        "id": "P0",
+        "name": "Platform",
+        "unit_margin": 0.6628566486824267
+      },
+      {
+        "id": "P1",
+        "name": "Core Suite",
+        "unit_margin": 0.5828566486824266
+      },
+      {
+        "id": "P2",
+        "name": "Analytics",
+        "unit_margin": 0.5028566486824266
+      },
+      {
+        "id": "P3",
+        "name": "Services",
+        "unit_margin": 0.40285664868242665
+      },
+      {
+        "id": "P4",
+        "name": "Legacy",
+        "unit_margin": 0.3028566486824266
+      }
+    ],
+    "revenue_lines": 1980,
+    "ar_invoices": 1088,
+    "anomalies": [
+      {
+        "type": "concentration",
+        "severity": "high",
+        "customer": "Northwind Holdings",
+        "customer_id": "C0055",
+        "pct_of_segment": 0.21,
+        "segment": "North America Segment"
+      },
+      {
+        "type": "one_time_revenue",
+        "severity": "medium",
+        "amount": 10317235081,
+        "note": "one-time revenue inflating the latest period"
+      },
+      {
+        "type": "margin_erosion",
+        "severity": "medium",
+        "product": "Legacy",
+        "unit_margin": 0.303,
+        "note": "lowest-margin line gaining revenue share YoY"
+      },
+      {
+        "type": "dso_drift",
+        "severity": "medium",
+        "dso_now": 34.5,
+        "dso_prior": 31.7,
+        "delta_days": 2.8
+      }
+    ]
+  }
+}

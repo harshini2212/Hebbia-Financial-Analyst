@@ -71,6 +71,12 @@ _CONCEPTS: tuple[Concept, ...] = (
     _M("assets.total", "Total assets", ("Assets",), ("total assets",)),
     _M("assets.current", "Total current assets", ("AssetsCurrent",), ("total current assets",)),
     _M("assets.noncurrent", "Total non-current assets", ("AssetsNoncurrent",)),
+    # Working-capital lines — constraints for the synthetic ledger (DSO/DIO/DPO).
+    _M("accounts_receivable.total", "Accounts receivable, net",
+       ("AccountsReceivableNetCurrent", "ReceivablesNetCurrent"), ("accounts receivable",)),
+    _M("inventory.total", "Inventory, net", ("InventoryNet",), ("inventories", "inventory")),
+    _M("accounts_payable.total", "Accounts payable, current",
+       ("AccountsPayableCurrent", "AccountsPayableTradeCurrent"), ("accounts payable",)),
     _M("liabilities.total", "Total liabilities", ("Liabilities",), ("total liabilities",)),
     _M("liabilities.current", "Total current liabilities", ("LiabilitiesCurrent",),
        ("total current liabilities",)),

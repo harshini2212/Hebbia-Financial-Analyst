@@ -1,0 +1,401 @@
+{
+  "ticker": "MSFT",
+  "issuer": "MICROSOFT CORP",
+  "fiscal_year": 2025,
+  "prior_year": 2024,
+  "reconciliation": [
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2023,
+      "target": 211915000000.0,
+      "synthetic": 211915000000.00015,
+      "variance": 0.000152587890625,
+      "pct": 7.200428975060755e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Productivity And Business Processes",
+      "fiscal_year": 2023,
+      "target": 94151000000.0,
+      "synthetic": 94150979500.74164,
+      "variance": -20499.258361816406,
+      "pct": -2.177274629246254e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Intelligent Cloud",
+      "fiscal_year": 2023,
+      "target": 72944000000.0,
+      "synthetic": 72943987013.48781,
+      "variance": -12986.512191772461,
+      "pct": -1.780340013129587e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 More Personal Computing",
+      "fiscal_year": 2023,
+      "target": 44820000000.0,
+      "synthetic": 44820033485.77057,
+      "variance": 33485.770568847656,
+      "pct": 7.471167016699611e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2023,
+      "target": 65863000000.0,
+      "synthetic": 65863000103.931816,
+      "variance": 103.93181610107422,
+      "pct": 1.578000031900676e-09,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2024,
+      "target": 245122000000.0,
+      "synthetic": 245121999999.99994,
+      "variance": -6.103515625e-05,
+      "pct": -2.4899909534843875e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Productivity And Business Processes",
+      "fiscal_year": 2024,
+      "target": 106820000000.0,
+      "synthetic": 106819829191.7933,
+      "variance": -170808.20669555664,
+      "pct": -1.5990283345399424e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Intelligent Cloud",
+      "fiscal_year": 2024,
+      "target": 87464000000.0,
+      "synthetic": 87464081969.5144,
+      "variance": 81969.51440429688,
+      "pct": 9.371800329769605e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 More Personal Computing",
+      "fiscal_year": 2024,
+      "target": 50838000000.0,
+      "synthetic": 50838088838.69228,
+      "variance": 88838.69228363037,
+      "pct": 1.747485980637129e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2024,
+      "target": 74114000000.0,
+      "synthetic": 74113999953.13226,
+      "variance": -46.86773681640625,
+      "pct": -6.323735976523497e-10,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2024,
+      "target": 56924000000.0,
+      "synthetic": 56924000000.00005,
+      "variance": 5.340576171875e-05,
+      "pct": 9.381941135329562e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "total revenue",
+      "fiscal_year": 2025,
+      "target": 281724000000.0,
+      "synthetic": 281724000000.0002,
+      "variance": 0.00018310546875,
+      "pct": 6.499462905183796e-16,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Productivity And Business Processes",
+      "fiscal_year": 2025,
+      "target": 120810000000.0,
+      "synthetic": 120809912570.54681,
+      "variance": -87429.45318603516,
+      "pct": -7.236938431093051e-07,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 Intelligent Cloud",
+      "fiscal_year": 2025,
+      "target": 106265000000.0,
+      "synthetic": 106265152944.2851,
+      "variance": 152944.28509521484,
+      "pct": 1.4392724330232424e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "segment revenue \u00b7 More Personal Computing",
+      "fiscal_year": 2025,
+      "target": 54649000000.0,
+      "synthetic": 54648934485.16803,
+      "variance": -65514.831970214844,
+      "pct": -1.1988294748342119e-06,
+      "ties_out": true
+    },
+    {
+      "marginal": "COGS (blended margin)",
+      "fiscal_year": 2025,
+      "target": 87831000000.0,
+      "synthetic": 87830999994.92577,
+      "variance": -5.0742340087890625,
+      "pct": -5.777269994408651e-11,
+      "ties_out": true
+    },
+    {
+      "marginal": "accounts receivable",
+      "fiscal_year": 2025,
+      "target": 69905000000.0,
+      "synthetic": 69905000000.00002,
+      "variance": 1.52587890625e-05,
+      "pct": 2.1827893659251841e-16,
+      "ties_out": true
+    }
+  ],
+  "tied_out": true,
+  "top_customers": [
+    {
+      "id": "C0004",
+      "name": "Summit Corp",
+      "segment": "Productivity And Business Processes",
+      "revenue": 25369996727,
+      "pct_of_total": 0.0901,
+      "yoy": 0.3195
+    },
+    {
+      "id": "C0102",
+      "name": "Monarch Systems",
+      "segment": "Intelligent Cloud",
+      "revenue": 14240232443,
+      "pct_of_total": 0.0505,
+      "yoy": 0.1082
+    },
+    {
+      "id": "C0063",
+      "name": "Meridian Holdings",
+      "segment": "Intelligent Cloud",
+      "revenue": 10363555763,
+      "pct_of_total": 0.0368,
+      "yoy": 0.1082
+    },
+    {
+      "id": "C0110",
+      "name": "Vertex Group",
+      "segment": "Intelligent Cloud",
+      "revenue": 7936704052,
+      "pct_of_total": 0.0282,
+      "yoy": 0.1082
+    },
+    {
+      "id": "C0041",
+      "name": "Brightwave Labs",
+      "segment": "Productivity And Business Processes",
+      "revenue": 7548758434,
+      "pct_of_total": 0.0268,
+      "yoy": 0.0516
+    },
+    {
+      "id": "C0096",
+      "name": "Sterling Systems",
+      "segment": "Intelligent Cloud",
+      "revenue": 7017611606,
+      "pct_of_total": 0.0249,
+      "yoy": null
+    },
+    {
+      "id": "C0044",
+      "name": "Lumen Labs",
+      "segment": "Productivity And Business Processes",
+      "revenue": 6956357873,
+      "pct_of_total": 0.0247,
+      "yoy": 0.0516
+    },
+    {
+      "id": "C0043",
+      "name": "Kestrel Labs",
+      "segment": "Productivity And Business Processes",
+      "revenue": 6886967713,
+      "pct_of_total": 0.0244,
+      "yoy": 0.0516
+    }
+  ],
+  "top5_concentration": 0.2324,
+  "reported_growth": 0.1493,
+  "underlying_growth": 0.1348,
+  "largest_customer": "Summit Corp",
+  "one_time_revenue": 6219035272,
+  "one_time_pct": 0.0221,
+  "recurring_growth": 0.124,
+  "margin_bridge": {
+    "blended_margin": 0.6882,
+    "lowest_margin_line": "Legacy",
+    "lowest_margin": 0.488,
+    "share_now": 0.2005,
+    "share_prior": 0.1674,
+    "products": [
+      {
+        "name": "Platform",
+        "margin": 0.848,
+        "share": 0.2429
+      },
+      {
+        "name": "Core Suite",
+        "margin": 0.768,
+        "share": 0.2127
+      },
+      {
+        "name": "Analytics",
+        "margin": 0.688,
+        "share": 0.1862
+      },
+      {
+        "name": "Services",
+        "margin": 0.588,
+        "share": 0.1578
+      },
+      {
+        "name": "Legacy",
+        "margin": 0.488,
+        "share": 0.2005
+      }
+    ]
+  },
+  "working_capital": {
+    "dso": 90.6,
+    "dso_prior": 84.8,
+    "dio": 3.9,
+    "dpo": 115.2
+  },
+  "insights": [
+    {
+      "headline": "$6,219M of revenue is one-time \u2014 2% of the top line",
+      "severity": "medium",
+      "detail": "Non-recurring revenue inflating the latest period; the recurring base is softer.",
+      "evidence": "2.2% of FY2025 revenue tagged one-time"
+    },
+    {
+      "headline": "Legacy (lowest margin, 49%) gaining share",
+      "severity": "medium",
+      "detail": "Mix shift toward the lowest-margin line \u2014 gross-margin pressure ahead.",
+      "evidence": "Share 17% \u2192 20%"
+    },
+    {
+      "headline": "DSO up 6 days YoY \u2014 collections slowing",
+      "severity": "medium",
+      "detail": "Receivables growing faster than revenue; cash conversion deteriorating ahead of the cash-flow statement.",
+      "evidence": "DSO 85 \u2192 91 days"
+    }
+  ],
+  "constraints": [
+    {
+      "fiscal_year": 2025,
+      "revenue_total": 281724000000.0,
+      "segments": {
+        "Productivity And Business Processes": 120810000000.0,
+        "Intelligent Cloud": 106265000000.0,
+        "More Personal Computing": 54649000000.0
+      },
+      "cogs": 87831000000.0,
+      "gross_margin": 0.6882374238616519,
+      "accounts_receivable": 69905000000.0,
+      "inventory": 938000000.0,
+      "accounts_payable": 27724000000.0
+    },
+    {
+      "fiscal_year": 2024,
+      "revenue_total": 245122000000.0,
+      "segments": {
+        "Productivity And Business Processes": 106820000000.0,
+        "Intelligent Cloud": 87464000000.0,
+        "More Personal Computing": 50838000000.0
+      },
+      "cogs": 74114000000.0,
+      "gross_margin": 0.6976444382797138,
+      "accounts_receivable": 56924000000.0,
+      "inventory": 1246000000.0,
+      "accounts_payable": 21996000000.0
+    },
+    {
+      "fiscal_year": 2023,
+      "revenue_total": 211915000000.0,
+      "segments": {
+        "Productivity And Business Processes": 94151000000.0,
+        "Intelligent Cloud": 72944000000.0,
+        "More Personal Computing": 44820000000.0
+      },
+      "cogs": 65863000000.0,
+      "gross_margin": 0.6892008588349102,
+      "accounts_receivable": null,
+      "inventory": null,
+      "accounts_payable": null
+    }
+  ],
+  "ledger_summary": {
+    "customers": 140,
+    "products": [
+      {
+        "id": "P0",
+        "name": "Platform",
+        "unit_margin": 0.8482374238616519
+      },
+      {
+        "id": "P1",
+        "name": "Core Suite",
+        "unit_margin": 0.7682374238616518
+      },
+      {
+        "id": "P2",
+        "name": "Analytics",
+        "unit_margin": 0.6882374238616519
+      },
+      {
+        "id": "P3",
+        "name": "Services",
+        "unit_margin": 0.5882374238616519
+      },
+      {
+        "id": "P4",
+        "name": "Legacy",
+        "unit_margin": 0.48823742386165186
+      }
+    ],
+    "revenue_lines": 1960,
+    "ar_invoices": 1076,
+    "anomalies": [
+      {
+        "type": "concentration",
+        "severity": "high",
+        "customer": "Summit Corp",
+        "customer_id": "C0004",
+        "pct_of_segment": 0.21,
+        "segment": "Productivity And Business Processes"
+      },
+      {
+        "type": "one_time_revenue",
+        "severity": "medium",
+        "amount": 2798565873,
+        "note": "one-time revenue inflating the latest period"
+      },
+      {
+        "type": "margin_erosion",
+        "severity": "medium",
+        "product": "Legacy",
+        "unit_margin": 0.488,
+        "note": "lowest-margin line gaining revenue share YoY"
+      },
+      {
+        "type": "dso_drift",
+        "severity": "medium",
+        "dso_now": 90.6,
+        "dso_prior": 84.8,
+        "delta_days": 5.8
+      }
+    ]
+  }
+}
