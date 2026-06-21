@@ -285,11 +285,10 @@ def qoe_events(ticker: str, period: str = "FY2025"):
             if chk.fiscal_year != fy:
                 continue
             passed += int(chk.ties_out)
-            if chk.marginal.startswith("segment revenue"):
-                seg = chk.marginal.split("·", 1)[-1].strip()
-                yield "cell", {"segment": seg, "filed": chk.target, "rollup": chk.synthetic,
-                               "variance": round(chk.pct, 6), "ties": chk.ties_out}
-            yield "tie_out", {"check": chk.marginal, "value": chk.target,
+            label = chk.marginal.split("·", 1)[-1].strip() if "·" in chk.marginal else chk.marginal
+            yield "cell", {"segment": label, "filed": chk.target, "rollup": chk.synthetic,
+                           "variance": round(chk.pct, 6), "ties": chk.ties_out}
+            yield "tie_out", {"check": label, "value": chk.target,
                               "variance": round(chk.pct, 6), "passed": chk.ties_out}
             _pace()
         yield "step", {"id": "reconcile", "label": f"Reconciled — {passed} checks tie out",
