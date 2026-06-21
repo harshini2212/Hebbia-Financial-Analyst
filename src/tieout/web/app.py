@@ -3,15 +3,26 @@
 from __future__ import annotations
 
 import collections
+import json
 import os
 import time
 from pathlib import Path
 
 from fastapi import Body, FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import service
+
+
+def sse(event: str, data: dict) -> str:
+    """One Server-Sent-Events frame: `event: <type>` + `data: <json>` + blank line."""
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+# Headers that keep SSE flushing incrementally (no proxy/CDN buffering).
+_SSE_HEADERS = {"Cache-Control": "no-cache", "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"}
 
 _STATIC = Path(__file__).parent / "static"
 
@@ -132,6 +143,23 @@ def qoe_run(ticker: str):
 @app.get("/api/sources/{ticker}")
 def sources(ticker: str):
     return service.sources(ticker)
+
+
+@app.get("/api/stream/qoe")
+def stream_qoe(ticker: str, period: str = "FY2025"):
+    """Stream a Quality-of-Earnings run as it computes (Server-Sent Events).
+    Phase 1: a stub that proves the transport before the workflow is wired in."""
+    def gen():
+        yield sse("run_started", {"run_id": "r_stub", "workflow": "qoe",
+                                  "company": ticker, "period": period})
+        yield sse("step", {"id": "pull_public", "label": "Pull filed marginals from XBRL",
+                           "status": "running"})
+        yield sse("step", {"id": "pull_public", "label": "Pull filed marginals from XBRL",
+                           "status": "done"})
+        yield sse("tie_out", {"check": "us-gaap:Revenues", "value": 716900000000,
+                              "variance": 0.0, "passed": True})
+        yield sse("done", {"run_id": "r_stub", "checks_passed": 1, "elapsed_ms": 10})
+    return StreamingResponse(gen(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 
 @app.get("/")
