@@ -172,8 +172,8 @@
 <div class="drawer" id="drawer"></div>
 
 <script>
-const NAV=[['workflows','Workflows','◧'],['qoe','QoE workspace','▦'],['companies','Companies','▤'],
-  ['sources','Sources','⇄'],['runs','Runs','↻'],['artifacts','Artifacts','▭'],['evals','Evals','✓']];
+const NAV=[['qoe','QoE workspace','▦'],['ask','Ask anything','✦'],['companies','Companies','▤'],
+  ['sources','Connectors','⇄'],['workflows','Workflows','◧'],['runs','Runs','↻'],['artifacts','Investor memo','▭'],['evals','Trust','✓']];
 // same-origin by default (works on localhost + a whole-app deploy); set to the deployed
 // API URL only if the UI is hosted on a different origin than the API.
 const API='';
@@ -208,8 +208,59 @@ function renderCtx(){
   c.innerHTML=`<div class="co"><span class="tk">${q.ticker}</span> · ${q.issuer} · FY${q.fiscal_year}</div><div class="srcs">${chips}</div>`;
 }
 function render(){const v=document.getElementById('view');
-  v.innerHTML='';v.appendChild(({workflows:vWorkflows,qoe:vQoE,companies:vCompanies,sources:vSources,
+  v.innerHTML='';v.appendChild(({workflows:vWorkflows,qoe:vQoE,ask:vAsk,companies:vCompanies,sources:vSources,
     runs:vRuns,artifacts:vArtifacts,evals:vEvals}[S.tab]||vQoE)());}
+
+/* ---------- Ask anything (live AI query agent) ---------- */
+function vAsk(){
+  const el=$('<div></div>');
+  const issuer=(S.qoe&&S.qoe.issuer)||((S.companies.find(c=>c.ticker===S.company)||{}).issuer)||S.company||'';
+  el.appendChild($(`<div class="phead"><h1>Ask anything — ${esc(issuer)}</h1>
+    <p>A grounded AI analyst answers any question using ${esc(S.company)}'s SEC filings + the synthetic ERP/CRM ledger — watch it call tools, then stream a cited answer with a tie-out badge. <b>Calibrated demo data.</b></p></div>`));
+  el.appendChild($(`<div class="search" style="margin-bottom:14px"><input id="askq" autocomplete="off" placeholder="Ask anything about ${esc(S.company)} — e.g. how concentrated is revenue?" style="flex:1"/><button class="btn" id="askbtn">Ask</button></div>`));
+  el.appendChild($(`<div id="ask-deck"></div>`));
+  el.appendChild($(`<div id="ask-status" class="qstatus" style="display:none"></div>
+    <div class="panel" id="ask-panel" style="display:none"><div class="ph"><h3>Answer</h3><span class="sub" id="ask-cites"></span></div>
+      <div class="pb"><div id="ask-trace" style="margin-bottom:10px"></div><div id="ask-answer" style="font-size:14px;line-height:1.65;white-space:pre-wrap"></div></div></div>`));
+  setTimeout(()=>{wireAsk();loadDeck();},0);
+  return el;
+}
+function loadDeck(){
+  fetch(`${API}/api/ask/deck`).then(r=>r.json()).then(deck=>{
+    const d=document.getElementById('ask-deck');if(!d)return;
+    d.innerHTML='<div class="ulabel" style="margin-bottom:8px">Try asking</div>'+(deck||[]).map(g=>
+      `<div style="margin-bottom:9px"><div class="muted" style="font-size:11px;margin-bottom:4px">${esc(g.group)}</div><div style="display:flex;flex-wrap:wrap;gap:6px">${g.qs.map(q=>`<span class="chip acc qpick" style="cursor:pointer">${esc(q)}</span>`).join('')}</div></div>`).join('');
+    d.querySelectorAll('.qpick').forEach(c=>c.onclick=()=>{const q=c.textContent;const inp=document.getElementById('askq');if(inp)inp.value=q;askRun(q);});
+  }).catch(()=>{});
+}
+function wireAsk(){
+  const inp=document.getElementById('askq'),btn=document.getElementById('askbtn');
+  const go=()=>{const q=(inp.value||'').trim();if(q)askRun(q);};
+  if(btn)btn.onclick=go; if(inp)inp.onkeydown=e=>{if(e.key==='Enter')go();};
+}
+function askRun(q){
+  const panel=document.getElementById('ask-panel'),status=document.getElementById('ask-status'),
+    trace=document.getElementById('ask-trace'),ans=document.getElementById('ask-answer'),cites=document.getElementById('ask-cites');
+  if(!panel)return;
+  panel.style.display='';status.style.display='';trace.innerHTML='';ans.textContent='';cites.innerHTML='';
+  status.className='qstatus run';status.innerHTML='<span class="spin" style="margin:0"></span><span>thinking… <span id="ask-timer" class="mono">0.0s</span></span>';
+  const t0=Date.now();let got=false,finished=false;
+  clearInterval(S.askTimer);S.askTimer=setInterval(()=>{const t=document.getElementById('ask-timer');if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+'s';},100);
+  let es;try{es=new EventSource(`${API}/api/stream/ask?ticker=${encodeURIComponent(S.company)}&q=${encodeURIComponent(q)}`);}
+  catch(e){clearInterval(S.askTimer);status.className='qstatus warn';status.innerHTML='<span>no live backend</span>';return;}
+  const stop=()=>{clearInterval(S.askTimer);if(es)es.close();};
+  es.addEventListener('run_started',()=>{got=true;});
+  es.addEventListener('step',e=>{got=true;const s=JSON.parse(e.data);upsertAskStep(s.id,s.label,s.status);});
+  es.addEventListener('citation',e=>{const c=JSON.parse(e.data);cites.insertAdjacentHTML('beforeend',`<span class="chip ghost" style="margin-left:4px">${esc(c.source)}</span>`);});
+  es.addEventListener('token',e=>{ans.textContent+=JSON.parse(e.data).text;});
+  es.addEventListener('tie_out',e=>{if(JSON.parse(e.data).passed)cites.insertAdjacentHTML('beforeend','<span class="chip ok" style="margin-left:4px">✓ ties out to XBRL</span>');});
+  es.addEventListener('failed',e=>{finished=true;stop();status.className='qstatus warn';status.innerHTML=`<span>⚠ ${esc(JSON.parse(e.data).message)}</span>`;});
+  es.addEventListener('done',e=>{finished=true;const d=JSON.parse(e.data);stop();status.className='qstatus ok';status.innerHTML=`<span class="tickok">✓</span><span>answered · <span class="mono">${(d.elapsed_ms/1000).toFixed(1)}s</span></span>`;});
+  es.onerror=()=>{if(finished)return;stop();status.className='qstatus warn';status.innerHTML=got?'<span>disconnected</span>':'<span>could not reach the AI backend (needs the live server + an API key)</span>';};
+}
+function upsertAskStep(id,label,status){let row=document.getElementById('astep-'+id);
+  if(!row){row=document.createElement('div');row.id='astep-'+id;row.className='tev2';const t=document.getElementById('ask-trace');if(t)t.appendChild(row);}
+  row.innerHTML=(status==='done'?'<span class="tickok">✓</span>':'<span class="spin" style="margin:0"></span>')+`<span>${esc(label)}</span>`;}
 
 /* ---------- Workflows library ---------- */
 function vWorkflows(){

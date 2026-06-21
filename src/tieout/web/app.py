@@ -164,6 +164,27 @@ def stream_qoe(ticker: str, period: str = "FY2025"):
     return StreamingResponse(gen(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 
+@app.get("/api/stream/ask")
+def stream_ask(ticker: str, q: str, connectors: str = "edgar,erp,crm"):
+    """Stream a freeform AI answer about the company (Claude tool-use over XBRL + ledger)."""
+    from ..workflows.ask import ask_events
+    if not (q or "").strip():
+        raise HTTPException(status_code=400, detail="a question is required")
+    _ratelimit()  # this one calls the Claude API
+    conn = {x for x in connectors.split(",") if x} or None
+
+    def gen():
+        for event, payload in ask_events(ticker, q, conn):
+            yield sse(event, payload)
+    return StreamingResponse(gen(), media_type="text/event-stream", headers=_SSE_HEADERS)
+
+
+@app.get("/api/ask/deck")
+def ask_deck():
+    from ..workflows.ask import QUESTION_DECK
+    return QUESTION_DECK
+
+
 @app.get("/")
 def index():
     return FileResponse(_STATIC / "index.html")
