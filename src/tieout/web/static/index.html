@@ -267,7 +267,7 @@ function vQoE(){
 function runQoE(ticker){
   if(!ticker)return;
   qoeReset(); setQoeStatus('running');
-  let got=false; const t0=Date.now();
+  let got=false, finished=false; const t0=Date.now();
   clearInterval(S.qoeTimer);
   S.qoeTimer=setInterval(()=>{const t=document.getElementById('qoe-timer');if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+'s';},100);
   let es;
@@ -282,9 +282,9 @@ function runQoE(ticker){
   es.addEventListener('metric',e=>{const m=JSON.parse(e.data);setKpi(m.key,m.value,m.unit,m.flag);});
   es.addEventListener('finding',e=>{const f=JSON.parse(e.data);addFinding(f.severity,f.text,f.detail,f.evidence);});
   es.addEventListener('result',e=>{onResult(JSON.parse(e.data));});
-  es.addEventListener('failed',e=>{stop();showError(JSON.parse(e.data).message);});
-  es.addEventListener('done',e=>{const d=JSON.parse(e.data);stop();setQoeStatus('done',d.checks_passed,d.elapsed_ms);});
-  es.onerror=()=>{stop(); if(!got) qoeFallback(ticker);};
+  es.addEventListener('failed',e=>{finished=true;stop();showError(JSON.parse(e.data).message);});
+  es.addEventListener('done',e=>{const d=JSON.parse(e.data);finished=true;stop();setQoeStatus('done',d.checks_passed,d.elapsed_ms);});
+  es.onerror=()=>{if(finished)return;stop();if(!got)qoeFallback(ticker);else setQoeStatus('warn','disconnected');};
 }
 /* no live backend (e.g. the static export) -> replay the cached run */
 function qoeFallback(ticker){
