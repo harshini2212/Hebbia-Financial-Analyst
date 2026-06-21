@@ -172,12 +172,13 @@
 <div class="drawer" id="drawer"></div>
 
 <script>
-const NAV=[['qoe','QoE workspace','▦'],['ask','Ask anything','✦'],['companies','Companies','▤'],
-  ['sources','Connectors','⇄'],['workflows','Workflows','◧'],['runs','Runs','↻'],['artifacts','Investor memo','▭'],['evals','Trust','✓']];
+const NAV=[['qoe','QoE workspace','▦'],['ask','Ask anything','✦'],['analyses','Analyses','▥'],['companies','Companies','▤'],
+  ['sources','Connectors','⇄'],['runs','Runs','↻'],['artifacts','Investor memo','▭'],['evals','Trust','✓']];
 // same-origin by default (works on localhost + a whole-app deploy); set to the deployed
 // API URL only if the UI is hosted on a different origin than the API.
 const API='';
-const S={tab:'qoe',company:null,companies:[],qoe:null,sources:[],evals:null,bench:null,inspect:null,busy:false};
+const S={tab:'qoe',company:null,companies:[],qoe:null,sources:[],conn:new Set(),analyses:null,evals:null,bench:null,inspect:null,busy:false};
+function have(id){return id==='edgar'||S.conn.has(id);}
 const $=h=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
 function pct(v){return v==null?'—':(v*100).toFixed(Math.abs(v*100)>=10?0:1)+'%';}
 function money(v){if(v==null)return '—';const a=Math.abs(v),s=v<0?'−':'';
@@ -194,6 +195,8 @@ async function boot(){
 async function loadCompany(){
   const j=async u=>{try{return await(await fetch(u)).json();}catch(e){return null;}};
   [S.qoe,S.sources]=await Promise.all([j('/api/qoe/'+S.company),j('/api/sources/'+S.company)]);
+  S.conn=new Set((S.sources||[]).filter(s=>s.status==='connected'&&s.id!=='edgar').map(s=>s.id));
+  S.analyses=null;
 }
 function renderNav(){
   const n=document.getElementById('nav');n.innerHTML='';
@@ -208,7 +211,7 @@ function renderCtx(){
   c.innerHTML=`<div class="co"><span class="tk">${q.ticker}</span> · ${q.issuer} · FY${q.fiscal_year}</div><div class="srcs">${chips}</div>`;
 }
 function render(){const v=document.getElementById('view');
-  v.innerHTML='';v.appendChild(({workflows:vWorkflows,qoe:vQoE,ask:vAsk,companies:vCompanies,sources:vSources,
+  v.innerHTML='';v.appendChild(({workflows:vWorkflows,qoe:vQoE,ask:vAsk,analyses:vAnalyses,companies:vCompanies,sources:vSources,
     runs:vRuns,artifacts:vArtifacts,evals:vEvals}[S.tab]||vQoE)());}
 
 /* ---------- Ask anything (live AI query agent) ---------- */
@@ -478,24 +481,115 @@ function wireCompanySearch(sb){
   inp.onblur=()=>setTimeout(()=>{ac.innerHTML='';},200);
 }
 
-/* ---------- Sources (connectors) ---------- */
+/* ---------- Connectors (user-controlled) ---------- */
+const ANAME={concentration:'Customer concentration',revenue_analysis:'Revenue quality',net_profit:'Profitability & margins',annual_cash_flow:'Cash flow & conversion',burn_rate:'Burn / self-funding',roi_by_segment:'ROI by segment',retention:'Net revenue retention',pipeline_to_revenue:'Pipeline → revenue',headcount:'Headcount & efficiency',investor_analysis:'Investor base & flows'};
+const KINDCOLOR={public:'teal',erp:'purple',crm:'purple',hris:'amber',investor:'blue',live:'slate'};
 function vSources(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="phead"><h1>Sources</h1><p>Every source — public filings, synthetic ERP/CRM, or a live connector — exposes the <b>same adapter interface</b>, so the workflows never know which fed them. Demo on synthetic; a real customer connects Merge and the exact same workflows run on live data.</p></div>`));
-  el.appendChild($(`<div class="callout" style="margin-bottom:16px"><b>The swap that makes it real:</b> <code>EdgarAdapter</code> (public) · <code>SyntheticAdapter</code> (EDGAR-anchored demo) · <code>MergeAdapter</code> (production). The synthetic ledger is validated by the same tie-out harness that checks real extraction — one trust layer, two jobs.</div>`));
-  const kindColor={public:'teal',synthetic:'purple',live:'slate'};
-  const cards=$('<div class="cards"></div>');
-  (S.sources||[]).forEach(s=>{
-    const st=s.status==='connected'?`<span class="chip ok"><span class="dot ok"></span>connected</span>`:`<span class="chip slate">available</span>`;
-    const tie=s.tied_out?'<span class="chip ok">tied out ✓</span>':(s.tied_out===false?'<span class="chip bad">off</span>':'');
-    cards.appendChild($(`<div class="card">
-      <div class="ct">${s.name} <span class="chip ${kindColor[s.kind]||'slate'}">${s.kind}</span></div>
-      <div class="cv">${s.vendor}</div>
-      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">${st}${tie}</div>
-      <div class="cd">${s.provides}</div>
-      <div class="cmeta">${esc(s.detail)}</div></div>`));});
+  el.appendChild($(`<div class="phead"><h1>Connectors — ${esc(S.company||'')}</h1><p>You decide what's connected. EDGAR (public filings) is always on; connect ERP, CRM, HRIS or investor data <b>when you're ready</b> — each unlocks more analyses, and every synthetic source is validated by the same tie-out harness. Connections are per-session. <b>Calibrated demo data — anchored to SEC EDGAR/XBRL, not real.</b></p></div>`));
+  const cards=$('<div class="cards" id="conn-cards"></div>');
+  (S.sources||[]).forEach(s=>cards.appendChild(sourceCard(s)));
   el.appendChild(cards);
   return el;
+}
+function sourceCard(s){
+  const connected=s.status==='connected',locked=s.status==='locked';
+  const unlocks=(s.unlocks||[]).length?`<div class="cmeta"><b>Unlocks:</b> ${s.unlocks.map(u=>esc(ANAME[u]||u)).join(' · ')}</div>`:'';
+  const tie=connected&&s.tied_out?'<span class="chip ok">tied out ✓</span>':'';
+  const statusChip=connected?'<span class="chip ok"><span class="dot ok"></span>connected</span>':(locked?'<span class="chip teal">always on</span>':'<span class="chip slate">available</span>');
+  const card=$(`<div class="card" id="src-${s.id}">
+    <div class="ct">${esc(s.name)} <span class="chip ${KINDCOLOR[s.kind]||'slate'}">${esc(s.kind)}</span></div>
+    <div class="cv">${esc(s.vendor)}</div>
+    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">${statusChip}${tie}</div>
+    <div class="cd">${esc(s.provides)}</div>
+    <div class="cmeta" style="color:#b45309">🔒 ${esc(s.security)}</div>
+    ${connected&&s.detail?`<div class="cmeta">${esc(s.detail)}</div>`:''}
+    ${unlocks}</div>`);
+  if(s.toggleable){const b=$(`<button class="btn ${connected?'ghost':''}" style="margin-top:12px;width:100%">${connected?'Disconnect':'Connect'}</button>`);
+    b.onclick=()=>toggleConnector(s.id,!connected);card.appendChild(b);}
+  else if(s.id==='merge'){card.appendChild($(`<button class="btn ghost" disabled style="margin-top:12px;width:100%;opacity:.55;cursor:default">Production swap</button>`));}
+  return card;
+}
+async function toggleConnector(id,connect){
+  const card=document.getElementById('src-'+id),b=card&&card.querySelector('button');
+  if(b){b.disabled=true;b.textContent=connect?'Connecting…':'Disconnecting…';}
+  try{
+    const r=await fetch(`${API}/api/sources/${S.company}/${id}/toggle`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({connect})});
+    if(!r.ok)throw new Error('toggle failed');
+    const data=await r.json();
+    S.sources=data.sources;S.conn=new Set(data.connected);S.analyses=null;
+    renderCtx();
+    const wrap=document.getElementById('conn-cards');if(wrap){wrap.innerHTML='';(S.sources||[]).forEach(s=>wrap.appendChild(sourceCard(s)));}
+    if(connect&&(data.unlocked||[]).length)toast(`✓ Unlocked ${data.unlocked.length} ${data.unlocked.length>1?'analyses':'analysis'}: ${data.unlocked.map(u=>ANAME[u]||u).join(', ')} — see the Analyses tab`);
+    else if(!connect)toast(`Disconnected ${id.toUpperCase()}`);
+  }catch(e){if(b){b.disabled=false;b.textContent=connect?'Connect':'Disconnect';}toast('Could not reach the backend');}
+}
+function toast(msg){let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:11px 20px;border-radius:9px;font-size:13px;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.28);max-width:78%;text-align:center';document.body.appendChild(t);}
+  t.textContent=msg;t.style.transition='';t.style.opacity='1';clearTimeout(t._h);t._h=setTimeout(()=>{t.style.transition='opacity .5s';t.style.opacity='0';},4000);}
+
+/* ---------- Analyses (unlocked by connectors) ---------- */
+function vAnalyses(){
+  const el=$('<div></div>');
+  const issuer=(S.qoe&&S.qoe.issuer)||S.company||'';
+  el.appendChild($(`<div class="phead"><h1>Analyses — ${esc(issuer)}</h1><p>Each card is a deterministic analysis that ties out to ${esc(S.company)}'s filings. Locked cards need a connector — connect it under <b>Connectors</b> and it unlocks here. <b>Calibrated demo data.</b></p></div>`));
+  el.appendChild($(`<div id="an-grid" class="cards"></div>`));
+  el.appendChild($(`<div id="an-result" style="margin-top:18px"></div>`));
+  setTimeout(loadAnalyses,0);
+  return el;
+}
+async function loadAnalyses(){
+  const grid=document.getElementById('an-grid');if(!grid)return;
+  if(!S.analyses){try{S.analyses=await(await fetch(`${API}/api/analyses/${S.company}`)).json();}catch(e){grid.innerHTML='<div class="muted">backend offline — start the server to run analyses</div>';return;}}
+  const cat=(S.analyses&&S.analyses.catalog)||[];grid.innerHTML='';
+  cat.forEach(a=>{
+    const card=$(`<div class="card${a.unlocked?'':' locked'}" style="${a.unlocked?'cursor:pointer':'cursor:pointer;opacity:.7'}">
+      <div class="ct">${esc(a.name)}</div>
+      <div class="cd">${esc(a.blurb)}</div>
+      <div style="margin-top:10px">${a.unlocked?'<span class="chip ok">ready ▸</span>':`<span class="chip slate">🔒 connect ${a.needs.map(n=>n.toUpperCase()).join(' + ')}</span>`}</div></div>`);
+    card.onclick=a.unlocked?(()=>runAnalysis(a.id,a.name)):(()=>{S.tab='sources';renderNav();render();toast(`Connect ${a.needs.map(n=>n.toUpperCase()).join(' + ')} to unlock ${a.name}`);});
+    grid.appendChild(card);
+  });
+}
+async function runAnalysis(id,name){
+  const out=document.getElementById('an-result');if(!out)return;
+  out.innerHTML=`<div class="panel"><div class="ph"><h3>${esc(name)}</h3></div><div class="pb"><span class="spin" style="margin:0"></span> computing…</div></div>`;
+  try{
+    const r=await fetch(`${API}/api/analyses/${S.company}/${id}/run`,{method:'POST'});
+    if(!r.ok){const e=await r.json().catch(()=>({}));out.innerHTML=`<div class="panel"><div class="pb muted">${esc((e&&e.detail)||'could not run')}</div></div>`;return;}
+    out.innerHTML=renderAnalysis(await r.json());
+    out.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){out.innerHTML='<div class="panel"><div class="pb muted">backend offline</div></div>';}
+}
+function klabel(k){return k.replace(/_/g,' ').replace(/\bpct\b/,'%').replace(/^\w/,c=>c.toUpperCase());}
+function fmtVal(k,v){
+  if(v==null)return '—';
+  if(typeof v==='number'){
+    if(/margin|growth|_pct|retention|coverage|intensity|^top\d/.test(k))return pct(v);
+    if(/income|cash|capex|fcf|flow|profit|invested|revenue|amount/.test(k))return money(v);
+    return v.toLocaleString();
+  }
+  return esc(String(v));
+}
+function tbl(headers,rows){
+  return `<table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:13px">
+    <thead><tr>${headers.map(h=>`<th style="text-align:left;padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase">${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td style="padding:6px 10px;border-bottom:1px solid #f1f5f9;${i>0?'text-align:right;font-variant-numeric:tabular-nums':''}">${esc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function renderAnalysis(data){
+  const r=data.result||{};
+  const skip=['note','source','customers','cohorts','funnel','years','top_holders','segments','by_segment','segment_gross_margin'];
+  const rows=Object.entries(r).filter(([k,v])=>!skip.includes(k)&&typeof v!=='object');
+  let body=rows.length?`<div class="kpis">`+rows.map(([k,v])=>`<div class="kpi"><div class="kl">${esc(klabel(k))}</div><div class="kv">${fmtVal(k,v)}</div></div>`).join('')+`</div>`:'';
+  if(r.customers)body+=tbl(['Customer','Segment','Revenue','% total'],r.customers.map(c=>[c.name,c.segment||'',money(c.revenue),pct(c.pct_of_total)]));
+  if(r.segments)body+=tbl(['Segment','Revenue','Gross profit','Proxy IC','ROIC'],r.segments.map(s=>[s.segment,money(s.revenue),money(s.gross_profit),money(s.proxy_invested_capital),pct(s.gp_roic_proxy)]));
+  if(r.years)body+=tbl(['FY','Headcount','Rev / employee'],r.years.map(y=>[y.fiscal_year,(y.headcount||0).toLocaleString(),money(y.revenue_per_employee)]));
+  if(r.top_holders)body+=tbl(['Holder','% held','Type','QoQ flow'],r.top_holders.map(h=>[h.name,pct(h.pct_held),h.is_hedge_fund?'Hedge fund':'Institution',(h.qoq_change_pct>0?'+':'')+h.qoq_change_pct+'%']));
+  if(r.cohorts)body+=tbl(['Cohort','# customers','Net retention'],r.cohorts.map(c=>[c.cohort_year,c.n_customers,pct(c.net_retention)]));
+  if(r.funnel)body+=tbl(['Stage','# opps','Amount'],r.funnel.map(f=>[f.stage,f.count,money(f.amount)]));
+  if(r.by_segment)body+=tbl(['Segment','Revenue'],Object.entries(r.by_segment).map(([s,v])=>[s,money(v)]));
+  return `<div class="panel"><div class="ph"><h3>${esc(data.name)}</h3><span class="sub">${esc(r.source||'')}</span></div>
+    <div class="pb">${r.note?`<div class="callout" style="margin-bottom:12px">${esc(r.note)}</div>`:''}${body}</div></div>`;
 }
 
 /* ---------- Runs ---------- */
