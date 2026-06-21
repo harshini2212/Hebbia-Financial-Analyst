@@ -255,9 +255,12 @@ function wireHomeSearch(){
 }
 async function selectCompanyByTicker(ticker,name){
   const msg=document.getElementById('home-msg');const ac=document.getElementById('home-ac');if(ac)ac.innerHTML='';
-  if(msg)msg.innerHTML='<span class="spin" style="margin:0"></span> ingesting '+esc(name||ticker)+' from SEC EDGAR… (~30s first time)';
-  try{const r=await fetch(`${API}/api/qoe/${ticker}/run`,{method:'POST'});if(!r.ok)throw new Error(((await r.json())||{}).detail||r.statusText);
-    S.company=ticker;S.companies=await(await fetch(`${API}/api/qoe/companies`)).json();await loadCompany();S.tab='qoe';renderNav();render();}
+  const known=(S.companies||[]).some(c=>c.ticker===ticker);
+  if(msg)msg.innerHTML='<span class="spin" style="margin:0"></span> '+(known?'loading ':'ingesting ')+esc(name||ticker)+(known?'…':' from SEC EDGAR… (~30s first time)');
+  try{
+    if(!known){const r=await fetch(`${API}/api/qoe/${ticker}/run`,{method:'POST'});if(!r.ok)throw new Error(((await r.json())||{}).detail||r.statusText);
+      S.companies=await(await fetch(`${API}/api/qoe/companies`)).json();}
+    S.company=ticker;await loadCompany();S.tab='qoe';renderNav();render();}
   catch(e){if(msg)msg.textContent='Could not load '+ticker+': '+e.message;}
 }
 

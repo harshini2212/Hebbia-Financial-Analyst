@@ -318,7 +318,11 @@
       "gross_margin": 0.5028566486824266,
       "accounts_receivable": 67729000000.0,
       "inventory": 38325000000.0,
-      "accounts_payable": 121909000000.0
+      "accounts_payable": 121909000000.0,
+      "net_income": 77670000000.0,
+      "operating_income": 79975000000.0,
+      "cfo": 139514000000.0,
+      "capex": 131819000000.0
     },
     {
       "fiscal_year": 2024,
@@ -332,7 +336,11 @@
       "gross_margin": 0.48854393464156787,
       "accounts_receivable": 55451000000.0,
       "inventory": 34214000000.0,
-      "accounts_payable": 94363000000.0
+      "accounts_payable": 94363000000.0,
+      "net_income": 59248000000.0,
+      "operating_income": 68593000000.0,
+      "cfo": 115877000000.0,
+      "capex": 82999000000.0
     },
     {
       "fiscal_year": 2023,
@@ -346,7 +354,11 @@
       "gross_margin": 0.46982088955000567,
       "accounts_receivable": null,
       "inventory": null,
-      "accounts_payable": null
+      "accounts_payable": null,
+      "net_income": 30425000000.0,
+      "operating_income": 36852000000.0,
+      "cfo": 84946000000.0,
+      "capex": 52729000000.0
     }
   ],
   "ledger_summary": {

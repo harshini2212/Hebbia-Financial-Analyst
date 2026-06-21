@@ -251,7 +251,9 @@ def ask_deck():
 
 @app.get("/")
 def index():
-    return FileResponse(_STATIC / "index.html")
+    # never cache the shell — clients must always get the latest JS
+    return FileResponse(_STATIC / "index.html",
+                        headers={"Cache-Control": "no-store, must-revalidate"})
 
 
 app.mount("/", StaticFiles(directory=_STATIC), name="static")
