@@ -280,9 +280,9 @@ function vAsk(){
     <p>A grounded AI analyst answers any question using ${esc(S.company)}'s SEC filings + the synthetic ERP/CRM ledger — watch it call tools, then stream a cited answer with a tie-out badge. <b>Calibrated demo data.</b></p></div>`));
   el.appendChild($(`<div class="search" style="margin-bottom:14px"><input id="askq" autocomplete="off" placeholder="Ask anything about ${esc(S.company)} — e.g. how concentrated is revenue?" style="flex:1"/><button class="btn" id="askbtn">Ask</button></div>`));
   el.appendChild($(`<div id="ask-deck"></div>`));
-  el.appendChild($(`<div id="ask-status" class="qstatus" style="display:none"></div>
+  el.appendChild($(`<div><div id="ask-status" class="qstatus" style="display:none"></div>
     <div class="panel" id="ask-panel" style="display:none"><div class="ph"><h3>Answer</h3><span class="sub" id="ask-cites"></span></div>
-      <div class="pb"><div id="ask-trace" style="margin-bottom:10px"></div><div id="ask-answer" style="font-size:14px;line-height:1.65;white-space:pre-wrap"></div></div></div>`));
+      <div class="pb"><div id="ask-trace" style="margin-bottom:10px"></div><div id="ask-answer" style="font-size:14px;line-height:1.65;white-space:pre-wrap"></div></div></div></div>`));
   setTimeout(()=>{wireAsk();loadDeck();},0);
   return el;
 }
