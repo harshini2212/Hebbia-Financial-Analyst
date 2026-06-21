@@ -1,0 +1,1819 @@
+{
+  "rows": [
+    {
+      "ticker": "COST",
+      "issuer": "COSTCO WHOLESALE CORP /NEW",
+      "note": "clean baseline",
+      "fiscal_year": 2025
+    },
+    {
+      "ticker": "AMZN",
+      "issuer": "AMAZON COM INC",
+      "note": "multi-segment + equity-method",
+      "fiscal_year": 2025
+    },
+    {
+      "ticker": "KHC",
+      "issuer": "Kraft Heinz Co",
+      "note": "messy revenue tagging",
+      "fiscal_year": 2025
+    }
+  ],
+  "columns": [
+    {
+      "id": "net_income",
+      "label": "Net income",
+      "concept": "net_income.parent",
+      "unit": "USD",
+      "q": "What was {co}'s net income attributable to the company in fiscal year {fy}?"
+    },
+    {
+      "id": "assets",
+      "label": "Total assets",
+      "concept": "assets.total",
+      "unit": "USD",
+      "q": "What were {co}'s total assets at the end of fiscal year {fy}?"
+    },
+    {
+      "id": "gross_margin",
+      "label": "Gross margin",
+      "concept": "gross_margin.ratio",
+      "unit": "ratio",
+      "q": "What was {co}'s gross margin in fiscal year {fy}?"
+    },
+    {
+      "id": "operating_margin",
+      "label": "Operating margin",
+      "concept": "operating_margin.ratio",
+      "unit": "ratio",
+      "q": "What was {co}'s operating margin in fiscal year {fy}?"
+    },
+    {
+      "id": "net_margin",
+      "label": "Net margin",
+      "concept": "net_margin.ratio",
+      "unit": "ratio",
+      "q": "What was {co}'s net profit margin in fiscal year {fy}?"
+    },
+    {
+      "id": "effective_tax_rate",
+      "label": "Effective tax rate",
+      "concept": "effective_tax_rate.ratio",
+      "unit": "ratio",
+      "q": "What was {co}'s effective income tax rate in fiscal year {fy}?"
+    }
+  ],
+  "cells": {
+    "COST": {
+      "net_income": {
+        "ticker": "COST",
+        "question": "What was Costco Wholesale's net income attributable to the company in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Costco Wholesale's net income attributable to the parent company in fiscal year 2025 was $8.099 billion.",
+        "value": 8099000000.0,
+        "unit": "USD",
+        "answer_concept": "net_income.parent",
+        "gold": 8099000000.0,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "absolute_figure",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3065,
+            "output_tokens": 314,
+            "est_cost_usd": 0.004635,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "single-figure question \u2192 retrieve the reported value (no decomposition needed)",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "absolute_figure \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 1 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OK (vs XBRL 8,099,000,000) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.004635,
+        "tokens": 3379,
+        "checks": [
+          {
+            "label": "Net income attributable to parent",
+            "concept": "net_income.parent",
+            "stated": 8099000000.0,
+            "truth": 8099000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved net income attributable to parent from Costco Wholesale's fiscal year 2025 filing"
+          }
+        ],
+        "tool_calls": 1,
+        "error": ""
+      },
+      "assets": {
+        "ticker": "COST",
+        "question": "What were Costco Wholesale's total assets at the end of fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Costco Wholesale had total assets of $77.099 billion at the end of fiscal year 2025.",
+        "value": 77099000000.0,
+        "unit": "USD",
+        "answer_concept": "assets.total",
+        "gold": 77099000000.0,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "absolute_figure",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3053,
+            "output_tokens": 286,
+            "est_cost_usd": 0.004483,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "single-figure question \u2192 retrieve the reported value (no decomposition needed)",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "absolute_figure \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 1 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OK (vs XBRL 77,099,000,000) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.004483,
+        "tokens": 3339,
+        "checks": [
+          {
+            "label": "Total assets",
+            "concept": "assets.total",
+            "stated": 77099000000.0,
+            "truth": 77099000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved total assets from Costco Wholesale's fiscal year 2025 filing"
+          }
+        ],
+        "tool_calls": 1,
+        "error": ""
+      },
+      "gross_margin": {
+        "ticker": "COST",
+        "question": "What was Costco Wholesale's gross margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Costco Wholesale's gross margin in fiscal year 2025 was 12.84%.",
+        "value": 0.1284,
+        "unit": "%",
+        "answer_concept": "gross_margin.ratio",
+        "gold": 0.1284320671496477,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3292,
+            "output_tokens": 697,
+            "est_cost_usd": 0.006777,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 3 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 12.84%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.006777,
+        "tokens": 3989,
+        "checks": [
+          {
+            "label": "Total revenue",
+            "concept": "revenue.total",
+            "stated": 275235000000.0,
+            "truth": 275235000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Cost of goods sold",
+            "concept": "cogs.total",
+            "stated": 239886000000.0,
+            "truth": 239886000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Total revenue for FY2025: $275,235,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Cost of goods sold for FY2025: $239,886,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Gross profit = Revenue \u2212 COGS = $275,235M \u2212 $239,886M = $35,349M"
+          },
+          {
+            "type": "calculation",
+            "text": "Gross margin ratio = Gross profit \u00f7 Revenue = $35,349M \u00f7 $275,235M = 0.1284 (12.84%)"
+          }
+        ],
+        "tool_calls": 3,
+        "error": ""
+      },
+      "operating_margin": {
+        "ticker": "COST",
+        "question": "What was Costco Wholesale's operating margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Costco Wholesale's operating margin in fiscal year 2025 was 3.77%.",
+        "value": 0.0377,
+        "unit": "%",
+        "answer_concept": "operating_margin.ratio",
+        "gold": 0.037724126658828204,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3187,
+            "output_tokens": 618,
+            "est_cost_usd": 0.006277,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 2 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 3.77%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.006277,
+        "tokens": 3805,
+        "checks": [
+          {
+            "label": "Operating Income",
+            "concept": "operating_income.total",
+            "stated": 10383000000.0,
+            "truth": 10383000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Total Revenue",
+            "concept": "revenue.total",
+            "stated": 275235000000.0,
+            "truth": 275235000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved operating income for FY 2025: $10,383,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved total revenue for FY 2025: $275,235,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Operating Margin = Operating Income \u00f7 Total Revenue = $10,383,000,000 \u00f7 $275,235,000,000 = 0.0377"
+          }
+        ],
+        "tool_calls": 2,
+        "error": ""
+      },
+      "net_margin": {
+        "ticker": "COST",
+        "question": "What was Costco Wholesale's net profit margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Costco Wholesale's net profit margin in fiscal year 2025 was 2.94%, calculated as net income attributable to parent divided by total revenue.",
+        "value": 0.0294,
+        "unit": "%",
+        "answer_concept": "net_margin.ratio",
+        "gold": 0.02942576344191343,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3190,
+            "output_tokens": 556,
+            "est_cost_usd": 0.00597,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 2 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 2.94%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.00597,
+        "tokens": 3746,
+        "checks": [
+          {
+            "label": "Net Income Attributable to Parent",
+            "concept": "net_income.parent",
+            "stated": 8099000000.0,
+            "truth": 8099000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Total Revenue",
+            "concept": "revenue.total",
+            "stated": 275235000000.0,
+            "truth": 275235000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved total revenue for FY2025: $275,235,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved net income attributable to parent for FY2025: $8,099,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Net Profit Margin = Net Income / Revenue = $8,099,000,000 / $275,235,000,000 = 0.0294 or 2.94%"
+          }
+        ],
+        "tool_calls": 2,
+        "error": ""
+      },
+      "effective_tax_rate": {
+        "ticker": "COST",
+        "question": "What was Costco Wholesale's effective income tax rate in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Costco Wholesale's effective income tax rate in fiscal year 2025 was 25.14%.",
+        "value": 0.2514,
+        "unit": "%",
+        "answer_concept": "effective_tax_rate.ratio",
+        "gold": 0.2513403613346289,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": false,
+            "input_tokens": 4923,
+            "output_tokens": 700,
+            "est_cost_usd": 0.008423,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell \u2014 3 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 25.13%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.008423,
+        "tokens": 5623,
+        "checks": [
+          {
+            "label": "Income Tax Expense",
+            "concept": "income_tax.total",
+            "stated": 2719000000.0,
+            "truth": 2719000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Income Before Income Taxes",
+            "concept": "pretax_income.total",
+            "stated": 10818000000.0,
+            "truth": 10818000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved income tax expense for FY 2025: $2,719,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved pretax income for FY 2025: $10,818,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Effective Tax Rate = Income Tax Expense / Pretax Income = $2,719,000,000 / $10,818,000,000 = 0.2514"
+          }
+        ],
+        "tool_calls": 3,
+        "error": ""
+      }
+    },
+    "AMZN": {
+      "net_income": {
+        "ticker": "AMZN",
+        "question": "What was Amazon's net income attributable to the company in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Amazon's net income attributable to the parent company in fiscal year 2025 was $77.67 billion.",
+        "value": 77670000000.0,
+        "unit": "USD",
+        "answer_concept": "net_income.parent",
+        "gold": 77670000000.0,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "absolute_figure",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3053,
+            "output_tokens": 301,
+            "est_cost_usd": 0.004558,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "single-figure question \u2192 retrieve the reported value (no decomposition needed)",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "absolute_figure \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 1 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OK (vs XBRL 77,670,000,000) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.004558,
+        "tokens": 3354,
+        "checks": [
+          {
+            "label": "Net income attributable to parent",
+            "concept": "net_income.parent",
+            "stated": 77670000000.0,
+            "truth": 77670000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved net income attributable to parent (net_income.parent) for fiscal year 2025"
+          }
+        ],
+        "tool_calls": 1,
+        "error": ""
+      },
+      "assets": {
+        "ticker": "AMZN",
+        "question": "What were Amazon's total assets at the end of fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Amazon's total assets at the end of fiscal year 2025 were $818.042 billion.",
+        "value": 818042000000.0,
+        "unit": "USD",
+        "answer_concept": "assets.total",
+        "gold": 818042000000.0,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "absolute_figure",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "est_cost_usd": 0.0,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "single-figure question \u2192 retrieve the reported value (no decomposition needed)",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "absolute_figure \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 1 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OK (vs XBRL 818,042,000,000) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.0,
+        "tokens": 0,
+        "checks": [
+          {
+            "label": "Total Assets (FY 2025)",
+            "concept": "assets.total",
+            "stated": 818042000000.0,
+            "truth": 818042000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved total assets from Amazon's FY 2025 filing"
+          }
+        ],
+        "tool_calls": 1,
+        "error": ""
+      },
+      "gross_margin": {
+        "ticker": "AMZN",
+        "question": "What was Amazon's gross margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Amazon's gross margin in fiscal year 2025 was 50.27%.",
+        "value": 0.5027,
+        "unit": "%",
+        "answer_concept": "gross_margin.ratio",
+        "gold": 0.502856648683644,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 4886,
+            "output_tokens": 795,
+            "est_cost_usd": 0.008861,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 3 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 50.29%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.008861,
+        "tokens": 5681,
+        "checks": [
+          {
+            "label": "Total Revenue",
+            "concept": "revenue.total",
+            "stated": 716924000000.0,
+            "truth": 716924000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Cost of Goods Sold",
+            "concept": "cogs.total",
+            "stated": 356414000000.0,
+            "truth": 356414000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved total revenue for fiscal year 2025: $716,924,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved cost of goods sold for fiscal year 2025: $356,414,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Gross Profit = Revenue - COGS = $716,924,000,000 - $356,414,000,000 = $360,510,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Gross Margin = Gross Profit / Revenue = $360,510,000,000 / $716,924,000,000 = 0.5027"
+          }
+        ],
+        "tool_calls": 3,
+        "error": ""
+      },
+      "operating_margin": {
+        "ticker": "AMZN",
+        "question": "What was Amazon's operating margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Amazon's operating margin in fiscal year 2025 was 11.15%.",
+        "value": 0.1115,
+        "unit": "%",
+        "answer_concept": "operating_margin.ratio",
+        "gold": 0.11155296795809265,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "est_cost_usd": 0.0,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 3 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 11.16%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.0,
+        "tokens": 0,
+        "checks": [
+          {
+            "label": "Operating income (total)",
+            "concept": "operating_income.total",
+            "stated": 79975000000.0,
+            "truth": 79975000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Total revenue",
+            "concept": "revenue.total",
+            "stated": 716924000000.0,
+            "truth": 716924000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved operating income (total) for FY2025: $79,975,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved total revenue for FY2025: $716,924,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Operating margin = Operating income \u00f7 Revenue = $79,975,000,000 \u00f7 $716,924,000,000 = 0.1115"
+          }
+        ],
+        "tool_calls": 3,
+        "error": ""
+      },
+      "net_margin": {
+        "ticker": "AMZN",
+        "question": "What was Amazon's net profit margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Amazon's net profit margin in fiscal year 2025 was 10.83%.",
+        "value": 0.1083,
+        "unit": "%",
+        "answer_concept": "net_margin.ratio",
+        "gold": 0.1083378433423717,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3178,
+            "output_tokens": 606,
+            "est_cost_usd": 0.006208,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 2 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 10.83%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.006208,
+        "tokens": 3784,
+        "checks": [
+          {
+            "label": "Net Income (attributable to parent)",
+            "concept": "net_income.parent",
+            "stated": 77670000000.0,
+            "truth": 77670000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Total Revenue",
+            "concept": "revenue.total",
+            "stated": 716924000000.0,
+            "truth": 716924000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved net income attributable to parent for FY2025: $77,670,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved total revenue for FY2025: $716,924,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Net profit margin = Net Income / Revenue = $77,670,000,000 / $716,924,000,000 = 0.1083 (10.83%)"
+          }
+        ],
+        "tool_calls": 2,
+        "error": ""
+      },
+      "effective_tax_rate": {
+        "ticker": "AMZN",
+        "question": "What was Amazon's effective income tax rate in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Amazon's effective income tax rate in fiscal year 2025 was 19.61%.",
+        "value": 0.1961,
+        "unit": "%",
+        "answer_concept": "effective_tax_rate.ratio",
+        "gold": 0.19614432081751285,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "est_cost_usd": 0.0,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 3 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 19.61%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.0,
+        "tokens": 0,
+        "checks": [
+          {
+            "label": "Income tax expense",
+            "concept": "income_tax.total",
+            "stated": 19087000000.0,
+            "truth": 19087000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Pretax income",
+            "concept": "pretax_income.total",
+            "stated": 97311000000.0,
+            "truth": 97311000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Income tax expense (FY 2025): $19,087,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Pretax income (FY 2025): $97,311,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Effective tax rate = Income tax expense \u00f7 Pretax income = $19,087,000,000 \u00f7 $97,311,000,000 = 0.1961"
+          }
+        ],
+        "tool_calls": 3,
+        "error": ""
+      }
+    },
+    "KHC": {
+      "net_income": {
+        "ticker": "KHC",
+        "question": "What was Kraft Heinz's net income attributable to the company in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Kraft Heinz had a net loss attributable to the parent company of $5.846 billion in fiscal year 2025.",
+        "value": -5846000000.0,
+        "unit": "USD",
+        "answer_concept": "net_income.parent",
+        "gold": -5846000000.0,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "absolute_figure",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "est_cost_usd": 0.0,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "single-figure question \u2192 retrieve the reported value (no decomposition needed)",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "absolute_figure \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 1 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OK (vs XBRL -5,846,000,000) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.0,
+        "tokens": 0,
+        "checks": [
+          {
+            "label": "Net income attributable to parent",
+            "concept": "net_income.parent",
+            "stated": -5846000000.0,
+            "truth": -5846000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved net income attributable to parent (net_income.parent) for fiscal year 2025 from official filing"
+          }
+        ],
+        "tool_calls": 1,
+        "error": ""
+      },
+      "assets": {
+        "ticker": "KHC",
+        "question": "What were Kraft Heinz's total assets at the end of fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Kraft Heinz's total assets at the end of fiscal year 2025 were $81,786 million (or $81.786 billion).",
+        "value": 81786000000.0,
+        "unit": "USD",
+        "answer_concept": "assets.total",
+        "gold": 81786000000.0,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "absolute_figure",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 3053,
+            "output_tokens": 296,
+            "est_cost_usd": 0.004533,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "single-figure question \u2192 retrieve the reported value (no decomposition needed)",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "absolute_figure \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 1 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OK (vs XBRL 81,786,000,000) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.004533,
+        "tokens": 3349,
+        "checks": [
+          {
+            "label": "Total assets",
+            "concept": "assets.total",
+            "stated": 81786000000.0,
+            "truth": 81786000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved total assets from Kraft Heinz's fiscal year 2025 filing"
+          }
+        ],
+        "tool_calls": 1,
+        "error": ""
+      },
+      "gross_margin": {
+        "ticker": "KHC",
+        "question": "What was Kraft Heinz's gross margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Kraft Heinz's gross margin in fiscal year 2025 was 33.30%.",
+        "value": 0.333,
+        "unit": "%",
+        "answer_concept": "gross_margin.ratio",
+        "gold": 0.33313286959356947,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "est_cost_usd": 0.0,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 4 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL 33.31%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.0,
+        "tokens": 0,
+        "checks": [
+          {
+            "label": "Gross profit",
+            "concept": "gross_profit.total",
+            "stated": 8309000000.0,
+            "truth": 8309000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Cost of goods sold",
+            "concept": "cogs.total",
+            "stated": 16633000000.0,
+            "truth": 16633000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved gross profit: $8,309,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved cost of goods sold: $16,633,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Calculated total revenue = gross profit + COGS = $8,309M + $16,633M = $24,942,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Calculated gross margin = gross profit / revenue = $8,309M / $24,942M = 0.3330 (33.30%)"
+          }
+        ],
+        "tool_calls": 4,
+        "error": ""
+      },
+      "operating_margin": {
+        "ticker": "KHC",
+        "question": "What was Kraft Heinz's operating margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Kraft Heinz's operating margin in fiscal year 2025 was approximately -18.72%, calculated as operating income of -$4,669M divided by total revenue of $24,942M (derived as gross profit of $8,309M + COGS of $16,633M).",
+        "value": -0.18722,
+        "unit": "ratio",
+        "answer_concept": "operating_margin.ratio",
+        "gold": -0.18719429185918096,
+        "tie_out": "ok",
+        "confidence": 0.92,
+        "final_tier": "claude-sonnet-4-6",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 9194,
+            "output_tokens": 758,
+            "est_cost_usd": 0.012984,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "not_derivable",
+            "tie_out": "off",
+            "violations": [],
+            "note": ""
+          },
+          {
+            "tier": "claude-sonnet-4-6",
+            "model_label": "Sonnet 4.6",
+            "cache_hit": false,
+            "input_tokens": 5196,
+            "output_tokens": 908,
+            "est_cost_usd": 0.029208,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 6 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency not_derivable; tie-out OFF (vs XBRL -18.72%) \u2192 REJECT",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "no figure produced, but ground truth exists \u2192 escalate to Sonnet 4.6",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "generate",
+            "detail": "Sonnet 4.6 filled the cell \u2014 4 grounded retrieval(s)",
+            "tier": "claude-sonnet-4-6"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL -18.72%) \u2192 PASS",
+            "tier": "claude-sonnet-4-6"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Sonnet 4.6",
+            "tier": "claude-sonnet-4-6"
+          }
+        ],
+        "cost_usd": 0.042192,
+        "tokens": 16056,
+        "checks": [
+          {
+            "label": "Operating Income",
+            "concept": "operating_income.total",
+            "stated": -4669000000.0,
+            "truth": -4669000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Gross Profit",
+            "concept": "gross_profit.total",
+            "stated": 8309000000.0,
+            "truth": 8309000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "COGS",
+            "concept": "cogs.total",
+            "stated": 16633000000.0,
+            "truth": 16633000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Operating income retrieved: -$4,669,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Revenue.total not reported; gross profit retrieved: $8,309,000,000 and COGS retrieved: $16,633,000,000"
+          },
+          {
+            "type": "definition",
+            "text": "Total Revenue = Gross Profit + COGS = $8,309M + $16,633M = $24,942M"
+          },
+          {
+            "type": "calculation",
+            "text": "Operating Margin = Operating Income / Revenue = -4,669,000,000 / 24,942,000,000 = -0.18722"
+          }
+        ],
+        "tool_calls": 4,
+        "error": ""
+      },
+      "net_margin": {
+        "ticker": "KHC",
+        "question": "What was Kraft Heinz's net profit margin in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Kraft Heinz's net profit margin in fiscal year 2025 was -23.43%, calculated from net income attributable to parent of -$5,846 million divided by total revenue of $24,942 million (derived from gross profit of $8,309 million plus cost of goods sold of $16,633 million).",
+        "value": -0.2343,
+        "unit": "%",
+        "answer_concept": "net_margin.ratio",
+        "gold": -0.23438377152769066,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": true,
+            "input_tokens": 7451,
+            "output_tokens": 1192,
+            "est_cost_usd": 0.013411,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell (cache hit) \u2014 6 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL -23.44%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.013411,
+        "tokens": 8643,
+        "checks": [
+          {
+            "label": "Net income attributable to parent",
+            "concept": "net_income.parent",
+            "stated": -5846000000.0,
+            "truth": -5846000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Gross profit",
+            "concept": "gross_profit.total",
+            "stated": 8309000000.0,
+            "truth": 8309000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Cost of goods sold",
+            "concept": "cogs.total",
+            "stated": 16633000000.0,
+            "truth": 16633000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Total revenue (calculated)",
+            "concept": null,
+            "stated": 24942000000.0,
+            "truth": null,
+            "ok": null,
+            "note": "no source concept cited"
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Retrieved net income attributable to parent: -$5,846 million"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved gross profit: $8,309 million"
+          },
+          {
+            "type": "retrieval",
+            "text": "Retrieved cost of goods sold: $16,633 million"
+          },
+          {
+            "type": "calculation",
+            "text": "Calculated total revenue = Gross Profit + COGS = $8,309 + $16,633 = $24,942 million"
+          },
+          {
+            "type": "calculation",
+            "text": "Calculated net profit margin = Net Income / Revenue = -$5,846 / $24,942 = -0.2343 or -23.43%"
+          }
+        ],
+        "tool_calls": 6,
+        "error": ""
+      },
+      "effective_tax_rate": {
+        "ticker": "KHC",
+        "question": "What was Kraft Heinz's effective income tax rate in fiscal year 2025?",
+        "fiscal_year": 2025,
+        "status": "verified",
+        "answer": "Kraft Heinz's effective income tax rate in fiscal year 2025 was -7.40% (calculated as $403 million in tax expense divided by -$5,445 million pretax income).",
+        "value": -0.074,
+        "unit": "%",
+        "answer_concept": "effective_tax_rate.ratio",
+        "gold": -0.07401286488739861,
+        "tie_out": "ok",
+        "confidence": 0.98,
+        "final_tier": "claude-haiku-4-5",
+        "route": "ratio",
+        "attempts": [
+          {
+            "tier": "claude-haiku-4-5",
+            "model_label": "Haiku 4.5",
+            "cache_hit": false,
+            "input_tokens": 4913,
+            "output_tokens": 771,
+            "est_cost_usd": 0.008768,
+            "trusted": true,
+            "retrieval_ok": true,
+            "calc_status": "corroborated",
+            "tie_out": "ok",
+            "violations": [],
+            "note": ""
+          }
+        ],
+        "trace": [
+          {
+            "step": "plan",
+            "detail": "ratio question \u2192 decompose: retrieve the operands, compute the ratio, verify it derives from them",
+            "tier": null
+          },
+          {
+            "step": "route",
+            "detail": "ratio \u2192 grounded XBRL structured retrieval; XBRL ground truth available for tie-out",
+            "tier": null
+          },
+          {
+            "step": "generate",
+            "detail": "Haiku 4.5 filled the cell \u2014 3 grounded retrieval(s)",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "verify",
+            "detail": "verify_cell \u2192 retrieval ok; self-consistency corroborated; tie-out OK (vs XBRL -7.40%) \u2192 PASS",
+            "tier": "claude-haiku-4-5"
+          },
+          {
+            "step": "gate",
+            "detail": "ties out to XBRL and is self-consistent \u2192 accept on Haiku 4.5",
+            "tier": "claude-haiku-4-5"
+          }
+        ],
+        "cost_usd": 0.008768,
+        "tokens": 5684,
+        "checks": [
+          {
+            "label": "Income tax expense",
+            "concept": "income_tax.total",
+            "stated": 403000000.0,
+            "truth": 403000000.0,
+            "ok": true,
+            "note": ""
+          },
+          {
+            "label": "Pretax income",
+            "concept": "pretax_income.total",
+            "stated": -5445000000.0,
+            "truth": -5445000000.0,
+            "ok": true,
+            "note": ""
+          }
+        ],
+        "identities": [],
+        "derivation": [
+          {
+            "type": "retrieval",
+            "text": "Income tax expense: $403,000,000"
+          },
+          {
+            "type": "retrieval",
+            "text": "Pretax income: -$5,445,000,000"
+          },
+          {
+            "type": "calculation",
+            "text": "Effective tax rate = Income tax expense / Pretax income = $403,000,000 / -$5,445,000,000 = -0.0740"
+          }
+        ],
+        "tool_calls": 3,
+        "error": ""
+      }
+    }
+  },
+  "metrics": {
+    "total_cells": 18,
+    "answerable": 18,
+    "unanswerable": 0,
+    "tie_out_accuracy": 1.0,
+    "tie_out_correct": 18,
+    "wrong_figures": 0,
+    "under_abstentions": 0,
+    "hallucination_rate": 0.0,
+    "hallucinations": 0,
+    "abstention_recall": null,
+    "false_answer_rate": null,
+    "correct_abstentions": 0,
+    "grounding_rate": 1.0,
+    "grounded_ok": 32,
+    "grounded_checkable": 32,
+    "gate": {
+      "by_status": {
+        "verified": 18
+      },
+      "escalated": 1,
+      "verified_first_tier": 17,
+      "escalation_rate": 0.0556
+    },
+    "cost_usd": 0.125096
+  },
+  "gold": {
+    "COST": {
+      "net_income.parent": 8099000000.0,
+      "assets.total": 77099000000.0,
+      "gross_margin.ratio": 0.1284320671496477,
+      "operating_margin.ratio": 0.037724126658828204,
+      "net_margin.ratio": 0.02942576344191343,
+      "effective_tax_rate.ratio": 0.2513403613346289
+    },
+    "AMZN": {
+      "net_income.parent": 77670000000.0,
+      "assets.total": 818042000000.0,
+      "gross_margin.ratio": 0.502856648683644,
+      "operating_margin.ratio": 0.11155296795809265,
+      "net_margin.ratio": 0.1083378433423717,
+      "effective_tax_rate.ratio": 0.19614432081751285
+    },
+    "KHC": {
+      "net_income.parent": -5846000000.0,
+      "assets.total": 81786000000.0,
+      "gross_margin.ratio": 0.33313286959356947,
+      "operating_margin.ratio": -0.18719429185918096,
+      "net_margin.ratio": -0.23438377152769066,
+      "effective_tax_rate.ratio": -0.07401286488739861
+    }
+  },
+  "total_cost_usd": 0.125096,
+  "concurrency": 6
+}

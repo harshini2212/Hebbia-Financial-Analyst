@@ -408,3 +408,28 @@ it belongs as a flagged extension, not the core.
   evaluation; the precise claim is that a **deterministic cross-figure accounting-identity check
   at answer-construction time** is a gap their published approach doesn't cover.
 - Not touching the deterministic engine's logic — only *consuming* it from the agent layer.
+
+---
+
+## Update — v2: the eval-first platform
+
+The v1 build (verified cell + hybrid eval) landed; v2 then promoted the eval engine from a
+side tab to the **spine**, building the part that was scoped as a stretch — verification
+*in the loop*:
+
+- **Eval as a gate** (`agent/orchestrator.py`): every cell is gated on (1) tie-out to XBRL
+  ground truth and (2) `verify_cell` reconciliation; failures **re-run on a stronger model
+  tier** (Haiku→Sonnet→Opus), and a cell that never passes is held back as low-confidence —
+  never shipped as a confident wrong answer. This is the self-correcting loop, with the
+  deterministic verifier as the control signal.
+- **The Query Grid** (`evals/grid.py`): documents × questions, bounded in-process fan-out
+  (the honest stand-in for Celery), each cell gated.
+- **XBRL-grounded metrics** (`evals/metrics.py`): tie-out accuracy, hallucination rate,
+  grounding rate, abstention calibration — real, machine-checked numbers, because XBRL is
+  the answer key (bet #2).
+- **An audit-console UI** — deliberately *not* a Matrix clone: data-dense, source-linked,
+  built so the eval/grounding is the star and the grid is the frame.
+
+Roadmap (labeled, not stubbed): distributed fan-out (Celery/Redis), hybrid prose retrieval
+(BM25 + embeddings + reranker) with span-level prose citations, a Neo4j graph for multi-hop
+questions, and multimodal table/chart extraction.

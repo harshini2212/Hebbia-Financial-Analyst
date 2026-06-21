@@ -45,6 +45,8 @@ class Cell:
     tool_calls: list = field(default_factory=list)    # [{concept, fiscal_year, result}]
     model_id: str = ""
     cache_hit: bool = False
+    input_tokens: int = 0    # live-call usage (0 on a cache hit)
+    output_tokens: int = 0
     error: str = ""
 
 
@@ -157,6 +159,10 @@ class ColumnAgent:
             msg = client.messages.create(
                 model=self.model_id, max_tokens=self.params.max_tokens,
                 system=system, tools=_TOOLS, messages=messages)
+            usage = getattr(msg, "usage", None)
+            if usage is not None:
+                out.input_tokens += getattr(usage, "input_tokens", 0) or 0
+                out.output_tokens += getattr(usage, "output_tokens", 0) or 0
             messages.append({"role": "assistant", "content": msg.content})
 
             tool_uses = [b for b in msg.content if getattr(b, "type", "") == "tool_use"]

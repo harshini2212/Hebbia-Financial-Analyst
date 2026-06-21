@@ -45,6 +45,11 @@ def main() -> None:
     if bench.exists():
         shutil.copy(bench, OUT / "api" / "benchmark.json")
 
+    # the gated Query Grid (the spine of the eval-first UI)
+    grid = DATA / "grid.json"
+    if grid.exists():
+        shutil.copy(grid, OUT / "api" / "grid.json")
+
     for f in filings:
         shutil.copy(DATA / f"{f['ticker']}.json",
                     OUT / "api" / "analysis" / f"{f['ticker']}.json")

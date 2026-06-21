@@ -6,6 +6,7 @@
     {"source": "/api/registry", "destination": "/api/registry.json"},
     {"source": "/api/health", "destination": "/api/health.json"},
     {"source": "/api/benchmark", "destination": "/api/benchmark.json"},
+    {"source": "/api/grid", "destination": "/api/grid.json"},
     {"source": "/api/analysis/:ticker", "destination": "/api/analysis/:ticker.json"}
   ]
 }

@@ -14,7 +14,7 @@ DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         p = self.path.split("?")[0]
-        if p in ("/api/filings", "/api/registry", "/api/health", "/api/benchmark"):
+        if p in ("/api/filings", "/api/registry", "/api/health", "/api/benchmark", "/api/grid"):
             self.path = p + ".json"
         elif p.startswith("/api/analysis/") and not p.endswith(".json"):
             self.path = p + ".json"

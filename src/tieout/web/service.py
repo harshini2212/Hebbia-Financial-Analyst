@@ -415,6 +415,27 @@ def benchmark() -> dict:
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {"results": {}}
 
 
+def grid() -> dict:
+    """The gated Query Grid (documents x questions), precomputed to data/web/grid.json."""
+    p = _CACHE_DIR / "grid.json"
+    if p.exists():
+        return json.loads(p.read_text(encoding="utf-8"))
+    return {"rows": [], "columns": [], "cells": {}, "metrics": {}, "gold": {}}
+
+
+def grid_run() -> dict:
+    """Recompute the grid live (needs an API key) and cache it."""
+    from ..evals import run_grid
+    res = run_grid()
+    _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    (_CACHE_DIR / "grid.json").write_text(json.dumps(res, indent=2), encoding="utf-8")
+    return res
+
+
+def eval_metrics() -> dict:
+    return grid().get("metrics", {})
+
+
 _search_client: EdgarClient | None = None
 
 

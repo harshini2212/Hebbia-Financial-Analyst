@@ -91,6 +91,25 @@ def benchmark():
     return service.benchmark()
 
 
+@app.get("/api/grid")
+def grid():
+    return service.grid()
+
+
+@app.post("/api/grid/run")
+def grid_run():
+    _ratelimit()
+    try:
+        return service.grid_run()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/eval/metrics")
+def eval_metrics():
+    return service.eval_metrics()
+
+
 @app.get("/")
 def index():
     return FileResponse(_STATIC / "index.html")

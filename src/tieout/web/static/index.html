@@ -3,723 +3,407 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>tieout — verify what AI extracts from filings</title>
+<title>tieout — eval-first document intelligence over SEC filings</title>
 <style>
   :root{
-    --bg:#f6f7f9; --surface:#ffffff; --surface2:#fbfcfd;
-    --line:#e6e8eb; --line2:#eef0f2;
-    --text:#0d1117; --muted:#646b76; --faint:#8b929c;
-    --accent:#2f6bff; --accent-soft:#eaf0ff;
-    --ok:#16a34a; --ok-soft:#e7f6ec; --bad:#dc2626; --bad-soft:#fdecec;
-    --warn:#b45309; --warn-soft:#fbf1e3; --gray:#6b7280; --gray-soft:#eef0f2;
-    --mono:'SFMono-Regular',ui-monospace,Consolas,Menlo,monospace;
+    --bg:#f5f6f8; --panel:#ffffff; --panel2:#fbfcfd;
+    --line:#e3e6eb; --line2:#eef1f4;
+    --ink:#0f172a; --ink2:#334155; --muted:#64748b; --faint:#94a3b8;
+    --accent:#2348b8; --accent-soft:#eaf0ff;
+    --ok:#15803d; --ok-soft:#e7f4ec; --warn:#b45309; --warn-soft:#fbf0e2;
+    --bad:#b91c1c; --bad-soft:#fbeaea; --slate:#475569; --slate-soft:#eef2f6;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Consolas,Menlo,monospace;
     --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.06);
-    --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+    --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.06);
+    --shadow-sm:0 1px 2px rgba(15,23,42,.05);
   }
   *{box-sizing:border-box}
   html,body{margin:0}
-  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
-  .wrap{max-width:1140px;margin:0 auto;padding:0 28px}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 26px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted)} .faint{color:var(--faint)}
+  .ulabel{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--faint);font-weight:600}
 
   /* top bar */
-  .topbar{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-  .nav{display:flex;align-items:center;gap:16px;height:72px}
-  .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:21px;letter-spacing:-.3px}
-  .logo{display:grid;grid-template-columns:repeat(2,10px);grid-auto-rows:10px;gap:3px}
-  .logo i{border-radius:50%;background:var(--text)} .logo i.a{background:var(--accent)}
+  .topbar{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+  .nav{display:flex;align-items:center;gap:18px;height:58px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.3px;flex-shrink:0}
+  .logo{display:grid;grid-template-columns:repeat(2,8px);grid-auto-rows:8px;gap:2px}
+  .logo i{border-radius:2px;background:var(--ink)} .logo i.a{background:var(--accent)}
+  .brand .tag{font-weight:400;font-size:12px;color:var(--faint);border-left:1px solid var(--line);padding-left:10px;margin-left:1px}
   .navlinks{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto}
   .navlinks::-webkit-scrollbar{height:0}
-  .nl{padding:8px 11px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:14px;font-weight:500}
-  .brand,.ghbtn{flex-shrink:0}
-  .nl:hover{background:var(--gray-soft);color:var(--text)}
+  .nl{padding:7px 12px;border-radius:7px;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:13px;font-weight:500}
+  .nl:hover{background:var(--slate-soft);color:var(--ink)}
   .nl.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
-  .ghbtn{border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 15px;border-radius:9px;font-size:14px;font-weight:600;white-space:nowrap}
+  .ghbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 13px;border-radius:8px;font-size:12.5px;font-weight:600;white-space:nowrap;flex-shrink:0}
   .ghbtn:hover{border-color:var(--accent);text-decoration:none}
 
-  /* context bar (filing selector) */
-  .ctx{background:var(--surface);border-bottom:1px solid var(--line)}
-  .ctxrow{display:flex;align-items:center;gap:8px;padding:15px 0;flex-wrap:wrap}
-  .ctx .lbl{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-right:6px;font-weight:600}
-  .pill{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 16px;cursor:pointer;transition:.14s;min-width:100px}
-  .pill:hover{border-color:var(--accent)}
-  .pill.active{border-color:var(--accent);background:var(--accent-soft)}
-  .pill .t{font-weight:700;font-size:14px} .pill .n{color:var(--muted);font-size:11.5px}
-  .pill.active .t{color:var(--accent)}
-  .runbtn{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600}
-  .runbtn:hover{border-color:var(--accent)}
+  /* status ribbon */
+  .ribbon{background:var(--panel);border-bottom:1px solid var(--line)}
+  .ribrow{display:flex;align-items:stretch;gap:0;height:46px;overflow-x:auto}
+  .ribrow::-webkit-scrollbar{height:0}
+  .kpi{display:flex;flex-direction:column;justify-content:center;padding:0 18px 0 0;margin-right:18px;border-right:1px solid var(--line2);white-space:nowrap}
+  .kpi:last-child{border-right:none}
+  .kpi .k{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:600}
+  .kpi .v{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+  .kpi .v.ok{color:var(--ok)} .kpi .v.warn{color:var(--warn)}
 
-  main{padding:30px 0 90px}
-  /* headings */
-  .phead{margin-bottom:20px}
-  .phead h2{margin:0 0 6px;font-size:24px;letter-spacing:-.5px}
-  .lead{margin:0;color:var(--muted);font-size:15px;max-width:760px}
-  .eyebrow{color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+  main{padding:24px 0 90px}
+  .phead{margin-bottom:18px}
+  .phead h1{margin:0 0 4px;font-size:20px;letter-spacing:-.3px;font-weight:700}
+  .phead p{margin:0;color:var(--muted);font-size:13px;max-width:820px}
 
-  /* cards */
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow-sm);overflow-x:auto}
-  .card h3{margin:0 0 3px;font-size:16px;letter-spacing:-.2px}
-  .card .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
-  .note{background:var(--surface2);border:1px solid var(--line2);border-radius:10px;padding:12px 15px;color:var(--muted);font-size:13px;margin-bottom:16px}
-  .note b{color:var(--text)}
-
-  /* metric rail (ChartMogul style) */
-  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
-  @media(max-width:820px){.metrics{grid-template-columns:repeat(2,1fr)}}
-  .metric{background:var(--surface);padding:16px 18px}
-  .metric .l{color:var(--muted);font-size:12px;margin-bottom:6px}
-  .metric .v{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
-  .metric .d{font-size:12px;font-weight:600;margin-top:3px}
-  .d.up{color:var(--ok)} .d.down{color:var(--bad)} .d.flat{color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-sm);margin-bottom:16px}
+  .panel .ph{padding:13px 16px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px}
+  .panel .ph h3{margin:0;font-size:13.5px;font-weight:650}
+  .panel .ph .sub{color:var(--faint);font-size:12px;margin-left:auto;font-weight:400}
+  .panel .pb{padding:16px}
+  .panel.flush .pb{padding:0}
 
   /* tables */
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line2)}
-  th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-  td.num,th.num{text-align:right;font-family:var(--mono)}
-  tbody tr:hover{background:var(--surface2)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line2)}
+  th{color:var(--faint);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
   tbody tr:last-child td{border-bottom:none}
-  .mono{font-family:var(--mono)} .muted{color:var(--muted)}
+  tbody tr.hover:hover{background:var(--panel2)}
 
-  .chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;font-family:var(--sans)}
   .chip.ok{background:var(--ok-soft);color:var(--ok)}
-  .chip.bad{background:var(--bad-soft);color:var(--bad)}
   .chip.warn{background:var(--warn-soft);color:var(--warn)}
-  .chip.gray{background:var(--gray-soft);color:var(--gray)}
+  .chip.bad{background:var(--bad-soft);color:var(--bad)}
+  .chip.slate{background:var(--slate-soft);color:var(--slate)}
   .chip.acc{background:var(--accent-soft);color:var(--accent)}
-  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:1px}
+  .chip.ghost{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.slate{background:var(--slate)}
 
-  /* hero (ChronoTask style) */
-  .hero{position:relative;text-align:center;padding:50px 0 30px}
-  .hero h1{font-size:54px;line-height:1.05;letter-spacing:-2px;margin:0 0 6px;font-weight:800}
-  .hero h1 .g{color:var(--faint)}
-  .hero p.tag{font-size:17px;color:var(--muted);max-width:620px;margin:14px auto 0}
-  .hero .cta{display:inline-flex;gap:10px;margin-top:24px}
-  .btn{background:var(--accent);color:#fff;border:none;padding:12px 22px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer}
-  .btn:hover{filter:brightness(1.05);text-decoration:none}
-  .btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--line)}
-  .floats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
-  .fcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;text-align:left;min-width:215px}
-  .fcard .h{font-size:12px;color:var(--muted);margin-bottom:6px}
-  .fcard .m{font-family:var(--mono);font-size:13px}
+  /* KPI cards */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  @media(max-width:880px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 16px;box-shadow:var(--shadow-sm)}
+  .kc .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:600;margin-bottom:9px}
+  .kc .v{font-family:var(--mono);font-size:27px;font-weight:650;letter-spacing:-1px;line-height:1;font-variant-numeric:tabular-nums}
+  .kc .d{font-size:11.5px;color:var(--muted);margin-top:7px}
+  .kc.good .v{color:var(--ok)} .kc.flag .v{color:var(--warn)}
 
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  @media(max-width:820px){.two,.three{grid-template-columns:1fr}.hero h1{font-size:38px;letter-spacing:-1px}}
-  .chain{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:10px 13px;margin:7px 0}
-  .chain .res{color:var(--accent);font-weight:600} .arrow{color:var(--faint)}
-  .barrow{display:flex;align-items:center;gap:12px;margin:9px 0}
-  .barrow .lab{width:230px;font-size:13px}
-  .bar{flex:1;height:20px;background:var(--gray-soft);border-radius:6px;overflow:hidden}
-  .bar>div{height:100%;background:linear-gradient(90deg,#f87171,#dc2626);border-radius:6px}
-  .barrow .sc{width:42px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
-  .err{background:var(--bad-soft);border:1px solid #f3c0c0;color:var(--bad);padding:11px 15px;border-radius:10px}
-  .loading{color:var(--muted);padding:60px;text-align:center}
-  .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-3px;margin-right:8px}
+  /* query grid */
+  .gridscroll{overflow-x:auto}
+  table.grid{font-size:12.5px}
+  table.grid th{position:sticky;top:0;background:var(--panel);z-index:1}
+  table.grid td,table.grid th{border-right:1px solid var(--line2);padding:0}
+  table.grid td:last-child,table.grid th:last-child{border-right:none}
+  table.grid th.rowh,table.grid td.rowh{text-align:left;padding:10px 14px;min-width:188px;position:sticky;left:0;background:var(--panel);z-index:2;border-right:1px solid var(--line)}
+  table.grid th.colh{padding:9px 12px;text-align:left;min-width:118px;vertical-align:bottom}
+  table.grid th.colh .cc{font-family:var(--mono);font-size:10px;color:var(--faint);text-transform:none;letter-spacing:0;font-weight:400}
+  .gcell{padding:10px 12px;cursor:pointer;display:block;min-height:54px}
+  .gcell:hover{background:var(--panel2)}
+  .gcell .val{font-family:var(--mono);font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+  .gcell .meta{display:flex;align-items:center;gap:6px;margin-top:5px}
+  .gcell.s-verified{box-shadow:inset 3px 0 0 var(--ok)}
+  .gcell.s-low_confidence{box-shadow:inset 3px 0 0 var(--warn);background:var(--warn-soft)}
+  .gcell.s-abstained{box-shadow:inset 3px 0 0 var(--slate);background:var(--slate-soft)}
+  .gcell.s-error{box-shadow:inset 3px 0 0 var(--bad);background:var(--bad-soft)}
+  .gcell .tier{font-size:10px;color:var(--faint);font-family:var(--mono)}
+  .rowh .tk{font-weight:700;font-family:var(--mono)} .rowh .nm{color:var(--muted);font-size:11.5px}
+  .esc{font-size:10px;color:var(--warn);font-weight:700;font-family:var(--mono)}
+
+  /* inspector drawer */
+  .scrim{position:fixed;inset:0;background:rgba(15,23,42,.28);z-index:40;opacity:0;pointer-events:none;transition:opacity .15s}
+  .scrim.show{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:540px;max-width:94vw;background:var(--panel);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(15,23,42,.12);z-index:50;transform:translateX(100%);transition:transform .18s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+  .drawer.show{transform:translateX(0)}
+  .drawer .dh{padding:16px 20px;border-bottom:1px solid var(--line)}
+  .drawer .db{padding:18px 20px;overflow-y:auto;flex:1}
+  .drawer .x{position:absolute;top:14px;right:18px;cursor:pointer;color:var(--faint);font-size:20px;line-height:1;border:none;background:none}
+  .drawer .x:hover{color:var(--ink)}
+  .sec{margin-bottom:22px}
+  .sec h4{margin:0 0 9px;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:700}
+  .kv{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .kv .item{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:7px 11px;min-width:84px}
+  .kv .item .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.4px}
+  .kv .item .v{font-family:var(--mono);font-size:13px;font-weight:600;margin-top:2px}
+
+  /* trace timeline */
+  .trace{position:relative;margin-left:6px;padding-left:18px;border-left:2px solid var(--line)}
+  .tev{position:relative;margin-bottom:11px}
+  .tev:before{content:'';position:absolute;left:-25px;top:3px;width:9px;height:9px;border-radius:50%;background:var(--panel);border:2px solid var(--faint)}
+  .tev.plan:before,.tev.route:before{border-color:var(--accent)}
+  .tev.verify:before{border-color:var(--slate)}
+  .tev.gate:before{border-color:var(--warn)}
+  .tev.gate.pass:before{border-color:var(--ok)}
+  .tev .st{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;color:var(--faint)}
+  .tev .dt{font-size:12.5px;color:var(--ink2);margin-top:1px}
+  .tev .dt .em{font-family:var(--mono);font-size:11.5px}
+
+  .attempt{display:flex;align-items:center;gap:10px;padding:8px 11px;border:1px solid var(--line2);border-radius:8px;margin-bottom:7px;font-size:12px}
+  .attempt .tier{font-family:var(--mono);font-weight:700;min-width:74px}
+  .attempt .grow{flex:1;color:var(--muted)}
+  .attempt.fail{background:var(--warn-soft);border-color:#f0dcbf}
+  .attempt.pass{background:var(--ok-soft);border-color:#bfe6cb}
+
+  .note{background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:11px 14px;color:var(--muted);font-size:12.5px;margin-bottom:14px}
+  .note b{color:var(--ink)}
+  .callout{background:var(--accent-soft);border:1px solid #cfdcff;border-radius:9px;padding:12px 15px;font-size:12.5px;color:#22356f}
+  .callout b{color:var(--accent)}
+  code{font-family:var(--mono);background:var(--slate-soft);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:11.5px;padding:11px 16px;border-top:1px solid var(--line2)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;vertical-align:-3px;margin-right:7px}
   @keyframes s{to{transform:rotate(360deg)}}
-  code{font-family:var(--mono);background:var(--gray-soft);padding:1px 6px;border-radius:5px;font-size:12px}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12.5px;margin-top:12px}
-  .feat{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow-sm)}
-  .feat h4{margin:0 0 6px;font-size:15px} .feat p{margin:0;color:var(--muted);font-size:13.5px}
-  .feat .ic{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:17px;margin-bottom:12px}
-  ul.clean{margin:6px 0 0;padding-left:18px;color:var(--muted)} ul.clean li{margin:7px 0}
-  ul.clean b{color:var(--text)}
-  /* badge */
-  .badge{font-size:11.5px;font-weight:700;letter-spacing:.3px;color:var(--accent);background:var(--accent-soft);padding:4px 9px;border-radius:20px;margin-left:8px;vertical-align:2px}
-  /* live search */
-  .search{display:flex;align-items:center;gap:6px;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
-  .acwrap{position:relative}
-  .search input{border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;width:300px;font-family:var(--sans);color:var(--text)}
-  .search input:focus{outline:none;border-color:var(--accent)}
-  .search .go{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer}
-  .ac{position:absolute;top:42px;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);z-index:60;max-height:340px;overflow:auto;display:none}
-  .ac.show{display:block}
-  .acitem{padding:9px 12px;cursor:pointer;display:flex;gap:10px;align-items:baseline;border-bottom:1px solid var(--line2)}
-  .acitem:last-child{border-bottom:none}
-  .acitem:hover,.acitem.sel{background:var(--accent-soft)}
-  .acitem .tk{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--accent);min-width:62px}
-  .acitem .nm{font-size:13px;color:var(--text)}
-  .achint{padding:8px 12px;color:var(--faint);font-size:11.5px;border-top:1px solid var(--line2)}
-  .runmsg{color:var(--accent);font-size:12.5px;font-weight:500;margin-left:auto;display:flex;align-items:center}
-  .keywarn{margin-left:auto;color:var(--warn);background:var(--warn-soft);border:1px solid #f0d9a8;border-radius:8px;padding:6px 10px;font-size:12px}
-  .keywarn code{background:rgba(0,0,0,.05)}
-  /* charts */
-  .chartgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
-  @media(max-width:820px){.chartgrid{grid-template-columns:1fr}}
-  .pbar{display:flex;height:26px;border-radius:7px;overflow:hidden;background:var(--gray-soft)}
-  .pbar>div{height:100%}
-  .obar{display:flex;align-items:center;gap:12px;margin:11px 0}
-  .obar .who{width:160px;font-size:13px} .obar .who b{font-weight:700}
-  .obar .pbar{flex:1;height:22px}
-  .donutwrap{display:flex;align-items:center;gap:20px}
-  .dlegend{font-size:13px} .dlegend div{margin:6px 0}
-  .wfall{margin:6px 0 2px}
-  .wbar{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--gray-soft);border:1px solid var(--line)}
-  .wbar>div{height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden}
-  .wbar .gap{background:repeating-linear-gradient(45deg,#fde2e2,#fde2e2 6px,#f9caca 6px,#f9caca 12px);color:var(--bad)}
-  .wflabels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
-  .aside{background:var(--accent-soft);border:1px solid #cfdcff;border-radius:12px;padding:14px 16px;font-size:13px;color:#274690}
-  .aside h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent)}
-  .vuln{background:var(--bad-soft);border:1px solid #f3c0c0;border-radius:12px;padding:14px 16px;margin-bottom:16px}
-  .vuln.clean{background:var(--ok-soft);border-color:#bfe6cb}
-  .vuln h4{margin:0 0 4px;font-size:14px}
-  .askinput{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;font-family:var(--sans);color:var(--text)}
-  .askinput:focus{outline:none;border-color:var(--accent)}
-  .exrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .ex{font-size:12.5px;color:var(--accent);background:var(--accent-soft);border:1px solid #cfdcff;border-radius:20px;padding:5px 12px;cursor:pointer}
-  .ex:hover{background:#dde7ff}
+  .loading{color:var(--muted);padding:50px;text-align:center}
+
+  /* architecture */
+  .arch{display:flex;flex-direction:column;gap:8px}
+  .layer{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:9px;padding:11px 15px;background:var(--panel2);position:relative}
+  .layer .lz{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:700;min-width:118px}
+  .layer .lt{font-size:13px;font-weight:600}
+  .layer .ld{color:var(--muted);font-size:12px;margin-left:auto;text-align:right;max-width:430px}
+  .layer.gate{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent-soft)}
+  .layer.gate .lt{color:var(--accent)}
+  .down{text-align:center;color:var(--faint);font-size:13px;line-height:.6}
+  .rm td .chip{margin-right:4px}
 </style>
 </head>
 <body>
 <div class="topbar"><div class="wrap nav">
-  <div class="brand"><span class="logo"><i class="a"></i><i></i><i></i><i></i></span> tieout <span class="badge">BUILT FOR HEBBIA</span></div>
+  <div class="brand"><span class="logo"><i class="a"></i><i></i><i></i><i></i></span> tieout
+    <span class="tag">eval-first document intelligence · SEC filings</span></div>
   <div class="navlinks" id="tabs"></div>
   <a class="ghbtn" href="https://github.com/harshini2212/Hebbia-Financial-Analyst" target="_blank">GitHub ↗</a>
 </div></div>
-<div class="ctx" id="ctxbar"><div class="wrap"><div class="ctxrow" id="filings"></div></div></div>
-<main><div class="wrap" id="view"><div class="loading"><span class="spin"></span>Loading…</div></div></main>
+<div class="ribbon"><div class="wrap"><div class="ribrow" id="ribbon"></div></div></div>
+<main><div class="wrap" id="view"></div></main>
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer"></div>
 
 <script>
-const S={filings:[],analyses:{},registry:[],ticker:null,tab:'overview',busy:false,acResults:[],hasKey:true,searchText:'',isStatic:false,
-  askQ:'',askResult:null,askBusy:false,askError:'',bench:null};
-let _acTimer;
-function doSearch(inp,box){
-  clearTimeout(_acTimer);
-  _acTimer=setTimeout(async()=>{
-    const q=inp.value.trim();
-    if(!q){S.acResults=[];box.classList.remove('show');return;}
-    try{S.acResults=await fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json());}
-    catch(e){S.acResults=[];}
-    if(!S.acResults.length){box.innerHTML='<div class="achint">No match on SEC EDGAR — try the company\'s legal name.</div>';box.classList.add('show');return;}
-    box.innerHTML=S.acResults.map(r=>`<div class="acitem" data-tk="${r.ticker}"><span class="tk">${r.ticker}</span><span class="nm">${r.name}</span></div>`).join('')
-      +'<div class="achint">Pick a company to pull its latest 10-K from SEC EDGAR and run it live (~30–60s).</div>';
-    box.querySelectorAll('.acitem').forEach(el=>el.onmousedown=(ev)=>{ev.preventDefault();box.classList.remove('show');S.searchText=el.getAttribute('data-tk')+' — '+el.querySelector('.nm').textContent;runTicker(el.getAttribute('data-tk'));});
-    box.classList.add('show');
-  },180);
-}
-const TABS=[['overview','Overview'],['snapshot','Snapshot'],['ask','Verified cell'],['benchmark','Hybrid eval'],['explorer','Filing explorer'],['propagation','Propagation'],
-  ['attribution','Attribution'],['localization','Localization'],['registry','Rulebook'],['approach','Approach']];
-const NO_CTX=new Set(['overview','approach','benchmark']);
-
+const S={tab:'grid',grid:null,bench:null,registry:[],hasKey:true,isStatic:false,inspect:null,busy:false};
 const $=(h)=>{const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;};
-function money(v,unit){
-  if(v===null||v===undefined) return '—';
-  if(unit==='ratio') return (v*100).toFixed(2)+'%';
-  const a=Math.abs(v),s=v<0?'−':'';
-  if(a>=1e9) return s+'$'+(a/1e9).toFixed(2)+'B';
-  if(a>=1e6) return s+'$'+(a/1e6).toFixed(2)+'M';
-  if(a>=1e3) return s+'$'+(a/1e3).toFixed(1)+'K';
-  return s+'$'+a.toFixed(0);
-}
-function statusChip(st){const m={satisfied:['ok','✓ ties out'],violated:['bad','✗ breaks'],
-  indeterminate:['gray','– n/a'],'n/a':['gray','—']};const[c,t]=m[st]||['gray',st];return `<span class="chip ${c}">${t}</span>`;}
-function labelChip(l){const m={extraction_error:'bad',filing_inconsistency:'warn',constraint_model_error:'warn',undetermined:'gray'};
-  return `<span class="chip ${m[l]||'gray'}">${l.replace(/_/g,' ')}</span>`;}
-function sevChip(s){return s==='soft'?'<span class="chip gray">soft</span>':'<span class="chip acc">hard</span>';}
-function pageHead(t,s){return `<div class="phead"><h2>${t}</h2><p class="lead">${s}</p></div>`;}
-function metric(l,v,d,tone){return `<div class="metric"><div class="l">${l}</div><div class="v">${v}</div>${d?`<div class="d ${tone||'flat'}">${d}</div>`:''}</div>`;}
-const CATCOLORS=['#2f6bff','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d'];
-function pbar(parts){const tot=parts.reduce((s,p)=>s+p.v,0)||1;
-  return `<div class="pbar">${parts.filter(p=>p.v>0).map(p=>`<div style="width:${p.v/tot*100}%;background:${p.c}" title="${p.t||''}"></div>`).join('')}</div>`;}
-function donut(parts){const tot=parts.reduce((s,p)=>s+p.v,0)||1;const R=54,C=2*Math.PI*R;let off=0,segs='';
-  parts.forEach(p=>{if(!p.v)return;const len=p.v/tot*C;
-    segs+=`<circle r="${R}" cx="70" cy="70" fill="none" stroke="${p.c}" stroke-width="16" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"/>`;off+=len;});
-  return `<svg width="140" height="140" viewBox="0 0 140 140">${segs}
-    <text x="70" y="66" text-anchor="middle" font-size="26" font-weight="700" fill="#0d1117">${tot}</text>
-    <text x="70" y="84" text-anchor="middle" font-size="11" fill="#646b76">checks</text></svg>`;}
-function legendRows(parts){return parts.map(p=>`<div><span class="dot" style="background:${p.c}"></span>${p.t} <b>${p.v}</b></div>`).join('');}
-function waterfall(seg){
-  const sum=seg.sum||1; let slices='';
-  seg.members.forEach((m,i)=>{const w=m.value/sum*100;
-    slices+=`<div style="width:${w}%;background:${CATCOLORS[i%CATCOLORS.length]}" title="${m.name}: ${money(m.value)}">${w>11?m.name.slice(0,12):''}</div>`;});
-  let verdict='';
-  if(seg.total!=null){const diff=seg.total-seg.sum;
-    verdict=seg.reconciles
-      ? `<span class="chip ok">✓ reconciles to total ${money(seg.total)}</span>`
-      : `<span class="chip warn">differs ${money(Math.abs(diff))} · corporate &amp; eliminations</span>`;}
-  return `<div class="wfall"><div class="wbar">${slices}</div>
-    <div class="wflabels"><span>Σ segments = <b>${money(sum)}</b></span><span>${verdict}</span></div></div>`;}
-function sparkBars(pts,color){
-  const max=Math.max(...pts.map(p=>p.value))||1, w=26, gap=12, h=44;
-  let s=''; pts.forEach((p,i)=>{const bh=Math.max(4,p.value/max*h);
-    s+=`<rect x="${i*(w+gap)}" y="${h-bh}" width="${w}" height="${bh}" rx="3" fill="${color}"/>`
-      +`<text x="${i*(w+gap)+w/2}" y="${h+13}" text-anchor="middle" font-size="9.5" fill="#8b929c">FY${String(p.year).slice(2)}</text>`;});
-  return `<svg width="${pts.length*(w+gap)}" height="${h+18}">${s}</svg>`;}
-// plain-English reasons a rule can't be checked on a given filing
-const NRREASON={
-  'bs.assets_split':'needs a current / non-current assets split this filing doesn\'t tag',
-  'bs.liabilities_split':'needs a current / non-current liabilities split this filing doesn\'t tag',
-  'bs.equity_attribution':'needs a noncontrolling-interest line not separately tagged',
-  'is.gross_profit':'this filing doesn\'t report a gross-profit line',
-  'is.operating_income':'depends on gross profit, which this filing doesn\'t report',
-  'is.net_income_attribution':'needs a noncontrolling-interest split not tagged here',
-  'rev.segments_sum':'segment revenue isn\'t tagged cleanly for this filer',
-  'opinc.segments_sum':'segment operating income isn\'t tagged cleanly for this filer',
-  'margin.gross':'a ratio the filing never states as data — computed on the Propagation tab',
-  'margin.operating':'a ratio the filing never states as data — computed on the Propagation tab',
-  'margin.net':'a ratio the filing never states as data — computed on the Propagation tab',
-  'tax.effective_rate':'a ratio the filing never states as data — computed on the Propagation tab',
-  'bs.balance':'a required balance-sheet line isn\'t tagged for this filing',
-  'bs.lse_decomp':'a required balance-sheet line isn\'t tagged for this filing',
-};
+const TABS=[['grid','Query Grid'],['eval','Eval'],['rulebook','Rulebook'],['arch','Architecture']];
+
+function pct(v){return v==null?'—':(v*100).toFixed(v*100>=10?1:2)+'%';}
+function money(v){if(v==null)return '—';const a=Math.abs(v),s=v<0?'−':'';
+  if(a>=1e9)return s+'$'+(a/1e9).toFixed(2)+'B';if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';
+  if(a>=1e3)return s+'$'+(a/1e3).toFixed(0)+'K';return s+'$'+a.toFixed(0);}
+function fmtVal(v,u){return v==null?'—':(u==='ratio'?pct(v):money(v));}
+function usd(v){return v==null?'—':(v===0?'$0':'$'+v.toFixed(v<0.01?4:3));}
+function tier(t){return (t||'').replace('claude-','').replace('-4-8',' 4.8').replace('-4-6',' 4.6').replace('-4-5',' 4.5').replace(/\b\w/g,c=>c.toUpperCase());}
+const STATUS={verified:['ok','verified'],low_confidence:['warn','low-confidence'],abstained:['slate','abstained'],error:['bad','error']};
+function statusChip(s){const[c,t]=STATUS[s]||['ghost',s];return `<span class="chip ${c}"><span class="dot ${c}"></span>${t}</span>`;}
+function labelChip(l){if(!l)return '';const m={extraction_error:'bad',filing_inconsistency:'warn',constraint_model_error:'warn',undetermined:'slate'};
+  return `<span class="chip ${m[l]||'ghost'}">${l.replace(/_/g,' ')}</span>`;}
 
 async function boot(){
-  S.filings=await(await fetch('/api/filings')).json();
-  S.ticker=S.filings[0].ticker;
-  S.registry=await(await fetch('/api/registry')).json();
-  try{const h=await(await fetch('/api/health')).json();S.hasKey=h.api_key;S.isStatic=!!h.static;}catch(e){S.hasKey=true;}
-  await Promise.all(S.filings.map(async f=>{
-    try{S.analyses[f.ticker]=await(await fetch('/api/analysis/'+f.ticker)).json();}
-    catch(e){S.analyses[f.ticker]={error:String(e)};}
-  }));
+  try{const h=await(await fetch('/api/health')).json();S.hasKey=h.api_key;S.isStatic=!!h.static;}catch(e){}
+  const j=async(u)=>{try{return await(await fetch(u)).json();}catch(e){return null;}};
+  [S.grid,S.bench,S.registry]=await Promise.all([j('/api/grid'),j('/api/benchmark'),j('/api/registry')]);
+  S.registry=S.registry||[];
   renderChrome();render();
 }
 function renderChrome(){
   const tb=document.getElementById('tabs');tb.innerHTML='';
   TABS.forEach(([id,label])=>{const t=$(`<div class="nl ${id===S.tab?'active':''}">${label}</div>`);
-    t.onclick=()=>{S.tab=id;renderChrome();render();window.scrollTo(0,0);};tb.appendChild(t);});
-  document.getElementById('ctxbar').style.display=NO_CTX.has(S.tab)?'none':'block';
-  const fb=document.getElementById('filings');fb.innerHTML='<span class="lbl">Filing</span>';
-  S.filings.forEach(f=>{const p=$(`<button class="pill ${f.ticker===S.ticker?'active':''}"><span class="t">${f.ticker}</span><span class="n">${f.note}</span></button>`);
-    p.onclick=()=>{S.ticker=f.ticker;if(NO_CTX.has(S.tab))S.tab='snapshot';renderChrome();render();};fb.appendChild(p);});
-  if(S.isStatic){
-    fb.appendChild($(`<div class="runmsg" style="color:var(--muted);font-weight:500">Hosted demo — 3 sample filings. <a href="https://github.com/harshini2212/Hebbia-Financial-Analyst" target="_blank">Clone the repo</a> to run any company live.</div>`));
-    return;
-  }
-  // live connector: type a company name, pick from EDGAR, run the eval live
-  const sg=$(`<div class="search"><div class="acwrap">
-    <input id="tsearch" autocomplete="off" spellcheck="false" value="${(S.searchText||'').replace(/"/g,'&quot;')}" placeholder="Search a company — Walmart, Nvidia, Coca-Cola…" ${S.busy?'disabled':''}/>
-    <div class="ac" id="acbox"></div></div>
-    <button class="go" id="tgo" ${S.busy?'disabled':''}>Run live</button></div>`);
-  fb.appendChild(sg);
-  const inp=sg.querySelector('#tsearch'), box=sg.querySelector('#acbox');
-  const go=()=>{ if(S.acResults&&S.acResults.length){S.searchText=S.acResults[0].ticker+' — '+S.acResults[0].name;runTicker(S.acResults[0].ticker);} else if(inp.value.trim()){S.searchText=inp.value.trim();runTicker(inp.value);} };
-  sg.querySelector('#tgo').onclick=go;
-  inp.oninput=()=>doSearch(inp,box);
-  inp.onkeydown=(e)=>{ if(e.key==='Enter'){box.classList.remove('show');go();} else if(e.key==='Escape'){box.classList.remove('show');} };
-  inp.onblur=()=>setTimeout(()=>box.classList.remove('show'),150);
-  inp.onfocus=()=>{ if(S.acResults&&S.acResults.length) box.classList.add('show'); };
-  if(!S.hasKey&&!S.busy) fb.appendChild($(`<div class="keywarn">⚠ No API key on server — live runs disabled (cached filings still work). Use <code>run.ps1</code> or a <code>.env</code>.</div>`));
-  if(S.busy) fb.appendChild($(`<div class="runmsg"><span class="spin"></span>${S.runmsg||'Running…'}</div>`));
+    t.onclick=()=>{S.tab=id;closeInspect();renderChrome();render();window.scrollTo(0,0);};tb.appendChild(t);});
+  renderRibbon();
 }
-const STAGES=['Resolving ticker on SEC EDGAR…','Downloading the 10-K + XBRL…','Parsing the financial statements…','Extracting figures with Claude…','Checking accounting identities…'];
-async function runTicker(t){
-  t=(t||'').trim().toUpperCase(); if(!t||S.busy) return;
-  S.busy=true; S.runmsg=STAGES[0]; renderChrome();
-  let i=0; const timer=setInterval(()=>{i=(i+1)%STAGES.length;S.runmsg=STAGES[i];const m=document.querySelector('.runmsg');if(m)m.innerHTML='<span class="spin"></span>'+S.runmsg;},2200);
-  try{
-    const r=await fetch('/api/analysis/'+encodeURIComponent(t)+'/run',{method:'POST'});
-    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
-    const data=await r.json(); S.analyses[t]=data;
-    if(!S.filings.find(f=>f.ticker===t)) S.filings.push({ticker:t,issuer:data.issuer,note:'live'});
-    S.ticker=t; S.tab='snapshot'; S.searchText='';
-  }catch(e){ alert('Could not run "'+t+'": '+e.message+'\n\nNeeds ANTHROPIC_API_KEY set on the server, and the ticker must file a 10-K on SEC EDGAR.'); }
-  clearInterval(timer); S.busy=false; renderChrome(); render();
-}
-async function runLive(){
-  if(S.busy)return;S.busy=true;renderChrome();
-  try{const r=await fetch('/api/analysis/'+S.ticker+'/run',{method:'POST'});
-    if(!r.ok)throw new Error((await r.json()).detail||r.statusText);
-    S.analyses[S.ticker]=await r.json();}
-  catch(e){alert('Live run failed: '+e.message+'\n(Needs ANTHROPIC_API_KEY for an uncached filing.)');}
-  S.busy=false;renderChrome();render();
+function renderRibbon(){
+  const r=document.getElementById('ribbon');const m=(S.grid||{}).metrics||{};
+  const cells=[
+    ['filings × questions',((S.grid||{}).rows||[]).length+' × '+((S.grid||{}).columns||[]).length,''],
+    ['tie-out vs XBRL',m.tie_out_accuracy==null?'—':pct(m.tie_out_accuracy),m.tie_out_accuracy>=1?'ok':''],
+    ['hallucination',m.hallucination_rate==null?'—':pct(m.hallucination_rate),m.hallucination_rate===0?'ok':'warn'],
+    ['grounding',m.grounding_rate==null?'—':pct(m.grounding_rate),m.grounding_rate>=1?'ok':''],
+    ['gate escalations',(m.gate?m.gate.escalated:0)+'',''],
+    ['grid cost',m.cost_usd==null?'—':usd(m.cost_usd),''],
+  ];
+  r.innerHTML=cells.map(([k,v,c])=>`<div class="kpi"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
 }
 function render(){const v=document.getElementById('view');
-  const fn={overview:vOverview,snapshot:vSnapshot,ask:vAsk,benchmark:vBench,explorer:vExplorer,propagation:vProp,attribution:vAttr,
-    localization:vLoc,registry:vRegistry,approach:vApproach}[S.tab];
-  v.innerHTML='';v.appendChild(fn());}
-function d(){return S.analyses[S.ticker];}
-function guard(){const a=d();if(a&&a.error)return $(`<div class="err">Failed to load ${S.ticker}: ${a.error}</div>`);return null;}
+  v.innerHTML='';v.appendChild(({grid:vGrid,eval:vEval,rulebook:vRulebook,arch:vArch}[S.tab]||vGrid)());}
 
-/* ---------- Overview (hero) ---------- */
-function vOverview(){
+/* ---------- Query Grid ---------- */
+function vGrid(){
   const el=$('<div></div>');
-  el.appendChild($(`<div class="hero">
-    <div class="eyebrow">AI extraction · verified</div>
-    <h1>Trust the numbers<br><span class="g">your AI pulls from filings.</span></h1>
-    <p class="tag">tieout checks LLM-extracted figures from SEC 10-Ks against the unbreakable rules of
-      accounting — catching the plausible-but-wrong numbers an AI-as-judge waves through.</p>
-    <div class="cta">
-      <button class="btn" id="goExpl">Explore a filing →</button>
-      <a class="btn ghost" href="https://github.com/harshini2212/Hebbia-Financial-Analyst" target="_blank">View code</a>
-    </div>
-    <div class="floats">
-      <div class="fcard"><div class="h">Balance sheet identity</div><div class="m"><span class="dot" style="background:var(--ok)"></span>assets = liabilities + equity <span class="chip ok" style="margin-left:6px">✓</span></div></div>
-      <div class="fcard"><div class="h">Costco segments (limited context)</div><div class="m"><span class="dot" style="background:var(--bad)"></span>parts ≠ total · off by $38.27B <span class="chip bad" style="margin-left:6px">✗</span></div></div>
-      <div class="fcard"><div class="h">Derived, never stated</div><div class="m"><span class="dot" style="background:var(--accent)"></span>gross margin = 12.84%</div></div>
-    </div></div>`));
-
-  let obars='';
-  S.filings.forEach(f=>{const a=S.analyses[f.ticker];if(!a||a.error)return;const s=a.scorecards[0];
-    obars+=`<div class="obar"><div class="who"><b>${f.ticker}</b> · Claude</div>
-      ${pbar([{v:s.agree,c:'#16a34a',t:'agree'},{v:s.disagree,c:'#dc2626',t:'disagree'}])}
-      <div class="muted mono" style="width:62px;text-align:right">${s.agree}/${s.agree+s.disagree}</div></div>`;});
-  el.appendChild($(`<div class="card"><h3>Extraction accuracy vs. official data</h3>
-    <div class="sub">Green = figures that match the SEC's structured data; red = mismatches. Claude clears all three filings.</div>${obars}</div>`));
-
-  const sc=$(`<div class="card"><h3>Cross-filing scoreboard</h3>
-    <div class="sub">Claude (reading the text) vs. a dumb regex baseline, both graded against the SEC's own structured data (XBRL).</div></div>`);
-  let agg={facts:0,agree:0}; let rows='';
-  S.filings.forEach(f=>{const a=S.analyses[f.ticker];if(!a||a.error)return;
-    a.scorecards.forEach((s,i)=>{ if(s.name.startsWith('Claude')){agg.facts+=s.facts;agg.agree+=s.agree;}
-      const attr=s.attributions.map(x=>labelChip(x.label)).join(' ')||'<span class="muted">none</span>';
-      rows+=`<tr><td>${i===0?'<b>'+f.ticker+'</b><div class="muted" style="font-size:11px">'+f.note+'</div>':''}</td>
-        <td>${s.name}</td><td class="num">${s.facts}</td><td class="num">${s.agree}</td>
-        <td class="num">${s.disagree}</td><td class="num">${s.violated}</td><td>${attr}</td></tr>`;});});
-  sc.appendChild($(`<table><thead><tr><th>Filing</th><th>Extractor</th><th class="num">Figures</th>
-    <th class="num">Agree</th><th class="num">Disagree</th><th class="num">Breaks</th><th>If broken, why</th>
-    </tr></thead><tbody>${rows}</tbody></table>`));
-  sc.appendChild($(`<div class="legend">
-    <span><span class="dot" style="background:var(--ok)"></span>Claude reconciles cleanly across complex real filings — zero false positives</span>
-    <span><span class="dot" style="background:var(--bad)"></span>the baseline's errors are caught &amp; labelled automatically</span></div>`));
-  el.appendChild(sc);
-  setTimeout(()=>{const b=document.getElementById('goExpl');if(b)b.onclick=()=>{S.tab='snapshot';renderChrome();render();window.scrollTo(0,0);};},0);
-  return el;
-}
-
-/* ---------- Verified cell (live column agent + engine verification) ---------- */
-function vAsk(){
-  const g=guard(); if(g) return g; const a=d(); const el=$('<div></div>');
-  el.appendChild($(pageHead(`Verified cell — ${a.issuer} FY${a.fiscal_year}`,
-    'A Matrix-style column agent answers a question over this filing, then the deterministic identity engine verifies the cell — every cited figure, the accounting identities they touch, and whether the answer actually follows from them. No LLM judge involved.')));
-  if(S.isStatic){
-    el.appendChild($('<div class="note">Filling a verified cell runs live on the server (the column agent calls Claude with tool use). Open the deployed app or run it locally to try it.</div>'));
+  el.appendChild($(`<div class="phead"><h1>Query Grid</h1>
+    <p>Documents (rows) × questions (columns). Every cell is run through the <b>eval gate</b> — generated by a tiered agent, then accepted only if it ties out to the filing's own XBRL ground truth and the cited figures reconcile. Cells that fail are re-run on a stronger model; cells that never pass are surfaced as low-confidence, never as a confident wrong answer. Click any cell to inspect the trace, grounding, and gate decisions.</p></div>`));
+  const g=S.grid;
+  if(!g||!g.rows||!g.rows.length){
+    el.appendChild($(`<div class="note">No grid computed yet. Run <code>python scripts/run_grid.py</code> (needs an API key) to populate <code>data/web/grid.json</code>.</div>`));
     return el;
   }
-  const examples=["What was the gross margin?","What was net income?","What was the operating margin?","How did revenue grow year over year?"];
-  const bar=$(`<div class="card"><div style="display:flex;gap:8px">
-    <input id="askq" class="askinput" placeholder="Ask about ${a.issuer}'s financials…" value="${(S.askQ||'').replace(/"/g,'&quot;')}" ${S.askBusy?'disabled':''}/>
-    <button class="btn" id="askgo" ${S.askBusy?'disabled':''}>${S.askBusy?'Thinking…':'Ask'}</button></div>
-    <div class="exrow">${examples.map(e=>`<span class="ex" data-q="${e}">${e}</span>`).join('')}</div></div>`);
-  el.appendChild(bar);
-  const inp=bar.querySelector('#askq');
-  const submit=(q)=>{const text=(q!==undefined?q:inp.value).trim(); if(text){S.askQ=text;askCell(text);}};
-  bar.querySelector('#askgo').onclick=()=>submit();
-  inp.onkeydown=(e)=>{if(e.key==='Enter')submit();};
-  bar.querySelectorAll('.ex').forEach(x=>x.onclick=()=>submit(x.getAttribute('data-q')));
-  if(S.askBusy) el.appendChild($('<div class="note"><span class="spin"></span>The column agent is retrieving figures and computing… (~10–20s)</div>'));
-  if(S.askError) el.appendChild($(`<div class="err">${S.askError}</div>`));
-  if(S.askResult) el.appendChild(renderAsk(S.askResult));
-  return el;
-}
-async function askCell(question){
-  S.askBusy=true; S.askError=''; S.askResult=null; render();
-  try{
-    const r=await fetch('/api/ask/'+encodeURIComponent(S.ticker),{method:'POST',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});
-    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
-    S.askResult=await r.json();
-  }catch(e){ S.askError='Could not answer: '+e.message; }
-  S.askBusy=false; render();
-}
-function renderAsk(res){
-  if(res.error) return $(`<div class="err">Agent error: ${res.error}</div>`);
-  const v=res.verdict;
-  const badge=v.trusted
-    ? '<span class="chip ok">&#10003; Verified cell — figures tie to official data and the answer reconciles</span>'
-    : '<span class="chip bad">&#9888; Unverified cell — see the failed check below</span>';
-  const deriv=(res.derivation||[]).map(dd=>`<div class="chain"><span class="chip ${dd.type==='retrieval'?'acc':dd.type==='calculation'?'warn':'gray'}" style="margin-right:8px">${dd.type}</span>${dd.text}</div>`).join('')||'<div class="muted">—</div>';
-  let checks='';
-  (v.checks||[]).forEach(c=>{const m=c.ok===null?'<span class="chip gray">n/a</span>':(c.ok?'<span class="chip ok">&#10003;</span>':'<span class="chip bad">&#10007;</span>');
-    checks+=`<tr><td>${c.label||''}</td><td class="mono">${c.concept||''}</td><td class="num">${c.stated==null?'':money(c.stated)}</td><td class="num">${c.truth==null?'':money(c.truth)}</td><td>${m}</td></tr>`;});
-  // self-consistency: does the stated answer follow from the cited figures via the identities?
-  let calc='';
-  if(v.calc_status==='corroborated') calc=`<div class="note" style="margin-top:12px"><span class="chip ok">&#10003; self-consistent</span> the accounting identities derive the stated answer from the cited figures.</div>`;
-  else if(v.calc_status==='contradicted') calc=`<div class="vuln" style="margin-top:12px"><h4>✗ Not self-consistent</h4><div class="muted">From the cited figures the identities derive <b>${v.derived_value}</b>, not the stated answer — the multi-step reasoning doesn't reconcile.</div></div>`;
-  // accounting identities the cell's own figures touch
-  let idens='';
-  (v.identities||[]).forEach(ic=>{const chip=ic.status==='satisfied'?'<span class="chip ok">&#10003; ties out</span>':`<span class="chip bad">&#10007; breaks</span> ${ic.label?labelChip(ic.label):''}`;
-    idens+=`<tr><td>${ic.description}</td><td>${chip}</td><td class="muted" style="font-size:12px">${ic.evidence||''}</td></tr>`;});
-  const idenCard=idens?`<h4 style="margin:18px 0 6px;font-size:13px">Accounting identities the cited figures touch</h4>
-    <table><thead><tr><th>Identity</th><th>Result</th><th>Detail</th></tr></thead><tbody>${idens}</tbody></table>`:'';
-  return $(`<div class="card"><div style="margin-bottom:10px">${badge}</div>
-    <h3 style="font-size:20px;margin:0 0 2px">${res.answer}</h3>
-    <div class="sub">The column agent made ${res.tool_calls} grounded retrieval(s) via tool calls${res.answer_concept?` · answer maps to <code>${res.answer_concept}</code>`:''}.</div>
-    ${calc}
-    <h4 style="margin:14px 0 6px;font-size:13px">Derivation (retrieval → definition → calculation)</h4>${deriv}
-    <h4 style="margin:18px 0 6px;font-size:13px">Cited figures checked against official XBRL</h4>
-    <table><thead><tr><th>Figure</th><th>Concept</th><th class="num">Agent</th><th class="num">Official</th><th>Match</th></tr></thead><tbody>${checks}</tbody></table>
-    ${idenCard}</div>`);
-}
-
-/* ---------- Hybrid eval (leaderboard: deterministic + rubric + judge) ---------- */
-function vBench(){
-  const el=$('<div></div>');
-  el.appendChild($(pageHead('Hybrid answer-quality evaluation',
-    "Hebbia's evaluation philosophy is hybrid — deterministic checks + rubric/LLM grading. Applied to financial extraction: each model fills Matrix cells over real SEC filings, scored on the audit trail (Retrieval / Definition / Calculation), by a naive LLM judge, and — the differentiator — by the deterministic accounting-identity layer. The headline is the money metric: answers the judge accepts that are actually wrong.")));
-  if(!S.bench){
-    el.appendChild($('<div class="loading"><span class="spin"></span>Loading results…</div>'));
-    fetch('/api/benchmark').then(r=>r.json()).then(b=>{S.bench=b; if(S.tab==='benchmark') render();}).catch(()=>{S.bench={results:{}}; if(S.tab==='benchmark') render();});
-    return el;
-  }
-  const res=S.bench.results||{};
-  if(!Object.keys(res).length){
-    el.appendChild($('<div class="note">No benchmark results yet — run <code>python scripts/run_bench.py</code> on the server.</div>'));
-    return el;
-  }
-  let rows='';
-  Object.values(res).forEach(r=>{rows+=`<tr><td><b>${r.label}</b></td>
-    <td class="num">${(r.rubric_score*100).toFixed(0)}%</td>
-    <td class="num">${(r.final_accuracy*100).toFixed(0)}%</td>
-    <td class="num">${(r.gap*100>=0?'+':'')+(r.gap*100).toFixed(0)}pp</td>
-    <td class="num">${(r.trusted_rate*100).toFixed(0)}%</td>
-    <td class="num">${(r.judge_accuracy*100).toFixed(0)}%</td>
-    <td class="num">${r.money_metric}</td></tr>`;});
-  el.appendChild($(`<div class="card"><h3>Leaderboard · ${S.bench.question_count} questions</h3>
-    <div class="sub">Rubric = derivation (audit-trail) score. Final = bottom-line accuracy. The last column is the money metric.</div>
-    <table><thead><tr><th>Model</th><th class="num">Rubric</th><th class="num">Final answer</th><th class="num">Gap</th><th class="num">Trusted</th><th class="num">LLM-judge says OK</th><th class="num">Judge-passed but wrong</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="legend"><span>Rubric grades the full audit trail (retrieval / definition / calculation); Final grades only the bottom-line number.</span>
-    <span><b>Judge-passed but wrong</b> = a naive LLM-judge rubber-stamped these; the constraint layer caught them.</span></div></div>`));
-  const first=Object.values(res)[0];
-  let qrows='';
-  (first.per_question||[]).forEach(p=>{const fa=p.final_ok?'<span class="chip ok">&#10003;</span>':'<span class="chip bad">&#10007;</span>';
-    const tr=p.trusted?'<span class="chip ok">&#10003;</span>':'<span class="chip bad">&#10007;</span>';
-    qrows+=`<tr><td>${p.question}</td><td>${p.skill}</td><td class="num">${(p.rubric_score*100).toFixed(0)}%</td><td>${fa}</td><td>${tr}</td><td>${p.judge_yes?'yes':'no'}</td></tr>`;});
-  el.appendChild($(`<div class="card"><h3>Per-question · ${first.label}</h3>
-    <table><thead><tr><th>Question</th><th>Skill</th><th class="num">Rubric</th><th>Final</th><th>Trusted</th><th>Judge OK</th></tr></thead><tbody>${qrows}</tbody></table></div>`));
-  return el;
-}
-
-/* ---------- Snapshot (company brief) ---------- */
-function vSnapshot(){
-  const g=guard();if(g)return g;const a=d();const s=a.snapshot;const el=$('<div></div>');
-  el.appendChild($(pageHead(`${a.issuer} — FY${a.fiscal_year}`,
-    `A plain-English brief built from this filing's data. Every figure here was checked against the SEC's official numbers by the constraint engine.`)));
-
-  // KPI rail with year-over-year deltas
-  el.appendChild($(`<div class="metrics">${s.kpis.map(k=>{
-    const yo=k.yoy==null?'':(k.yoy>=0?'▲ ':'▼ ')+Math.abs(k.yoy*100).toFixed(1)+'% YoY';
-    return metric(k.label, money(k.value), yo, k.yoy==null?'flat':(k.yoy>=0?'up':'down'));
-  }).join('')}</div>`));
-
-  if(s.narrative) el.appendChild($(`<div class="card"><h3>The year in plain English</h3>
-    <div class="sub">AI-written from the verified figures.</div>
-    <p style="font-size:15px;margin:0;line-height:1.6">${s.narrative}</p></div>`));
-
-  // trend + profitability, side by side
-  const trend=Object.keys(s.series).length?`<div class="card"><h3>Multi-year trend</h3>
-    <div class="sub">From the comparative years in this filing.</div>
-    ${Object.entries(s.series).map(([name,pts])=>`<div class="obar">
-      <div class="who" style="text-transform:capitalize">${name}</div>
-      ${sparkBars(pts, name.includes('net')?'#16a34a':name.includes('asset')?'#7c3aed':'#2f6bff')}
-      <div class="muted mono" style="margin-left:auto">${money(pts[pts.length-1].value)}</div></div>`).join('')}</div>`:'';
-  const m=s.margins;
-  const mstat=(lbl,v)=>`<div style="flex:1;background:var(--surface2);border:1px solid var(--line2);border-radius:9px;padding:12px 14px">
-    <div class="mono" style="font-size:21px;font-weight:700">${v==null?'—':(v*100).toFixed(1)+'%'}</div>
-    <div class="muted" style="font-size:12px">${lbl}</div></div>`;
-  const margins=`<div class="card"><h3>Profitability</h3><div class="sub">Margins — derived and verified.</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">${mstat('Gross',m.gross)}${mstat('Operating',m.operating)}${mstat('Net',m.net)}${mstat('Eff. tax',m.tax)}</div></div>`;
-  el.appendChild($(`<div class="two">${trend}${margins}</div>`));
-
-  if(a.segments) el.appendChild($(`<div class="card"><h3>Revenue by segment</h3>
-    <div class="sub">How the business breaks down.</div>${waterfall(a.segments)}</div>`));
-
-  if(s.notable.length) el.appendChild($(`<div class="card"><h3>Notable this year</h3>
-    <ul class="clean">${s.notable.map(n=>`<li>${n}</li>`).join('')}</ul></div>`));
-
-  el.appendChild($(`<div class="aside">Every figure above was checked against the filing's official SEC data — open <b>Filing explorer</b> for the rule-by-rule audit.</div>`));
-  return el;
-}
-
-/* ---------- Filing explorer ---------- */
-function vExplorer(){
-  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');
-  el.appendChild($(pageHead(`${a.issuer} — 10-K FY${a.fiscal_year}`,
-    `Every accounting identity, checked against the filing's official data (XBRL) and against what Claude pulled from the text. Filed ${a.filing_date}.`)));
-  el.appendChild($(`<div style="margin:-10px 0 18px"><a href="${a.url}" target="_blank">Open the filing on SEC EDGAR ↗</a></div>`));
-
-  const sc=a.scorecards[0], idOk=a.constraints.filter(c=>c.gt_status==='satisfied').length;
-  el.appendChild($(`<div class="metrics">
-    ${metric('Figures Claude extracted',sc.facts,a.facts.filter(f=>f.agree===false).length?null:'all consistent','up')}
-    ${metric('Agree with official data',sc.agree+' / '+(sc.agree+sc.disagree),sc.disagree===0?'0 disagreements':sc.disagree+' off',sc.disagree===0?'up':'down')}
-    ${metric('Hard violations',sc.violated,sc.violated===0?'clean':'caught',sc.violated===0?'up':'down')}
-    ${metric('Gaps filled by graph',a.propagation.length,'derived w/ provenance','flat')}
-  </div>`));
-
-  // vulnerability summary (front and center)
-  const viols=a.attribution;
-  el.appendChild($(viols.length
-    ? `<div class="vuln"><h4>⚠ ${viols.length} issue(s) the constraint layer flagged</h4>${viols.map(x=>`<div style="margin-top:7px"><code>${x.id}</code> ${labelChip(x.label)} <span class="muted">${x.evidence}</span></div>`).join('')}</div>`
-    : `<div class="vuln clean"><h4>✓ No vulnerabilities found</h4><div class="muted">Every figure Claude extracted reconciles against the filing's official data.</div></div>`));
-
-  // charts: segment waterfall + identity-outcome donut
-  const counts={satisfied:0,violated:0,indeterminate:0};
-  a.constraints.forEach(c=>{if(counts[c.gt_status]!==undefined)counts[c.gt_status]++;});
-  const dparts=[{v:counts.satisfied,c:'#16a34a',t:'ties out'},{v:counts.violated,c:'#dc2626',t:'breaks'},{v:counts.indeterminate,c:'#cbd2da',t:'n/a · missing inputs'}];
-  const donutCard=`<div class="card"><h3>Identity outcomes</h3>
-    <div class="sub">How the 16 checks land on the official data.</div>
-    <div class="donutwrap">${donut(dparts)}<div class="dlegend">${legendRows(dparts)}</div></div></div>`;
-  const wfCard=a.segments?`<div class="card"><h3>Do the segments add up to the total?</h3>
-    <div class="sub">Reportable segments stacked against consolidated revenue — the check that catches a dropped segment.</div>
-    ${waterfall(a.segments)}
-    <div class="aside" style="margin-top:14px"><h4>What to notice</h4>If a segment were missing, the bar wouldn't reach the total and a striped "missing" slice would appear — exactly the $38B Costco omission an LLM judge waves through.</div></div>`:'';
-  el.appendChild($(`<div class="chartgrid">${wfCard||donutCard}${wfCard?donutCard:''}</div>`));
-
-  const B={verified:[],problem:[],notrep:[]};
-  a.constraints.forEach(c=>{
-    if(c.claude_status==='violated'||c.gt_status==='violated') B.problem.push(c);
-    else if(c.gt_status==='satisfied') B.verified.push(c);
-    else B.notrep.push(c);
+  const cols=g.columns;
+  let head=`<tr><th class="rowh">Filing</th>`+cols.map(c=>`<th class="colh">${c.label}<div class="cc">${c.concept}</div></th>`).join('')+`</tr>`;
+  let body='';
+  g.rows.forEach(r=>{
+    body+=`<tr><td class="rowh"><div class="tk">${r.ticker}</div><div class="nm">${r.issuer} · FY${r.fiscal_year}</div></td>`;
+    cols.forEach(c=>{
+      const cell=(g.cells[r.ticker]||{})[c.id];
+      if(!cell){body+=`<td><span class="gcell muted">—</span></td>`;return;}
+      const esc=cell.attempts&&cell.attempts.length>1?`<span class="esc" title="escalated">↑${cell.attempts.length}</span>`:'';
+      body+=`<td><span class="gcell s-${cell.status}" data-t="${r.ticker}" data-q="${c.id}">
+        <span class="val">${fmtVal(cell.value,c.unit)}</span>
+        <span class="meta">${statusChip(cell.status)}${esc}</span>
+        <span class="tier">${tier(cell.final_tier)}</span></span></td>`;
+    });
+    body+='</tr>';
   });
-  const verdict=`We checked <b>${a.constraints.length}</b> accounting rules against ${a.issuer}'s filing. `
-    +`<b style="color:var(--ok)">${B.verified.length} verified${B.problem.length?'':' — all hold'}</b>`
-    +(B.problem.length?`, <b style="color:var(--bad)">${B.problem.length} problem${B.problem.length>1?'s':''}</b>`:'')
-    +`, and <b>${B.notrep.length} not reported</b> (the filing doesn't contain the figures those rules need).`;
-  el.appendChild($(`<div class="note" style="font-size:14px">${verdict}</div>`));
-
-  if(B.verified.length){
-    const rows=B.verified.map(c=>`<tr><td><div>${c.description}</div>
-      <div class="muted mono" style="font-size:11px">${c.formula}</div></td>
-      <td class="num">${c.gt_residual!==null?money(c.gt_residual):''}</td>
-      <td><span class="chip ok">&#10003; holds</span></td></tr>`).join('');
-    el.appendChild($(`<div class="card"><h3>&#10003; Verified — ${B.verified.length} rules hold</h3>
-      <div class="sub">All inputs present and the two sides reconcile (residual within the rounding-aware tolerance).</div>
-      <table><thead><tr><th>Identity</th><th class="num">residual</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></div>`));
-  }
-  if(B.problem.length){
-    const rows=B.problem.map(c=>{const at=a.attribution.find(x=>x.id===c.id)||{};
-      return `<tr><td><div>${c.description}</div><div class="muted mono" style="font-size:11px">${c.formula}</div></td>
-        <td>${at.label?labelChip(at.label):'<span class="chip bad">breaks</span>'}</td>
-        <td class="muted" style="font-size:12px">${at.evidence||''}</td></tr>`;}).join('');
-    el.appendChild($(`<div class="card"><h3>Problems — ${B.problem.length}</h3>
-      <div class="sub">Inputs are present, but the numbers don't reconcile — shown with the attributed cause.</div>
-      <table><thead><tr><th>Identity</th><th>Verdict</th><th>Why</th></tr></thead><tbody>${rows}</tbody></table></div>`));
-  }
-  if(B.notrep.length){
-    const rows=B.notrep.map(c=>`<tr><td>${c.description}</td>
-      <td class="muted" style="font-size:12px">${NRREASON[c.id]||"the filing doesn't report all the line items this rule needs"}</td></tr>`).join('');
-    el.appendChild($(`<div class="card"><details><summary style="cursor:pointer;font-weight:600;font-size:15px">Not reported — ${B.notrep.length} rules (click to expand)</summary>
-      <div class="sub" style="margin-top:10px">Not failures — the tool refuses to grade rules whose figures aren't in this filing.</div>
-      <table><thead><tr><th>Identity</th><th>Why it can't be checked here</th></tr></thead><tbody>${rows}</tbody></table></details></div>`));
-  }
-
-  const fc=$(`<div class="card"><h3>Did Claude read the numbers right?</h3>
-    <div class="sub">Each consolidated figure Claude pulled from the prose, checked against the SEC's structured value.</div></div>`);
-  let frows='';
-  a.facts.forEach(f=>{const m=f.agree===null?'<span class="chip gray">no tag</span>':(f.agree?'<span class="chip ok">✓ match</span>':'<span class="chip bad">✗ off</span>');
-    frows+=`<tr><td class="mono">${f.concept}</td><td class="num">${money(f.text)}</td>
-      <td class="num">${money(f.xbrl)}</td><td>${m}</td></tr>`;});
-  fc.appendChild($(`<table><thead><tr><th>Line item</th><th class="num">Claude (from text)</th>
-    <th class="num">Official (XBRL)</th><th>Match</th></tr></thead><tbody>${frows}</tbody></table>`));
-  el.appendChild(fc);
+  const panel=$(`<div class="panel flush"><div class="gridscroll"><table class="grid"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    <div class="legend">
+      <span><span class="dot ok"></span>verified — ties out to XBRL + reconciles</span>
+      <span><span class="dot warn"></span>low-confidence — failed the gate across tiers</span>
+      <span><span class="dot slate"></span>abstained — no ground truth, correctly declined</span>
+      <span class="mono faint">↑N = escalated through N tiers</span>
+    </div></div>`);
+  panel.querySelectorAll('.gcell[data-t]').forEach(c=>c.onclick=()=>openInspect(c.getAttribute('data-t'),c.getAttribute('data-q')));
+  el.appendChild(panel);
   return el;
 }
 
-/* ---------- Propagation ---------- */
-function vProp(){
-  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');
-  el.appendChild($(pageHead('Propagation — the graph fills the gaps',
-    'The identities share variables, so when one value is missing the tool solves for it instead of giving up. Each derived number carries its formula — the citation trail an autonomous analyst needs.')));
-  el.appendChild($(`<div class="note">Example: ${a.issuer} never printed its gross margin. The graph derived
-    it from <code>revenue − cost</code>, then computed the ratio — values that were never in the filing.</div>`));
-  const c=$('<div class="card"><h3>Figures derived for FY'+a.fiscal_year+'</h3></div>');
-  if(!a.propagation.length){c.appendChild($('<div class="muted">No derived facts for this filing.</div>'));}
-  a.propagation.forEach(p=>{c.appendChild($(`<div class="chain"><span class="res">${p.concept}</span> = <b>${money(p.value,p.unit)}</b>
-    <span class="arrow"> ← </span>${p.op} <span class="muted">(${p.inputs} inputs)</span></div>`));});
-  el.appendChild(c);return el;
+/* ---------- cell inspector ---------- */
+function openInspect(t,q){S.inspect={t,q};drawInspect();}
+function closeInspect(){S.inspect=null;document.getElementById('scrim').classList.remove('show');document.getElementById('drawer').classList.remove('show');}
+function drawInspect(){
+  const{t,q}=S.inspect;const g=S.grid;const cell=(g.cells[t]||{})[q];const col=g.columns.find(c=>c.id===q);
+  const row=g.rows.find(r=>r.ticker===t);const gold=(g.gold[t]||{})[col.concept];
+  const d=document.getElementById('drawer');
+  const tieChip=cell.tie_out==='ok'?'<span class="chip ok">ties out ✓</span>'
+    :cell.tie_out==='off'?'<span class="chip bad">does not tie out ✗</span>'
+    :cell.tie_out==='no_gold'?'<span class="chip slate">no XBRL ground truth</span>'
+    :cell.tie_out==='abstained'?'<span class="chip slate">declined</span>':'';
+  const trace=cell.trace.map(e=>{
+    const pass=e.step==='gate'&&/accept|abstention/.test(e.detail);
+    return `<div class="tev ${e.step}${pass?' pass':''}"><div class="st">${e.step}${e.tier?' · '+tier(e.tier):''}</div>
+      <div class="dt">${escapeHtml(e.detail)}</div></div>`;}).join('');
+  const checks=(cell.checks||[]).map(c=>{const m=c.ok==null?'<span class="chip ghost">n/a</span>':(c.ok?'<span class="chip ok">match</span>':'<span class="chip bad">off</span>');
+    return `<tr><td>${c.label||''}</td><td class="mono faint">${c.concept||''}</td><td class="num">${c.stated==null?'':money(c.stated)}</td><td class="num">${c.truth==null?'':money(c.truth)}</td><td>${m}</td></tr>`;}).join('');
+  const idens=(cell.identities||[]).map(ic=>{const sc=ic.status==='satisfied'?'<span class="chip ok">ties out</span>':'<span class="chip bad">breaks</span> '+labelChip(ic.label);
+    return `<tr><td>${ic.description}</td><td>${sc}</td></tr>`;}).join('');
+  const attempts=(cell.attempts||[]).map((a,i)=>{
+    const passed=a.trusted&&a.tie_out!=='off';const isLast=i===cell.attempts.length-1;
+    const cls=passed&&isLast&&cell.status==='verified'?'pass':(passed?'':'fail');
+    const verdict=a.note?('error: '+a.note):`retrieval ${a.retrieval_ok?'ok':'off'} · self-consistency ${a.calc_status}${a.tie_out!=='no_gold'?' · tie-out '+a.tie_out:''}`;
+    return `<div class="attempt ${cls}"><span class="tier">${a.model_label}</span>
+      <span class="grow">${verdict}</span>
+      <span class="mono faint">${a.cache_hit?'cached':(a.input_tokens+a.output_tokens)+' tok'}</span>
+      <span class="mono">${usd(a.est_cost_usd)}</span></div>`;}).join('');
+  d.innerHTML=`<button class="x" onclick="closeInspect()">×</button>
+    <div class="dh">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">${statusChip(cell.status)} ${tieChip}</div>
+      <div style="font-size:11px" class="ulabel">${t} · ${row.issuer} · FY${cell.fiscal_year}</div>
+      <div style="font-size:15px;font-weight:650;margin-top:3px">${col.label}</div>
+      <div class="muted" style="font-size:12.5px;margin-top:3px">${escapeHtml(cell.question)}</div>
+      <div class="kv">
+        <div class="item"><div class="k">answer</div><div class="v">${fmtVal(cell.value,col.unit)}</div></div>
+        <div class="item"><div class="k">XBRL truth</div><div class="v">${fmtVal(gold,col.unit)}</div></div>
+        <div class="item"><div class="k">confidence</div><div class="v">${(cell.confidence*100).toFixed(0)}%</div></div>
+        <div class="item"><div class="k">final tier</div><div class="v">${tier(cell.final_tier)}</div></div>
+        <div class="item"><div class="k">cost</div><div class="v">${usd(cell.cost_usd)}</div></div>
+      </div>
+    </div>
+    <div class="db">
+      <div class="sec"><h4>Answer</h4><div style="font-size:13.5px">${escapeHtml(cell.answer)||'<span class=muted>—</span>'}</div></div>
+      <div class="sec"><h4>Reasoning trace — plan → route → generate → verify → gate</h4><div class="trace">${trace}</div></div>
+      <div class="sec"><h4>Gate &amp; model tiering${cell.attempts.length>1?' · escalated ×'+cell.attempts.length:''}</h4>${attempts}</div>
+      ${checks?`<div class="sec"><h4>Grounding — cited figures vs official XBRL</h4>
+        <table><thead><tr><th>Figure</th><th>Concept</th><th class="num">Agent</th><th class="num">XBRL</th><th>Match</th></tr></thead><tbody>${checks}</tbody></table></div>`:''}
+      ${idens?`<div class="sec"><h4>Accounting identities the figures touch</h4>
+        <table><thead><tr><th>Identity</th><th>Result</th></tr></thead><tbody>${idens}</tbody></table></div>`:''}
+    </div>`;
+  document.getElementById('scrim').classList.add('show');
+  d.classList.add('show');
 }
 
-/* ---------- Attribution ---------- */
-function vAttr(){
-  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');
-  el.appendChild($(pageHead('Attribution — whose fault is it?',
-    "Most tools just say 'wrong.' When an identity breaks, tieout uses the filing's official data to decide the actual cause — so a real model error isn't confused with a filing quirk or an incomplete rule.")));
-  el.appendChild($(`<div class="card"><h3>The decision logic</h3>
-    <table><thead><tr><th>Official data…</th><th>vs. the text…</th><th>→ verdict</th></tr></thead><tbody>
-    <tr><td>satisfies the identity</td><td>a figure disagrees</td><td>${labelChip('extraction_error')}</td></tr>
-    <tr><td>breaks the identity itself</td><td>—</td><td>${labelChip('filing_inconsistency')}</td></tr>
-    <tr><td>satisfies, text matches it</td><td>rule still fires</td><td>${labelChip('constraint_model_error')}</td></tr>
-    <tr><td>incomplete</td><td>—</td><td>${labelChip('undetermined')}</td></tr>
-    </tbody></table></div>`));
-  const ac=$(`<div class="card"><h3>Verdicts for ${a.ticker} (Claude)</h3></div>`);
-  if(!a.attribution.length){ac.appendChild($('<div class="note">No attributable violations — Claude\'s extraction reconciles cleanly against the official data.</div>'));}
-  a.attribution.forEach(x=>{ac.appendChild($(`<div style="margin:12px 0"><code>${x.id}</code> ${labelChip(x.label)}
-    <div class="muted mono" style="font-size:11.5px;margin-top:5px">${x.evidence}</div></div>`));});
-  el.appendChild(ac);return el;
-}
-
-/* ---------- Localization ---------- */
-function vLoc(){
-  const g=guard();if(g)return g;const a=d();const el=$('<div></div>');const L=a.localization;
-  el.appendChild($(pageHead('Localization — pointing at the culprit',
-    'We inject a fake $5B error into one segment, then rank suspects by how few satisfied identities vouch for each figure. It also stays honest about what it cannot pinpoint.')));
-  const c=$('<div class="card"></div>');
-  if(!L){c.appendChild($('<div class="muted">No segment data to run the localization demo for this filing.</div>'));el.appendChild(c);return el;}
-  c.appendChild($(`<div class="note">Injected <b>+$5B</b> into segment <code>${L.injected_segment}</code> →
-    <code>rev.segments_sum</code> ${statusChip('violated')} with residual <b class="mono">${money(L.residual)}</b>.</div>`));
-  const max=Math.max(...L.suspects.map(s=>s.score),0.0001);
-  L.suspects.forEach(s=>{c.appendChild($(`<div class="barrow"><div class="lab">${s.segment}
-    <span class="muted mono" style="font-size:11px">${money(s.value)}</span></div>
-    <div class="bar"><div style="width:${(s.score/max*100).toFixed(0)}%"></div></div><div class="sc">${s.score.toFixed(2)}</div></div>`));});
-  c.appendChild($(`<div class="legend"><span>Taller bar = more suspect. The consolidated total is exonerated
-    (vouched by the margin identities). Honest limit: sibling segments share no other identity, so isolating a single one needs a cross-period signal.</span></div>`));
-  el.appendChild(c);return el;
-}
-
-/* ---------- Rulebook (registry) ---------- */
-function vRegistry(){
-  const el=$('<div></div>');
-  el.appendChild($(pageHead('The rulebook',
-    `${S.registry.length} universal accounting identities, hand-authored once and bound to each filing. Tolerance is rounding-aware and source-aware (tight for official data, looser for prose).`)));
-  let rows='';
-  S.registry.forEach(r=>{rows+=`<tr><td class="mono">${r.id}</td><td>${r.description}</td>
-    <td class="mono muted" style="font-size:11.5px">${r.formula}</td><td>${sevChip(r.severity)}</td></tr>`;});
-  el.appendChild($(`<div class="card"><table><thead><tr><th>ID</th><th>Identity</th><th>Formula</th><th>Type</th></tr></thead><tbody>${rows}</tbody></table></div>`));
-  return el;
-}
-
-/* ---------- Approach (Hebbia framing + differentiation + learnings) ---------- */
-function vApproach(){
-  const el=$('<div></div>');
-  el.appendChild($(pageHead('Approach',
-    'Why this exists, how it maps onto what Hebbia is building, and what made it hard.')));
-
-  el.appendChild($(`<div class="two">
-    <div class="feat"><div class="ic">◎</div><h4>What Hebbia builds</h4>
-      <p>Matrix — documents as rows, questions as columns, and a swarm of agents filling each <b>cell</b> with a
-      cited answer over filings, contracts and transcripts. The product's value rests entirely on those cells being
-      <b>trustworthy</b>; today that trust comes from citations and rubric / LLM-judge evaluation.</p></div>
-    <div class="feat"><div class="ic">⊨</div><h4>What this adds</h4>
-      <p>The missing leg of that trust: a deterministic check that a cell's figures actually obey accounting —
-      cross-figure identities, three-way attribution, and a self-consistency test that the answer follows from the
-      cited numbers. The guardrail you can't get from a second AI grading the first.</p></div>
+/* ---------- Eval dashboard ---------- */
+function vEval(){
+  const el=$('<div></div>');const m=(S.grid||{}).metrics||{};
+  el.appendChild($(`<div class="phead"><h1>Evaluation</h1>
+    <p>The eval engine scored against the filings' <b>own XBRL</b> — machine-checked ground truth, not an LLM judge. Answerability is defined by ground truth, which is what makes abstention measurable. Each numeric question maps to a canonical accounting concept the engine can verify or derive.</p></div>`));
+  if(!m||m.total_cells==null){el.appendChild($(`<div class="note">No metrics yet — run the grid first.</div>`));return el;}
+  const kc=(k,v,d,cls)=>`<div class="kc ${cls||''}"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
+  el.appendChild($(`<div class="kpis">
+    ${kc('Tie-out accuracy',pct(m.tie_out_accuracy),`${m.tie_out_correct}/${m.answerable} answerable cells match XBRL`,m.tie_out_accuracy>=1?'good':'')}
+    ${kc('Hallucination rate',pct(m.hallucination_rate),`${m.hallucinations} unsupported/incorrect figures`,m.hallucination_rate===0?'good':'flag')}
+    ${kc('Grounding rate',pct(m.grounding_rate),`${m.grounded_ok}/${m.grounded_checkable} cited figures trace to XBRL`,m.grounding_rate>=1?'good':'')}
+    ${kc('Escalation rate',pct(m.gate?m.gate.escalation_rate:0),`${m.gate?m.gate.escalated:0} cell(s) re-run on a stronger tier`,'')}
   </div>`));
+  const g=m.gate||{};const bs=g.by_status||{};
+  el.appendChild($(`<div class="panel"><div class="ph"><h3>Gate outcomes &amp; cost</h3><span class="sub">cheap-first tiering with a deterministic gate</span></div>
+    <div class="pb"><div class="kv" style="gap:10px">
+      <div class="item"><div class="k">verified</div><div class="v" style="color:var(--ok)">${bs.verified||0}</div></div>
+      <div class="item"><div class="k">low-confidence</div><div class="v" style="color:var(--warn)">${bs.low_confidence||0}</div></div>
+      <div class="item"><div class="k">abstained</div><div class="v" style="color:var(--slate)">${bs.abstained||0}</div></div>
+      <div class="item"><div class="k">on cheap tier</div><div class="v">${g.verified_first_tier||0}/${m.total_cells}</div></div>
+      <div class="item"><div class="k">unanswerable</div><div class="v">${m.unanswerable}</div></div>
+      <div class="item"><div class="k">abstention recall</div><div class="v">${m.abstention_recall==null?'n/a':pct(m.abstention_recall)}</div></div>
+      <div class="item"><div class="k">total cost</div><div class="v">${usd(m.cost_usd)}</div></div>
+    </div>
+    <div class="callout" style="margin-top:14px"><b>Why it's a gate, not a report:</b> a cell is accepted only when its answer ties out to XBRL <i>and</i> its cited figures reconcile against the accounting identities. Failures are re-run on a stronger model (cost-aware), and anything that never passes is held back as low-confidence — so a confident wrong number never reaches the grid.</div></div></div>`));
+  el.appendChild(benchPanel());
+  return el;
+}
+function benchPanel(){
+  const b=S.bench;if(!b||!b.results||!Object.keys(b.results).length)
+    return $(`<div class="panel"><div class="ph"><h3>Model comparison</h3></div><div class="pb"><div class="muted" style="font-size:12.5px">No model leaderboard — run <code>python scripts/run_bench.py</code>.</div></div></div>`);
+  let rows='';Object.values(b.results).forEach(r=>{rows+=`<tr class="hover"><td><b>${r.label}</b></td>
+    <td class="num">${pct(r.rubric_score)}</td><td class="num">${pct(r.final_accuracy)}</td>
+    <td class="num">${pct(r.trusted_rate)}</td><td class="num">${pct(r.judge_accuracy)}</td>
+    <td class="num" style="color:${r.money_metric?'var(--bad)':'var(--ok)'}">${r.money_metric}</td></tr>`;});
+  return $(`<div class="panel flush"><div class="ph"><h3>Model comparison — hybrid eval</h3><span class="sub">${b.question_count} questions · deterministic + rubric + LLM judge</span></div>
+    <table><thead><tr><th>Model</th><th class="num">Rubric</th><th class="num">Final answer</th><th class="num">Trusted</th><th class="num">Judge OK</th><th class="num">Judge-passed but wrong</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="legend"><span>Rubric grades the audit trail (retrieval/definition/calculation); Trusted = passed the deterministic gate.</span>
+    <span><b style="color:var(--bad)">Judge-passed but wrong</b> = a naive LLM judge accepted these; the deterministic layer caught them (the money metric).</span></div></div>`);
+}
 
-  el.appendChild($(`<div class="card"><h3>What we did differently</h3>
-    <ul class="clean">
-      <li><b>Not LLM-as-judge.</b> The usual way to grade AI output is to ask another AI — which rubber-stamps
-        plausible-but-wrong numbers. We grade with <b>deterministic accounting math</b> instead.</li>
-      <li><b>The filing grades itself.</b> We use each filing's own official XBRL data as the answer key —
-        free, exact ground truth, no manual labelling.</li>
-      <li><b>A constraint graph, not a checklist.</b> Because the rules share variables, the tool can
-        <b>propagate</b> — fill missing values and cross-check — not just pass/fail.</li>
-      <li><b>Attribution, not just detection.</b> A three-way “whose fault” verdict, the part most tools skip.</li>
-    </ul></div>`));
-
-  el.appendChild($(`<div class="card"><h3>What we learned (the honest part)</h3>
-    <ul class="clean">
-      <li><b>Not crying wolf is harder than catching errors.</b> Real filings broke a naive checker — Kraft
-        Heinz's $12M mezzanine equity, Amazon's $554M equity-method income, 3M's $1.4B discontinued operations,
-        3M's $24B segment double-count. Modelling real accounting structure was ~80% of the work.</li>
-      <li><b>Be honest about what a result shows.</b> The flashy “$38B catch” was partly a context-window
-        artifact — with full context Claude is accurate. So it's a <b>verifier first</b> that also catches errors
-        under weaker conditions, not a gotcha machine.</li>
-      <li><b>A true “filing inconsistency” is rare</b> in audited filings — most apparent ones are really your
-        own rule being incomplete. Knowing the difference is the whole game.</li>
-      <li><b>Engineering rigor:</b> reproducible via content-addressed caching, rounding-aware tolerance, and
-        edge cases like 52/53-week fiscal years (Amazon's FY2025 ends Jan 1, 2026).</li>
-    </ul></div>`));
-
-  el.appendChild($(`<div class="card"><h3>How it works, end to end</h3>
-    <div class="three">
-      <div><b>1 · Ingest</b><p class="muted" style="font-size:13px">Pull a filing from SEC EDGAR — official XBRL (ground truth) and raw text (what the AI reads).</p></div>
-      <div><b>2 · Extract &amp; verify</b><p class="muted" style="font-size:13px">Claude / baseline / XBRL pull the numbers; 16 identities check them with interval tolerance.</p></div>
-      <div><b>3 · Explain</b><p class="muted" style="font-size:13px">Propagate to fill gaps, localize the culprit, and attribute every break three ways.</p></div>
-    </div></div>`));
+/* ---------- Rulebook ---------- */
+function vRulebook(){
+  const el=$('<div></div>');
+  el.appendChild($(`<div class="phead"><h1>Rulebook</h1><p>${S.registry.length} universal accounting identities, hand-authored once and bound per filing. The gate uses these to reconcile an answer's cited figures; tolerance is rounding-aware and source-aware.</p></div>`));
+  let rows='';S.registry.forEach(r=>{rows+=`<tr class="hover"><td class="mono faint">${r.id}</td><td>${r.description}</td>
+    <td class="mono muted" style="font-size:11px">${r.formula}</td><td><span class="chip ${r.severity==='soft'?'slate':'acc'}">${r.severity}</span></td></tr>`;});
+  el.appendChild($(`<div class="panel flush"><table><thead><tr><th>ID</th><th>Identity</th><th>Formula</th><th>Type</th></tr></thead><tbody>${rows}</tbody></table></div>`));
   return el;
 }
 
+/* ---------- Architecture ---------- */
+function vArch(){
+  const el=$('<div></div>');
+  el.appendChild($(`<div class="phead"><h1>Architecture</h1><p>The spine is the request path; the load-bearing idea is that <b>eval is a gate wired into the loop</b> — answers that fail grounding are re-run, not just flagged — and that <b>XBRL is free, machine-readable ground truth</b>, which is what makes a credible eval engine possible.</p></div>`));
+  const L=(z,t,d,gate)=>`<div class="layer ${gate?'gate':''}"><div class="lz">${z}</div><div class="lt">${t}</div><div class="ld">${d}</div></div>`;
+  el.appendChild($(`<div class="panel"><div class="ph"><h3>Request path</h3><span class="sub">a cell = one (document × question) agent run</span></div><div class="pb"><div class="arch">
+    ${L('ingest','EDGAR + XBRL','pull the 10-K; parse XBRL facts (concept, value, period, dims) → the ground-truth store')}
+    <div class="down">↓</div>
+    ${L('orchestrate','Plan · Route','decompose the question; route numeric → structured XBRL retrieval')}
+    <div class="down">↓</div>
+    ${L('generate','Column agent','tiered tool-use agent retrieves grounded figures and emits a derivation')}
+    <div class="down">↓</div>
+    ${L('gate','Eval gate','tie-out to XBRL + verify_cell (identities, grounding, self-consistency) — accept, or escalate &amp; re-run',true)}
+    <div class="down" style="color:var(--accent)">↑ re-run on fail (stronger tier) · ✓ accept on pass · ! hold as low-confidence</div>
+    ${L('serve','Grid + metrics','stream verified cells to the grid; score the run against XBRL ground truth')}
+  </div></div></div>`));
+  const rm=(what,built,detail)=>`<tr class="rm"><td>${what}</td><td>${built?'<span class="chip ok">built</span>':'<span class="chip slate">roadmap</span>'}</td><td class="muted" style="font-size:12px">${detail}</td></tr>`;
+  el.appendChild($(`<div class="panel flush"><div class="ph"><h3>What's built vs. roadmap</h3><span class="sub">honest scope</span></div>
+    <table><thead><tr><th>Capability</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+    ${rm('XBRL ground-truth store',1,'arelle parse → fact store; the answer key for tie-out and abstention')}
+    ${rm('Eval gate (tie-out + verify)',1,'deterministic, in the hot path; re-run-on-fail with model tiering + cost')}
+    ${rm('Query grid + fan-out',1,'documents × questions; bounded in-process concurrency with backpressure')}
+    ${rm('XBRL-grounded metrics',1,'tie-out accuracy, hallucination, grounding, abstention calibration')}
+    ${rm('Constraint engine + attribution',1,'16 identities, propagation, 3-way violation attribution')}
+    ${rm('Distributed fan-out (Celery/Redis)',0,'currently in-process ThreadPool; same interface, swap the executor')}
+    ${rm('Hybrid prose retrieval + reranker',0,'currently structured XBRL retrieval; BM25 + embeddings + cross-encoder + span citations next')}
+    ${rm('Knowledge graph (Neo4j)',0,'for multi-hop / cross-filing / cross-time questions')}
+    ${rm('Multimodal table/chart extraction',0,'numbers from rendered tables and charts')}
+    </tbody></table></div>`));
+  return el;
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+document.getElementById('scrim').onclick=closeInspect;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeInspect();});
 boot();
 </script>
 </body>
