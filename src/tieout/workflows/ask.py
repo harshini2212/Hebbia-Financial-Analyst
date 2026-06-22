@@ -227,6 +227,9 @@ def ask_events(ticker: str, question: str, connectors=None):
 
 # A deck of example questions so a user knows what they can ask, grouped by lens.
 QUESTION_DECK = [
+    {"group": "Investment call", "qs": [
+        "Is this a good investment right now — verdict, top reasons, and key risks?",
+        "What would a skeptic short here, and is the bear case justified?"]},
     {"group": "Revenue & growth", "qs": [
         "How fast is revenue growing, and is the growth high quality?",
         "How much of revenue is recurring vs one-time?"]},

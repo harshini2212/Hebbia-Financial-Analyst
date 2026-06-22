@@ -337,12 +337,37 @@ function render(){const v=document.getElementById('view');
 }
 function pageAskBar(){
   const w=$(`<div class="pageask"><div class="pageask-lbl">${icon('spark')} Ask about any number on this page</div>
-    <div class="askbar"><input id="page-ask" placeholder="e.g. why is this number what it is? what changed year over year?"/><button class="go" id="page-ask-go">${icon('send')}</button></div></div>`);
-  const inp=w.querySelector('#page-ask'),go=w.querySelector('#page-ask-go');
-  const run=()=>{const q=(inp.value||'').trim();if(!q)return;S.pendingAsk=q;S.tab='ask';renderNav();render();};
+    <div class="askbar"><input id="page-ask" placeholder="e.g. why is this number what it is? what changed year over year?"/><button class="go" id="page-ask-go">${icon('send')}</button></div>
+    <div class="pa-answer" style="margin-top:12px"></div></div>`);
+  const inp=w.querySelector('#page-ask'),go=w.querySelector('#page-ask-go'),mount=w.querySelector('.pa-answer');
+  const run=()=>{const q=(inp.value||'').trim();if(!q)return;streamAskInto(q,mount);};   // answer inline, stay on the page
   go.onclick=run;inp.onkeydown=e=>{if(e.key==='Enter')run();};
   return w;
 }
+/* generic inline AI-answer streamer — builds the answer UI inside `mount` and streams */
+function streamAskInto(q,mount){
+  if(!mount)return;
+  mount.innerHTML=`<div class="qstatus run" data-st><span class="spin" style="margin:0"></span><span>thinking… <span class="mono" data-timer>0.0s</span></span></div>
+    <div class="panel" style="margin:0"><div class="ph"><h3>Answer</h3><span class="sub" data-cites></span></div>
+    <div class="pb"><div class="muted" style="font-size:11.5px;margin-bottom:8px">${esc(q)}</div><div data-trace style="margin-bottom:10px"></div><div data-ans style="font-size:14px;line-height:1.65;white-space:pre-wrap"></div></div></div>`;
+  const st=mount.querySelector('[data-st]'),cites=mount.querySelector('[data-cites]'),trace=mount.querySelector('[data-trace]'),ans=mount.querySelector('[data-ans]');
+  const t0=Date.now();let got=false,fin=false;
+  const timer=setInterval(()=>{const t=mount.querySelector('[data-timer]');if(t)t.textContent=((Date.now()-t0)/1000).toFixed(1)+'s';},100);
+  let es;try{es=new EventSource(`${API}/api/stream/ask?ticker=${encodeURIComponent(S.company)}&q=${encodeURIComponent(q)}`);}
+  catch(e){clearInterval(timer);st.className='qstatus warn';st.textContent='no live backend';return;}
+  const stop=()=>{clearInterval(timer);if(es)es.close();};
+  const step=(id,label,status)=>{let r=trace.querySelector('[data-step="'+id+'"]');if(!r){r=document.createElement('div');r.setAttribute('data-step',id);r.className='tev2';trace.appendChild(r);}r.innerHTML=(status==='done'?'<span class="tickok">✓</span>':'<span class="spin" style="margin:0"></span>')+`<span>${esc(label)}</span>`;};
+  es.addEventListener('run_started',()=>{got=true;});
+  es.addEventListener('step',e=>{got=true;const s=JSON.parse(e.data);step(s.id,s.label,s.status);});
+  es.addEventListener('citation',e=>{cites.insertAdjacentHTML('beforeend',`<span class="chip ghost" style="margin-left:4px">${esc(JSON.parse(e.data).source)}</span>`);});
+  es.addEventListener('token',e=>{ans.textContent+=JSON.parse(e.data).text;});
+  es.addEventListener('tie_out',e=>{if(JSON.parse(e.data).passed)cites.insertAdjacentHTML('beforeend','<span class="chip ok" style="margin-left:4px">✓ ties out to XBRL</span>');});
+  es.addEventListener('failed',e=>{fin=true;stop();st.className='qstatus warn';st.innerHTML=`<span>⚠ ${esc(JSON.parse(e.data).message)}</span>`;});
+  es.addEventListener('done',e=>{fin=true;const d=JSON.parse(e.data);stop();st.className='qstatus ok';st.innerHTML=`<span class="tickok">✓</span><span>answered · <span class="mono">${(d.elapsed_ms/1000).toFixed(1)}s</span></span>`;});
+  es.onerror=()=>{if(fin)return;stop();st.className='qstatus warn';st.innerHTML=got?'<span>disconnected</span>':'<span>could not reach the AI backend (needs the live server + an API key)</span>';};
+}
+function investQ(){const n=(S.qoe&&S.qoe.issuer)||S.company||'this company';
+  return `Is ${n} a good investment right now? Give a clear verdict (attractive / mixed / risky), the 3 strongest reasons and the 3 biggest risks, grounded in the filings + ledger — concentration, growth quality, margins, cash flow and retention.`;}
 
 /* ---------- Dashboard (landing) ---------- */
 function vHome(){
@@ -377,16 +402,19 @@ function vHome(){
   const right=$('<div style="display:flex;flex-direction:column;gap:16px"></div>');
   right.appendChild($(`<div class="greet"><div class="gorb"></div><h2>${greet},<br><b>what do you want to diligence?</b></h2></div>`));
   right.appendChild($(`<div class="panel" style="margin:0"><div class="pb">
-    <div class="chatwrap"><div class="bubble ai"><div class="who"><span class="mini-orb" style="width:15px;height:15px"></span>Hebbify</div>Ask me anything about ${esc(q&&q.issuer?q.issuer:'the active company')} — e.g. “how concentrated is revenue, and is growth high quality?” I’ll pull the filings + ledger and answer with citations.</div></div>
-    <div class="askbar" style="margin-top:13px"><input id="home-ask" placeholder="Ask anything…"/><button class="go" id="home-ask-go">${icon('send')}</button></div>
+    <div class="chatwrap"><div class="bubble ai"><div class="who"><span class="mini-orb" style="width:15px;height:15px"></span>Hebbify</div>Ask me anything about ${esc(q&&q.issuer?q.issuer:'the active company')} — or get a straight investment call, grounded in the filings + ledger with citations.</div></div>
+    <div style="margin-top:11px"><span class="chip acc" id="home-invest" style="cursor:pointer;font-size:11.5px;padding:5px 11px">💡 Is ${esc(q&&q.issuer?q.issuer:'this company')} a good investment?</span></div>
+    <div class="askbar" style="margin-top:11px"><input id="home-ask" placeholder="Ask anything…"/><button class="go" id="home-ask-go">${icon('send')}</button></div>
+    <div class="home-ask-answer" style="margin-top:12px"></div>
   </div></div>`));
   grid.appendChild(right);
   el.appendChild(grid);
   setTimeout(()=>{
     const t=document.getElementById('home-tied');if(t)t.onclick=()=>{S.tab='qoe';renderNav();render();};
-    const inp=document.getElementById('home-ask'),go=document.getElementById('home-ask-go');
-    const run=()=>{const v=(inp.value||'').trim();if(!v)return;S.pendingAsk=v;S.tab='ask';renderNav();render();};
+    const inp=document.getElementById('home-ask'),go=document.getElementById('home-ask-go'),mount=document.querySelector('.home-ask-answer');
+    const run=()=>{const v=(inp.value||'').trim();if(!v)return;streamAskInto(v,mount);};
     if(go)go.onclick=run;if(inp)inp.onkeydown=e=>{if(e.key==='Enter')run();};
+    const iv=document.getElementById('home-invest');if(iv)iv.onclick=()=>streamAskInto(investQ(),mount);
   },0);
   return el;
 }
