@@ -126,6 +126,28 @@ def _run_tool(name, args, cons, ledger, report):
     return {"error": f"unknown tool {name}"}
 
 
+_ANTHROPIC = None
+
+
+def _anthropic_client():
+    """A cached Anthropic client that forces IPv4 + a generous timeout.
+
+    Some hosts (notably Railway) fail outbound HTTPS over IPv6 and the SDK surfaces a bare
+    'Connection error.'. Binding the source socket to an IPv4 address forces IPv4 and avoids it.
+    """
+    global _ANTHROPIC
+    if _ANTHROPIC is None:
+        from anthropic import Anthropic
+        try:
+            import httpx
+            http = httpx.Client(transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                                timeout=httpx.Timeout(60.0, connect=15.0))
+            _ANTHROPIC = Anthropic(http_client=http, max_retries=3)
+        except Exception:
+            _ANTHROPIC = Anthropic(max_retries=3)
+    return _ANTHROPIC
+
+
 def ask_events(ticker: str, question: str, connectors=None):
     """Answer `question` about `ticker`, streaming (event, payload) tuples."""
     ticker = ticker.upper()
@@ -153,8 +175,7 @@ def ask_events(ticker: str, question: str, connectors=None):
             yield "failed", {"message": "No API key on the server. Set ANTHROPIC_API_KEY in your "
                              "host's environment variables (Railway → your service → Variables) and redeploy."}
             return
-        from anthropic import Anthropic
-        client = Anthropic()
+        client = _anthropic_client()
         system = _SYSTEM.format(issuer=cons.issuer, ticker=ticker,
                                 connected=", ".join(sorted(connected)))
         messages = [{"role": "user", "content": question}]
@@ -192,7 +213,11 @@ def ask_events(ticker: str, question: str, connectors=None):
 
         yield "done", {"run_id": run_id, "elapsed_ms": int((time.time() - t0) * 1000)}
     except Exception as exc:
-        yield "failed", {"message": str(exc)}
+        cause = getattr(exc, "__cause__", None)
+        msg = f"{type(exc).__name__}: {exc}"
+        if cause and str(cause) not in str(exc):
+            msg += f" — {type(cause).__name__}: {cause}"
+        yield "failed", {"message": msg}
 
 
 # A deck of example questions so a user knows what they can ask, grouped by lens.
