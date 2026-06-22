@@ -148,6 +148,11 @@ def ask_events(ticker: str, question: str, connectors=None):
                        "status": "done"}
 
         tools = [_SCHEMAS[t] for t, src in _TOOL_SOURCE.items() if src in connected and t in _SCHEMAS]
+        import os as _os
+        if not _os.environ.get("ANTHROPIC_API_KEY"):
+            yield "failed", {"message": "No API key on the server. Set ANTHROPIC_API_KEY in your "
+                             "host's environment variables (Railway → your service → Variables) and redeploy."}
+            return
         from anthropic import Anthropic
         client = Anthropic()
         system = _SYSTEM.format(issuer=cons.issuer, ticker=ticker,
