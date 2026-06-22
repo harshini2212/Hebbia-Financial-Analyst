@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Tiebbia — public + private financial intelligence, reconciled & tied out</title>
+<title>Hebbify — public + private financial intelligence, reconciled & tied out</title>
 <style>
   :root{
     --bg:#f4f1f6; --panel:rgba(255,255,255,.66); --panel2:rgba(255,255,255,.45);
@@ -226,7 +226,7 @@
 <body>
 <div class="app">
   <div class="side">
-    <div class="brand"><span class="orb"></span> Tiebbia</div>
+    <div class="brand"><span class="orb"></span> Hebbify</div>
     <div id="nav"></div>
     <div class="sp"></div>
     <div class="ghost">Public filings + private ERP/CRM, reconciled &amp; tied out. <b>Calibrated demo data.</b></div>
@@ -377,7 +377,7 @@ function vHome(){
   const right=$('<div style="display:flex;flex-direction:column;gap:16px"></div>');
   right.appendChild($(`<div class="greet"><div class="gorb"></div><h2>${greet},<br><b>what do you want to diligence?</b></h2></div>`));
   right.appendChild($(`<div class="panel" style="margin:0"><div class="pb">
-    <div class="chatwrap"><div class="bubble ai"><div class="who"><span class="mini-orb" style="width:15px;height:15px"></span>Tiebbia</div>Ask me anything about ${esc(q&&q.issuer?q.issuer:'the active company')} — e.g. “how concentrated is revenue, and is growth high quality?” I’ll pull the filings + ledger and answer with citations.</div></div>
+    <div class="chatwrap"><div class="bubble ai"><div class="who"><span class="mini-orb" style="width:15px;height:15px"></span>Hebbify</div>Ask me anything about ${esc(q&&q.issuer?q.issuer:'the active company')} — e.g. “how concentrated is revenue, and is growth high quality?” I’ll pull the filings + ledger and answer with citations.</div></div>
     <div class="askbar" style="margin-top:13px"><input id="home-ask" placeholder="Ask anything…"/><button class="go" id="home-ask-go">${icon('send')}</button></div>
   </div></div>`));
   grid.appendChild(right);
