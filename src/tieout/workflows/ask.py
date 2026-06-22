@@ -130,21 +130,26 @@ _ANTHROPIC = None
 
 
 def _anthropic_client():
-    """A cached Anthropic client that forces IPv4 + a generous timeout.
+    """A cached Anthropic client.
 
-    Some hosts (notably Railway) fail outbound HTTPS over IPv6 and the SDK surfaces a bare
-    'Connection error.'. Binding the source socket to an IPv4 address forces IPv4 and avoids it.
+    Sanitises the API key — strips ALL whitespace/newlines that a host's env-var editor may
+    have introduced (a stray newline in the key makes the SDK send an illegal HTTP header,
+    surfacing as 'Illegal header value' / 'Connection error.'). Also forces IPv4 + a generous
+    timeout (some hosts fail outbound HTTPS over IPv6).
     """
     global _ANTHROPIC
     if _ANTHROPIC is None:
+        import os as _os, re as _re
         from anthropic import Anthropic
+        key = _re.sub(r"\s+", "", _os.environ.get("ANTHROPIC_API_KEY", ""))
+        kw = {"api_key": key} if key else {}
         try:
             import httpx
             http = httpx.Client(transport=httpx.HTTPTransport(local_address="0.0.0.0"),
                                 timeout=httpx.Timeout(60.0, connect=15.0))
-            _ANTHROPIC = Anthropic(http_client=http, max_retries=3)
+            _ANTHROPIC = Anthropic(http_client=http, max_retries=3, **kw)
         except Exception:
-            _ANTHROPIC = Anthropic(max_retries=3)
+            _ANTHROPIC = Anthropic(max_retries=3, **kw)
     return _ANTHROPIC
 
 

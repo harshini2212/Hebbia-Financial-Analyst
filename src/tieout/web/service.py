@@ -40,8 +40,14 @@ def load_api_key() -> bool:
     """Best-effort: load ANTHROPIC_API_KEY from .env or the out-of-repo
     credentials file so live runs work without manual env setup. Runs on import
     so it applies no matter how the server is started. Returns True if a key is set."""
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return True
+    cur = os.environ.get("ANTHROPIC_API_KEY")
+    if cur:
+        # Drop any stray whitespace/newline a host's env-var editor (e.g. Railway) may have
+        # added — a newline in the key makes the SDK send an illegal HTTP header.
+        cleaned = "".join(cur.split())
+        if cleaned != cur:
+            os.environ["ANTHROPIC_API_KEY"] = cleaned
+        return bool(cleaned)
     home = Path(os.path.expanduser("~"))
     candidates = [
         Path(".env"),
