@@ -501,7 +501,8 @@ function vQoE(){
   const issuer=(S.qoe&&S.qoe.issuer)||((S.companies.find(c=>c.ticker===S.company)||{}).issuer)||S.company||'';
   el.appendChild($(`<div class="phead" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
     <div><h1>Quality of Earnings — ${esc(issuer)}</h1>
-    <p>Watch it run: filed consolidated numbers reconciled against the granular private ledger, live. Every figure rolls up to the public total (tie-out); the findings are what the 10-K never breaks out. <b>Calibrated demo data.</b></p></div>
+    <p>Watch it run: filed consolidated numbers reconciled against the granular private ledger, live. Every figure rolls up to the public total (tie-out); the findings are what the 10-K never breaks out. <b>Calibrated demo data.</b></p>
+    <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${esc(S.company||'')}&type=10-K&dateb=&owner=include&count=40" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;font-weight:650;color:var(--accent)">↗ View the original filings on SEC EDGAR</a></div>
     <button class="btn sm" id="qoe-rerun" style="flex-shrink:0">↻ Re-run live</button></div>`));
   el.appendChild($(`<div id="qoe-status" class="qstatus"></div>`));
   el.appendChild($(`<div class="kpis" id="qoe-kpis" style="grid-template-columns:repeat(5,minmax(0,1fr))">
