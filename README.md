@@ -1,4 +1,4 @@
-# tieout
+# Hebbify
 
 **Public + private financial intelligence, reconciled and tied out.** A workspace that fuses a company's real SEC filings (EDGAR/XBRL) with a *calibrated synthetic* ERP/CRM ledger, then reconciles the consolidated public numbers against the granular private ones to surface what the filing hides — customer concentration, reported-vs-underlying growth, one-time revenue, DSO drift. Every figure rolls up to the public total, validated by a deterministic tie-out.
 
