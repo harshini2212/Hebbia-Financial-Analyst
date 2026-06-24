@@ -6,20 +6,20 @@
 
 ## The two ideas that make it work
 
-1. **The synthetic engine is constrained generation, not fabrication.** It fits a private ledger (customers, SKUs, AR aging, CRM pipeline, cohorts) to the company's real XBRL marginals via **iterative proportional fitting** — so it *sums back to the reported numbers*, deterministic by CIK. Always framed as **calibrated demo data**, never real. The same tie-out harness that checks real extraction validates the synthetic generation — one trust layer, two jobs.
+1. **The synthetic engine is constrained generation, not fabrication.** It fits a private ledger (customers, SKUs, AR aging, CRM pipeline, cohorts) to the company's real XBRL marginals via **iterative proportional fitting** — so it *sums back to the reported numbers*, deterministic by CIK. Always framed as **calibrated demo data**, never real. The same Hebbify harness that checks real extraction validates the synthetic generation — one trust layer, two jobs.
 2. **The reconciliation join is the IP.** Rolling the granular ledger up to each public figure and exposing the variance is what produces *"top-5 = 30% of revenue (undisclosed); underlying growth 10% not 12%"* — the analysis that only exists when you join public + private.
 
 **Connectors:** EDGAR (public) · Synthetic ERP/CRM (demo) · Merge (production) all sit behind one `SourceAdapter` interface — demo on synthetic, a real customer connects Merge, the workflows never change.
 
 ### Proven on real Amazon XBRL
 ```
-Tie-out (synthetic ledger → reported XBRL):  17/17 across 3 years —
+Hebbify (synthetic ledger → reported XBRL):  17/17 across 3 years —
   revenue $716.9B, the 3 real segments, COGS, AR $67.7B all reconcile exactly.
 QoE findings:  top-5 = 30% · reported 12% vs underlying 10% · $22.9B one-time ·
   DSO 31.7→34.5d · DPO 124.8 (Amazon's real ratios) · NRR 111% · pipeline cov 112%.
 ```
 
-**Run it live** — opening the workspace *streams the run*: the trace ticks step-by-step, tie-out checks turn green one at a time, reconciliation rows + KPI cards fill as they compute, findings land last.
+**Run it live** — opening the workspace *streams the run*: the trace ticks step-by-step, Hebbify checks turn green one at a time, reconciliation rows + KPI cards fill as they compute, findings land last.
 
 ```bash
 python serve.py                  # -> http://localhost:8050 · open the QoE workspace
@@ -33,7 +33,8 @@ Opening a workflow hits an SSE endpoint (`/api/stream/qoe`); the *same generator
 
 The **verification/trust layer** underneath — the deterministic accounting-identity engine, the eval-gate that does the same job for *extraction* — is documented below.
 
-![tieout — workspace](docs/img/ui-overview.png)
+<img width="1885" height="956" alt="image" src="https://github.com/user-attachments/assets/d17d3b14-f244-4b5b-b3cc-c3ff8cafded3" />
+
 
 ---
 
@@ -49,7 +50,7 @@ The deterministic engine that scores all this — `tieout`'s accounting-identity
 
 ```
 EDGAR + XBRL ─▶ Plan · Route ─▶ Column agent ─▶  ┌── EVAL GATE ──┐ ─▶ Grid + metrics
-(ground truth)  (decompose,     (tiered tool-use, │ tie-out to    │    (verified cells,
+(ground truth)  (decompose,     (tiered tool-use, │ Hebbify to    │    (verified cells,
                  route numeric)  grounded figures) │ XBRL + verify │     scored vs XBRL)
                                                    │ identities    │
                                                    └──────┬────────┘
@@ -67,7 +68,7 @@ EDGAR + XBRL ─▶ Plan · Route ─▶ Column agent ─▶  ┌── EVAL GAT
 
 | Metric | Result |
 |---|--:|
-| **Tie-out accuracy** (answers matching XBRL) | **18/18 = 100%** |
+| **Hebbify accuracy** (answers matching XBRL) | **18/18 = 100%** |
 | **Hallucination rate** (unsupported/incorrect figures) | **0%** |
 | **Grounding rate** (cited figures tracing to XBRL) | **100%** |
 | **Resolved on the cheap tier** (Haiku) | **17/18** |
@@ -82,7 +83,7 @@ A light, data-dense single-page app (FastAPI + one self-contained page), built t
 
 - **Query Grid** — filings × questions; each cell shows the value, a status chip (verified / low-confidence / abstained), the model tier it resolved on, and an escalation marker. Click a cell →
 - **Cell inspector** — the full **reasoning trace** (plan → route → generate → verify → gate), the **gate & tiering** attempts (per-model cost/tokens, the escalation), the **grounding** (cited figures vs official XBRL), and the **identities** the figures touch.
-- **Eval** — tie-out / hallucination / grounding / escalation, gate outcomes + cost, and a model-comparison leaderboard (the hybrid deterministic + rubric + LLM-judge eval, with the *money metric*: answers the judge accepts that are actually wrong).
+- **Eval** — Hebbify / hallucination / grounding / escalation, gate outcomes + cost, and a model-comparison leaderboard (the hybrid deterministic + rubric + LLM-judge eval, with the *money metric*: answers the judge accepts that are actually wrong).
 - **Rulebook** — the accounting-identity registry. **Architecture** — the layered system with an honest *built vs. roadmap* table.
 
 Ships with precomputed results, so it runs instantly, offline, **no API key**:
@@ -94,7 +95,7 @@ python serve.py                                   # -> http://localhost:8000
 
 ## What's built vs. roadmap (honest scope)
 
-**Built:** EDGAR + XBRL ground-truth store · the eval gate (tie-out + verify, re-run-on-fail, tiering, cost) · the Query Grid with bounded in-process fan-out · XBRL-grounded metrics · the constraint engine + attribution.
+**Built:** EDGAR + XBRL ground-truth store · the eval gate (Hebbify + verify, re-run-on-fail, tiering, cost) · the Query Grid with bounded in-process fan-out · XBRL-grounded metrics · the constraint engine + attribution.
 
 **Roadmap (labeled as such, not stubbed):** distributed fan-out (Celery/Redis — same interface, swap the executor) · hybrid prose retrieval (BM25 + embeddings + cross-encoder rerank) with span-level prose citations (today retrieval is structured-XBRL) · a Neo4j knowledge graph for multi-hop / cross-filing questions · multimodal table/chart extraction.
 
@@ -124,7 +125,7 @@ Design decisions (details in [ARCHITECTURE.md](ARCHITECTURE.md)): Decimal everyw
 | 0–5 | XBRL ingest · 16-identity registry · propagating engine · extraction adapters · attribution · scorecard | ✅ |
 | A | Column agent → engine-backed cell verification (`verify_cell`) | ✅ |
 | B | Hybrid answer-quality eval (deterministic + rubric + judge, money metric) | ✅ |
-| C | **Eval-gate orchestrator** (tie-out + verify, re-run-on-fail, model tiering, cost) | ✅ |
+| C | **Eval-gate orchestrator** (Hebbify + verify, re-run-on-fail, model tiering, cost) | ✅ |
 | D | **Gated Query Grid + XBRL-grounded metrics + audit-console UI** | ✅ |
 | — | Roadmap: distributed fan-out · hybrid prose retrieval · graph · multimodal | planned |
 
